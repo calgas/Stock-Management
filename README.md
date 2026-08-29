@@ -2,7 +2,8 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 2.5.0
+**Current version:** 3.3.0
+**Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
 
@@ -15,6 +16,63 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Sends an optional daily email (per person, per RM/FG) with a fully styled current-stock workbook attached.
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
+- Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.3.0
+
+This release is correctness, performance and supply-chain work. No new screens.
+
+### Duplicate transactions can no longer be created by a retry
+
+The frontend retries a request that times out. A timeout only means the *response* was lost — the write may well have committed. The retry then posted the same stock movement a second time, which corrupted balances quietly and only on bad Wi-Fi, so it looked random.
+
+Fixed on both sides:
+
+- Each transaction submit generates a `clientTxnId` once, **per submit, not per network attempt**, so a retry carries the same ID.
+- `addTransaction_` looks that ID up in the ledger *inside the existing lock* before appending. On a match it returns the original result with `duplicate: true` rather than posting again.
+- The retry itself is now gated: only reads, or writes carrying a `clientTxnId`, are ever retried. Any other mutating action fails fast instead of gambling.
+
+The lookup scans the most recent `IDEMPOTENCY_SCAN_ROWS` (300) ledger rows rather than the whole sheet — a duplicate can only ever arrive seconds after the original, and scanning everything would make every post cost O(ledger size).
+
+This adds a `ClientTxnId` column to both ledgers, created automatically on first use.
+
+### Session validation no longer reads the whole Sessions sheet
+
+`validateSession_` runs on **every authenticated request** and was reading the entire Sessions sheet each time, so the cost grew with every login ever issued. Tokens are now cached in `CacheService` (`SESSION_CACHE_TTL_SECONDS`, 6h — the platform maximum), with the sheet consulted only on a miss.
+
+The sheet stays authoritative. The cache is written on login, dropped on logout, and its TTL is capped by the session's own stored expiry, so a cached entry can never extend a session beyond what the sheet recorded. Cache failures are swallowed — an optimisation must never fail a request.
+
+### Nightly balance drift detection
+
+Balances are maintained incrementally by `applyStockDelta_`, which is fast but can diverge from the ledger — a half-completed write, a manual edit in the sheet, a restored row. The divergence is silent; the numbers still look plausible.
+
+`nightlyDriftCheck_` now runs as part of the existing nightly cleanup trigger. It recomputes balances from the ledger in memory, compares against stored `CurrentBalance`, and emails every active Admin a table of any mismatches beyond `DRIFT_TOLERANCE` (0.001, to absorb float noise from fractional Kg/Ltr quantities).
+
+**It deliberately does not auto-correct.** An automatic fix on a nightly trigger could overwrite a legitimate manual correction and would destroy the evidence of whatever caused the drift. A human reviews, then uses **Recalculate stock**. Silence means no drift — it does not email on a clean run.
+
+### PWA icons are real icons now
+
+The manifest previously pointed at JPEGs, which Android cannot build a proper adaptive icon from. Replaced with PNGs, plus a dedicated maskable variant:
+
+| File | Size | Purpose |
+|---|---|---|
+| `logo/icon-192.png` | 192×192 | `any` |
+| `logo/icon-512.png` | 512×512 | `any` |
+| `logo/icon-512-maskable.png` | 512×512 | `maskable` |
+
+The maskable icon centres the mark in a **60%** safe zone on a white plate, not the usual 80% — the source artwork already carries its own internal margin, and at 80% the mark touched the launcher's crop edge.
+
+### Assets are served same-origin, and libraries are vendored
+
+- Logo and icon references in `index.html` and `manifest.json` are now **relative** (`./logo/…`). Same origin as the app, served by GitHub Pages' CDN, and cacheable by the service worker. `raw.githubusercontent.com` is not a CDN, is rate-limited, discourages hotlinking, and is blocked on some corporate networks.
+- `COMPANY_LOGO_URL` in `Code.gs` stays absolute — it goes into HTML email, which has no origin to be relative to — but points at the Pages URL rather than raw.
+- **Chart.js and SheetJS are no longer loaded from public CDNs.** Both live in `vendor/` (see [Vendored libraries](#vendored-libraries)) and are cached in the app shell, so charts and Excel import work offline.
+
+### Mail sending
+
+All outbound mail (password OTPs and the daily report) now funnels through a single `sendMail_()` helper, sending as `noreply@calgas.in` — see [Mail configuration](#mail-configuration) for the alias requirement, which is not optional.
 
 ---
 
@@ -40,7 +98,7 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - **`index.html`** is a single-file PWA (vanilla JS, no build step, no framework). It's hosted as static files completely separately from the Apps Script project — Apps Script here is *only* the JSON API, never serves HTML.
 - **`Code.gs`** is bound to the spreadsheet (deployed from *Extensions → Apps Script* inside the Sheet itself, not a standalone script) and deployed as a Web App. It's the only thing that ever touches the spreadsheet directly.
 - All communication is a single `doPost` endpoint accepting a JSON body (posted as `text/plain` to sidestep Apps Script's lack of CORS preflight support) with an `action` field that routes to the right handler.
-- **`sw.js`** caches the app shell (HTML/CSS/JS) for fast repeat loads and offline resilience, but every request to the backend is always network-only — stock data is never served stale.
+- **`sw.js`** caches the app shell (HTML/CSS/JS/icons/vendored libs) for fast repeat loads and offline resilience, but every request to the backend is always network-only — stock data is never served stale.
 
 ---
 
@@ -48,11 +106,39 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 
 | File | Purpose |
 |---|---|
-| `Code.gs` | The entire backend: auth, sessions, RM/FG CRUD, transactions, ledger, bulk import, daily mail, admin tools. |
+| `Code.gs` | The entire backend: auth, sessions, RM/FG CRUD, transactions, ledger, bulk import, daily mail, drift check, admin tools. |
 | `index.html` | The entire frontend: login/auth screens, dashboard, RM/FG stock pages, item history, Team & Access, all modals. |
-| `manifest.json` | PWA manifest (name, icons, theme colors). |
+| `manifest.json` | PWA manifest (name, icons, theme colors, scope). |
 | `sw.js` | Service worker — app-shell caching, network-only for API calls. |
+| `logo/` | Brand assets: PWA icons (PNG, incl. maskable) and the wordmark. Single source of truth for the whole app family. |
+| `vendor/` | Self-hosted third-party libraries — **not committed by default**, see below. |
 | `Stock_Management.xlsx` | The Google Sheet itself — the data store (see [Spreadsheet structure](#spreadsheet-structure)). |
+
+---
+
+## Vendored libraries
+
+`vendor/` is intentionally empty in a fresh clone. Download both files once and commit them. Until you do, charts won't render and bulk import won't parse.
+
+### `vendor/xlsx.full.min.js` — SheetJS **0.19.3**
+
+```
+https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js
+```
+
+**Do not use the npm or cdnjs copy.** The newest version ever published to npm is 0.18.5, which is vulnerable to **CVE-2023-30533** (prototype pollution when *reading* a crafted file). This app calls `XLSX.read()` on operator-supplied files during bulk import, so that path is directly exposed — this is not a hygiene upgrade. The fix ships only from SheetJS's own CDN.
+
+Save it with the browser's *Save page as*, not copy-paste: the file contains binary codepage tables that a rendered browser view will mangle.
+
+### `vendor/chart.umd.min.js` — Chart.js **4.4.1**
+
+```
+https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js
+```
+
+Expected size 205,125 bytes. Previously loaded from an **unpinned** `cdn.jsdelivr.net/npm/chart.js` URL, which resolves to whatever is latest — a major release could have broken every chart without a single line of this repo changing.
+
+> The npm tarball's `dist/chart.umd.js` is already minified and byte-identical to what jsDelivr serves as `chart.umd.min.js`; either source is fine.
 
 ---
 
@@ -61,7 +147,7 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 | Sheet | Purpose |
 |---|---|
 | `RM_Master` / `FG_Master` | One row per item: code, name, category/family, unit, reorder level, active flag, ID No. |
-| `RM_Stock_Ledger` / `FG_Stock_Ledger` | Every transaction ever posted, append-only. |
+| `RM_Stock_Ledger` / `FG_Stock_Ledger` | Every transaction ever posted, append-only. Includes `ClientTxnId` for duplicate suppression. |
 | `RM_Current_Stock` / `FG_Current_Stock` | Live computed balances, kept in sync incrementally on every transaction (and fully rebuildable via Recalculate). |
 | `Users` | Accounts: name, username, salted password hash, role, department, email, active flag, daily-mail subscriptions. |
 | `Sessions` | Active login tokens (auto-created, swept nightly). |
@@ -84,8 +170,22 @@ Master data and Current Stock are separate on purpose: Current Stock is a derive
 | Deactivate / reactivate items | ✅ | ❌ | ❌ |
 | Recalculate stock | ✅ | ❌ | ❌ |
 | Manage people (Team & Access) | ✅ | ❌ | ❌ |
+| Receive drift-check alerts | ✅ | ❌ | ❌ |
 
 Every permission is enforced **server-side** (`requireRole_` / department-scope checks in `Code.gs`) — the frontend hiding a button is a convenience, not the actual security boundary.
+
+---
+
+## Mail configuration
+
+Outbound mail is centralised in `sendMail_()` and sends as `MAIL_FROM` (`noreply@calgas.in`).
+
+Apps Script **cannot send as an arbitrary address**. `MailApp.sendEmail` has no `from` parameter at all; `GmailApp.sendEmail` accepts one, but only when that address is a verified *Send mail as* alias on the Google account owning the script. So:
+
+1. On the account that owns the Apps Script project, go to **Gmail → Settings → Accounts and Import → Send mail as** and add `noreply@calgas.in`, completing verification.
+2. Re-authorize the script once. `GmailApp` needs a scope `MailApp` did not.
+
+`sendMail_` checks `GmailApp.getAliases()` at runtime. If the alias is missing, mail **still sends** under the owner's own address rather than failing — a Workspace misconfiguration should not silently swallow password reset codes. `replyTo` is set to `MAIL_FROM` either way.
 
 ---
 
@@ -96,26 +196,64 @@ Every permission is enforced **server-side** (`requireRole_` / department-scope 
 1. Open `Stock_Management.xlsx` in Google Sheets (or import it as one).
 2. **Extensions → Apps Script**, paste in `Code.gs`.
 3. Run `ADMIN_generateAppSecret()` once from the Apps Script editor. This sets `Settings!APP_SECRET`, used for password hashing and session signing — without it, login will fail with an explicit error telling you to run this.
-4. **Deploy → New deployment → Web app.** Execute as *Me*, accessible to *Anyone* (the app handles its own auth on top of this). Copy the deployment URL.
-5. Run `ADMIN_installNightlyCleanupTrigger()` once — sweeps expired sessions and OTP codes nightly so those sheets don't grow unbounded.
-6. If you want the daily stock report emails: run `ADMIN_installDailyStockMailTrigger()` once. This needs Google Drive access (to generate `.xlsx` attachments) and Gmail send access, so it'll prompt a fresh authorization the first time — expected, not an error.
-7. Create your first Admin user directly in the `Users` sheet (Username, Name, Role=`Admin`, Active=`TRUE`, a real Email), then run `ADMIN_setUserPassword('their-username', 'a-temporary-password')` to set their initial password.
+4. Add and verify the `noreply@calgas.in` alias — see [Mail configuration](#mail-configuration).
+5. **Deploy → New deployment → Web app.** Execute as *Me*, accessible to *Anyone* (the app handles its own auth on top of this). Copy the deployment URL.
+6. Run `ADMIN_installNightlyCleanupTrigger()` once — sweeps expired sessions and OTP codes nightly, and runs the balance drift check.
+7. If you want the daily stock report emails: run `ADMIN_installDailyStockMailTrigger()` once. This needs Google Drive access (to generate `.xlsx` attachments) and Gmail send access, so it'll prompt a fresh authorization the first time — expected, not an error.
+8. Create your first Admin user directly in the `Users` sheet (Username, Name, Role=`Admin`, Active=`TRUE`, a real Email), then run `ADMIN_setUserPassword('their-username', 'a-temporary-password')` to set their initial password.
+
+> Do **not** switch the deployment to *Execute as: user accessing*. It would hand you `Session.getActiveUser()` for free, but it breaks the CORS-free `text/plain` POST from GitHub Pages.
 
 ### 2. Frontend
 
-1. In `index.html`, set `GOOGLE_API_URL` to the Web App URL from step 4 above.
-2. Host `index.html`, `manifest.json`, `sw.js` and `logo/` together as static files — GitHub Pages off this repo's `main` branch serves them at `https://calgas.github.io/Stock-Management/`. They don't need to be anywhere near the Apps Script project.
-3. Open the hosted URL, log in as the Admin user you just created, and change the temporary password via **Forgot password** (this also verifies the OTP email path is working).
+1. Download the two [vendored libraries](#vendored-libraries) into `vendor/` and commit them.
+2. In `index.html`, set `GOOGLE_API_URL` to the Web App URL from step 5 above.
+3. Host `index.html`, `manifest.json`, `sw.js`, `logo/` and `vendor/` together as static files — GitHub Pages off this repo's `main` branch serves them at `https://calgas.github.io/Stock-Management/`. They don't need to be anywhere near the Apps Script project.
+4. Open the hosted URL, log in as the Admin user you just created, and change the temporary password via **Forgot password** (this also verifies the OTP email path is working).
+
+> **Commit order matters.** Push `logo/` and `vendor/` *before* `index.html`, or the first visitors get a shell that 404s on its own icons and libraries — and the service worker may cache that broken state.
 
 ### 3. Ongoing accounts
 
 New users are created from **Team & Access** in the app — that flow emails them a password-setup code automatically; there's no need to touch `ADMIN_setUserPassword` again except as a break-glass fallback if someone's email is unreachable.
+
+### 4. Deploying an update
+
+Bump **all three** version markers together, or installed clients will keep serving the old shell:
+
+| Marker | File |
+|---|---|
+| `<meta name="app-version">` | `index.html` |
+| `APP_VERSION` | `index.html` |
+| `CACHE_VERSION` | `sw.js` |
+
+Currently `3.3.0` / `3.3.0` / `calgas-shell-v10`.
+
+---
+
+## Tunable constants (`Code.gs`)
+
+| Constant | Value | Notes |
+|---|---|---|
+| `SESSION_DURATION_HOURS` | 12 | Covers a full shift plus overrun. |
+| `SESSION_CACHE_TTL_SECONDS` | 21600 | 6h — the `CacheService` maximum. Capped further by the session's own expiry. |
+| `OTP_VALIDITY_MINUTES` | 10 | |
+| `OTP_MAX_ATTEMPTS` | 5 | |
+| `LOGIN_MAX_ATTEMPTS` | 5 | Then locked for `LOGIN_LOCKOUT_MINUTES`. |
+| `LOGIN_LOCKOUT_MINUTES` | 15 | |
+| `IDEMPOTENCY_SCAN_ROWS` | 300 | Ledger tail scanned for a duplicate `ClientTxnId`. |
+| `DRIFT_TOLERANCE` | 0.001 | Absorbs float noise on fractional quantities. |
+| `MAIL_FROM` | `noreply@calgas.in` | Requires a verified alias. |
 
 ---
 
 ## Notable design decisions
 
 - **Passwords are salted** (`Salt` column per user), with automatic migration: any account created before salting was added keeps working, and gets silently upgraded to a salted hash the next time it logs in successfully — no bulk migration step was needed.
+- **Retries are gated by idempotency, not by hope.** A request is only retried if it is a read, or a write carrying a `clientTxnId` the backend de-duplicates. That is the difference between a resilient client and one that corrupts data on a flaky connection.
+- **The duplicate check lives inside the transaction lock**, not before it — otherwise two concurrent duplicates could both pass the check and both append.
+- **Drift is reported, never auto-corrected.** Detection and correction are separate responsibilities; conflating them on an unattended trigger destroys the evidence you need to find the cause.
+- **The session cache never becomes authoritative.** Expiry is always checked against the stored `ExpiresAt`, so caching can only save a read — it can't extend a session.
 - **History lookups scan backward from the newest ledger rows in chunks**, stopping once enough matches are found, rather than reading the entire ledger on every click — this keeps item history fast regardless of how large the overall ledger grows.
 - **Excel output (exports and daily mail) is generated entirely server-side** via native Google Sheets formatting, then exported to real `.xlsx` — not via a client-side JS library. The free tier of the usual browser-side Excel library can't write cell colors/fills/borders at all; doing it server-side means real styling (branded headers, status color-coding, banded rows) with no such limitation, and guarantees exports and mail look identical since they share the same styling code.
 - **Bulk import creates each item's Current Stock row directly** at import time, seeded from an Opening Stock column — items are visible in the Stock tables immediately rather than only appearing after their first transaction.
@@ -125,8 +263,22 @@ New users are created from **Team & Access** in the app — that flow emails the
 
 ## Known limitations / not yet done
 
-- **PWA icons and the wordmark are served from `logo/` in this repo** via `raw.githubusercontent.com`, which is also what the sibling apps point at — this repo is the single source of truth for the family's brand assets.
+- **Google Fonts is still fetched from the network**, so "works offline" is not yet strictly true — the app loads and functions, but falls back to system fonts with no connection. Self-hosting the font files would close this.
+- **`index.html` is a single 3,400-line file.** Splitting out `app.css` and `app.js` needs no build step and would make every future edit cheaper. Deferred deliberately: it touches every line, and doing it alongside the 3.3.0 correctness work would have buried those changes in the diff.
+- **Google sign-in is not implemented.** It's worth doing for office staff, but it is an *addition*, not a simplification — shop-floor devices are shared and need the username/password path to stay, so password hashing, OTP, `PasswordResets` and throttling all remain either way. Blocked on creating a Google Cloud OAuth client ID. If added, the ID token must be verified server-side against `https://oauth2.googleapis.com/tokeninfo`, checking `aud`, `exp` and `email_verified` — and `hd` too, if `calgas.in` becomes a Workspace domain.
+- **No ledger archival.** Every transaction stays in one sheet forever. The backward-chunked scan keeps this fast for a long time, but past roughly 50k rows, rolling older rows into `RM_Stock_Ledger_Archive` will beat a clever scan.
 - **No incremental recalculation** — `Recalculate` does a full rebuild of Current Stock from the entire ledger. This is intentional (a rare, manual, correctness-first admin tool), and is fine at normal usage; a very large ledger (20,000+ rows) will get a heads-up that it may take a while, since Apps Script executions have a hard 6-minute ceiling.
-- **Gmail send quota** applies to OTPs and daily report emails — ~100/day on a consumer account, 1,500/day on Workspace. Irrelevant at a handful of subscribers, worth knowing if that list grows a lot.
-- **Sending as `noreply@calgas.in` requires that address to be a verified "Send mail as" alias** on the Google account owning the Apps Script project. `sendMail_` checks `GmailApp.getAliases()` at runtime; if the alias is absent, mail still sends, just under the owner's own address.
-- **Bulk import is capped at 500 rows per file**; split larger imports into batches.
+- **No explicit transaction reversal.** Corrections go through free-form Adjustments; a `ReversalOf` column and a "reverse this" action would give a much cleaner audit trail.
+- **Gmail send quota** applies to OTPs, drift alerts and daily report emails — ~100/day on a consumer account, 1,500/day on Workspace. Irrelevant at a handful of subscribers, worth knowing if that list grows a lot.
+- **Bulk import is capped at 500 rows per file**; split larger imports into batches. Exports are capped at 5,000 rows.
+- **Sheet version history does not cover a deleted tab.** A weekly timestamped copy of the spreadsheet to Drive would.
+
+---
+
+## If this ever outgrows Sheets
+
+Sheets is the right call at current scale — free, zero-ops, and "just open the sheet and look" is worth a great deal on a factory floor. The known limits above are localised, not architectural.
+
+If it does outgrow it, **Supabase** (free Postgres) is a better target than Firebase for one reason specific to this design: Current Stock becomes a SQL view over the ledger, which deletes `applyStockDelta_`, `recalcCurrentStock_`, and drift as a concept entirely. It would also let ELE Tracker and Manufacturing Tracker join against one item master instead of calling across to this app. The cost is losing the spreadsheet-as-UI, which is a real loss.
+
+Revisit when the ledger passes ~50k rows, or when write-lock contention becomes noticeable.
