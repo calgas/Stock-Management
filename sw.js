@@ -17,8 +17,17 @@
 // changes, so an already-installed client picks up the new shell instead
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
-const CACHE_VERSION = 'calgas-shell-v9';
-const APP_SHELL = ['./index.html', './manifest.json'];
+const CACHE_VERSION = 'calgas-shell-v10';
+const APP_SHELL = [
+  './index.html',
+  './manifest.json',
+  './logo/icon-192.png',
+  './logo/icon-512.png',
+  './logo/icon-512-maskable.png',
+  './logo/CALGAS%20CAPACITORS-logo-768x240.jpg',
+  './vendor/chart.umd.min.js',
+  './vendor/xlsx.full.min.js'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
