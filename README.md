@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.3.0
+**Current version:** 3.3.1
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,19 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.3.1
+
+**Form modals now use the width of a desktop screen.** The Stock Entry, Edit Person and Item modals were locked to a 460px frame regardless of viewport, so on a wide screen they rendered as a tall narrow column that scrolled vertically — and the Edit Person footer, which carries up to five buttons, overflowed that frame and forced a *horizontal* scrollbar inside the modal.
+
+- Those three modals now use `.modal-form` (860px) with a two-column field grid above 780px, collapsing to a single column below it. The mobile bottom-sheet behaviour is unchanged.
+- Footer rows (`.modal-actions`, `.modal-actions-split`, `.modal-actions-right`) now wrap, so no future button label can bring the sideways scroll back.
+- `.btn-primary` is full-width by design — correct as a thumb target in the mobile sheet, wrong in a desktop footer, where it wrapped onto its own line beneath Cancel. It is now auto-width in modal footers above 780px only.
+- The item modal fills `#itemFieldsMain` via `innerHTML`, leaving its fields one level too deep to be grid items. `.grid-passthrough` (`display: contents`) dissolves that wrapper so generated fields line up beside the static Code field.
+
+The frame is capped at 860px rather than filling the viewport deliberately: a field stretched across 1900px puts its label and input at opposite ends of the eye's travel, which reads as harder to use, not roomier. Two columns at ~390px is the width a field is actually comfortable at, and it roughly halves the form's height — which is what removes the vertical scrollbar.
 
 ---
 
@@ -227,7 +240,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.3.0` / `3.3.0` / `calgas-shell-v10`.
+Currently `3.3.1` / `3.3.1` / `calgas-shell-v11`.
 
 ---
 
