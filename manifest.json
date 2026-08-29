@@ -3,19 +3,28 @@
   "short_name": "StockApp",
   "description": "Stock management tool for Raw Materials and Finished Goods.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f3f0ea",
   "theme_color": "#f3f0ea",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-192x192.jpg",
+      "src": "./logo/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-512x512.jpg",
+      "src": "./logo/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./logo/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
