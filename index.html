@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.2.1">
+<meta name="app-version" content="3.3.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
-<link rel="icon" href="https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-192x192.jpg">
-<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-512x512.jpg">
-<link rel="preload" href="https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-192x192.jpg" as="image">
+<link rel="icon" href="./logo/icon-192.png">
+<link rel="apple-touch-icon" href="./logo/icon-512.png">
+<link rel="preload" href="./logo/icon-192.png" as="image">
 <link rel="dns-prefetch" href="https://script.google.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -725,7 +725,7 @@
   <div class="auth-card setup-card">
     <div class="auth-brand"><img class="js-company-logo-full" alt=""><div class="auth-brand-sub">Setup required</div></div>
     <h1>One thing before this works</h1>
-    <p class="lede">This page needs your Apps  Web App URL. Open this file, find the line near the top of the script:</p>
+    <p class="lede">This page needs your Apps Script Web App URL. Open this file, find the line near the top of the script:</p>
     <code>const GOOGLE_API_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';</code>
     <p class="lede">Paste your deployed Web App URL in there, save, and reload this page.</p>
   </div>
@@ -1209,11 +1209,11 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.2.1';
+const APP_VERSION = '3.3.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
-const COMPANY_LOGO_ICON_URL = 'https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/LOGO-192x192.jpg';
-const COMPANY_LOGO_FULL_URL = 'https://raw.githubusercontent.com/calgas/Stock-Management/refs/heads/main/logo/CALGAS%20CAPACITORS-logo-768x240.jpg';
+const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
+const COMPANY_LOGO_FULL_URL = './logo/CALGAS%20CAPACITORS-logo-768x240.jpg';
 const PAGE_SIZE = 50;
 const API_TIMEOUT_MS = 30000;
 const REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1250,7 +1250,7 @@ let chartJsPromise = null;
 function ensureChartJs() {
   if (chartJsReady) return Promise.resolve();
   if (!chartJsPromise) {
-    chartJsPromise = loadScript('https://cdn.jsdelivr.net/npm/chart.js').then(function () { chartJsReady = true; });
+    chartJsPromise = loadScript('./vendor/chart.umd.min.js').then(function () { chartJsReady = true; });
   }
   return chartJsPromise;
 }
@@ -1366,6 +1366,20 @@ async function api(action, params) {
   return promise;
 }
 
+// Actions that change server state. Only these need idempotency protection;
+// everything else is a read and is free to retry on a transport failure.
+const MUTATING_ACTIONS = { addRMTransaction: true, addFGTransaction: true };
+
+// crypto.randomUUID is unavailable on http:// origins and older WebViews,
+// which the shop-floor tablets may still be on — fall back to random bytes.
+function newClientTxnId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  const b = new Uint8Array(16);
+  (window.crypto || {}).getRandomValues ? crypto.getRandomValues(b)
+    : b.forEach((_, i) => { b[i] = Math.floor(Math.random() * 256); });
+  return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+}
+
 async function _apiRequest(action, params, retries) {
   retries = retries !== undefined ? retries : 1;
   const body = Object.assign({ action: action }, params);
@@ -1385,7 +1399,13 @@ async function _apiRequest(action, params, retries) {
     if (!json.success) throw new Error(json.error || 'Request failed');
     return json.data;
   } catch (err) {
-    const retryable = err.name === 'AbortError' || (err.message && err.message.indexOf('fetch') > -1);
+    // A timed-out request may already have committed server-side, so a blind
+    // retry can double-post. Only retry when that is provably safe: either
+    // the action does not mutate state, or it carries a clientTxnId the
+    // backend de-duplicates against.
+    const transportFailure = err.name === 'AbortError' || (err.message && err.message.indexOf('fetch') > -1);
+    const safeToRetry = !MUTATING_ACTIONS[action] || body.clientTxnId;
+    const retryable = transportFailure && safeToRetry;
     if (retries > 0 && retryable) {
       await new Promise(function (r) { setTimeout(r, 700); });
       return _apiRequest(action, params, retries - 1);
@@ -2307,6 +2327,10 @@ async function handleTxnSubmit(e) {
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
   const rateRaw = document.getElementById('txnRate').value; if(rateRaw !== '') payload.rate = Number(rateRaw);
+  // Generated once per submit attempt, not per network attempt, so a retry
+  // after a timeout carries the same ID and the backend recognises it as a
+  // duplicate rather than posting the stock movement twice.
+  payload.clientTxnId = newClientTxnId();
   if (config.key === 'rm' && txnType === 'Receipt') { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
 
   try {
@@ -2657,7 +2681,7 @@ async function downloadImportTemplate() {
   const config = activeImportConfig; if (!config) return;
   const btn = document.getElementById('importDownloadTemplateBtn'); setBtnLoading(btn, 'Preparing…');
   try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    await loadScript('./vendor/xlsx.full.min.js');
     const headers = importTemplateHeaders(config);
     const exampleRow = headers.map(function (h) { return h === config.codeField ? (config.key === 'rm' ? 'RM-EXAMPLE01' : 'FG-EXAMPLE01') : (h === 'OpeningStock' ? 0 : ''); });
     const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
@@ -2671,7 +2695,7 @@ async function handleImportFileChosen(e) {
   const file = e.target.files[0]; if (!file) return;
   const config = activeImportConfig; if (!config) return;
   try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    await loadScript('./vendor/xlsx.full.min.js');
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
     const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
