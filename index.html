@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.3.0">
+<meta name="app-version" content="3.3.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -542,6 +542,31 @@
   .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.3s var(--ease); }
   .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.4s var(--spring) both; }
   .modal.modal-wide { max-width: 760px; }
+
+  /* Form modals get a wider frame and a two-column field grid on desktop.
+     Deliberately capped at 860px rather than filling the viewport: a form
+     field stretched across 1900px puts the label and its input at opposite
+     ends of the eye's travel, which reads as harder to use, not roomier.
+     Two columns at ~390px is the width a field is comfortable at, and it
+     roughly halves the form's height so it stops needing a scrollbar. */
+  .modal.modal-form { max-width: 860px; }
+  .form-grid { display: block; }
+  .form-grid > .span-2 { grid-column: 1 / -1; }
+  /* The item modal fills #itemFieldsMain via innerHTML, so its fields are
+     nested one level too deep to be grid items. display:contents dissolves
+     the wrapper so they line up alongside the static Code field. */
+  .grid-passthrough { display: contents; }
+
+  @media (min-width: 781px) {
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; align-items: start; }
+    /* Row rhythm still comes from .field's own margin-bottom, so no row-gap
+       here — setting both would double the spacing between rows. */
+    .receipt-grid { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 20px; }
+    /* .btn-primary is full-width by design, which is right for a thumb
+       target in the mobile bottom sheet but wrong in a desktop footer —
+       it wrapped onto its own line under Cancel. Auto width only here. */
+    .modal-actions .btn-primary, .modal-actions-right .btn-primary { width: auto; }
+  }
   .modal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
   .modal-eyebrow { font-size: 11.5px; font-weight: 800; letter-spacing: 0.1em; color: var(--copper); margin-bottom: 6px; }
   .modal-head h3 { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.02em; }
@@ -550,9 +575,13 @@
   .icon-btn:hover { color: var(--critical); background: var(--critical-soft); transform: rotate(90deg) scale(1.1); }
 
   .modal-actions, .modal-actions-split { margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
-  .modal-actions-split { display: flex; justify-content: space-between; align-items: center; }
-  .modal-actions-right { display: flex; gap: 12px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+  /* flex-wrap on all three: the edit-person footer carries up to five
+     buttons, which could not fit the old 460px frame and forced the modal
+     to scroll sideways. Wrapping is the guarantee that no future label
+     length can reintroduce that. */
+  .modal-actions-split { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .modal-actions-right { display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; flex: 1 1 auto; }
 
   .confirm-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
   .confirm-icon-wrap.tone-danger { background: linear-gradient(135deg, var(--critical-soft), rgba(217, 80, 58, 0.1)); color: var(--critical); }
@@ -1003,7 +1032,7 @@
 </div>
 
 <div id="txnModal" class="modal-backdrop hidden">
-  <div class="modal">
+  <div class="modal modal-form">
     <div class="modal-drag-handle" aria-hidden="true"></div>
     <div class="modal-head">
       <div><div class="modal-eyebrow" id="txnModalEyebrow"></div><h3 id="txnModalTitle"></h3><div class="mono muted" id="txnModalCode"></div></div>
@@ -1011,20 +1040,24 @@
     </div>
     <form id="txnForm">
       <input type="hidden" id="txnCode"><input type="hidden" id="txnKey">
-      <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
-      <div class="field"><label for="txnQty">Quantity</label><input type="number" id="txnQty" step="any" required><div class="hint" id="txnQtyHint"></div></div>
-      <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
-      
-      <div id="receiptFields" class="receipt-fields hidden">
-        <div class="receipt-fields-label">Procurement details (Optional)</div>
-        <div class="field"><label for="txnSupplier">Supplier Name</label><select id="txnSupplier"></select></div>
-        <div class="field"><label for="txnInvoiceNo">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
-        <div class="field"><label for="txnInvoiceDate">Invoice Date</label><input type="date" id="txnInvoiceDate"></div>
-      </div>
+      <div class="form-grid">
+        <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
+        <div class="field"><label for="txnQty">Quantity</label><input type="number" id="txnQty" step="any" required><div class="hint" id="txnQtyHint"></div></div>
+        <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
+        <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any"></div>
 
-      <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any"></div>
-      <div class="field"><label for="txnReference">Reference (optional)</label><input type="text" id="txnReference" placeholder="PO / work order / invoice #"></div>
-      <div class="field"><label for="txnRemarks">Remarks (optional)</label><input type="text" id="txnRemarks"></div>
+        <div id="receiptFields" class="receipt-fields hidden span-2">
+          <div class="receipt-fields-label">Procurement details (Optional)</div>
+          <div class="receipt-grid">
+            <div class="field"><label for="txnSupplier">Supplier Name</label><select id="txnSupplier"></select></div>
+            <div class="field"><label for="txnInvoiceNo">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
+            <div class="field"><label for="txnInvoiceDate">Invoice Date</label><input type="date" id="txnInvoiceDate"></div>
+          </div>
+        </div>
+
+        <div class="field"><label for="txnReference">Reference (optional)</label><input type="text" id="txnReference" placeholder="PO / work order / invoice #"></div>
+        <div class="field"><label for="txnRemarks">Remarks (optional)</label><input type="text" id="txnRemarks"></div>
+      </div>
       <div class="modal-error" id="txnError"></div>
       <div class="modal-actions"><button type="button" class="btn-ghost" id="txnCancelBtn">Cancel</button><button type="submit" class="btn-primary" id="txnSubmit">Post transaction</button></div>
     </form>
@@ -1032,16 +1065,18 @@
 </div>
 
 <div id="itemModal" class="modal-backdrop hidden">
-  <div class="modal">
+  <div class="modal modal-form">
     <div class="modal-drag-handle" aria-hidden="true"></div>
     <div class="modal-head">
       <div><div class="modal-eyebrow" id="itemModalEyebrow"></div><h3 id="itemModalTitle"></h3></div>
       <button class="icon-btn" id="itemCloseBtn" aria-label="Close">✕</button>
     </div>
     <form id="itemForm">
-      <div class="field"><label for="itemCode">Code</label><input type="text" id="itemCode" required></div>
-      <div id="itemFieldsMain"></div>
-      <details id="itemFieldsMoreWrap" class="hidden"><summary>More details</summary><div id="itemFieldsMore"></div></details>
+      <div class="form-grid">
+        <div class="field"><label for="itemCode">Code</label><input type="text" id="itemCode" required></div>
+        <div id="itemFieldsMain" class="grid-passthrough"></div>
+      </div>
+      <details id="itemFieldsMoreWrap" class="hidden"><summary>More details</summary><div id="itemFieldsMore" class="form-grid"></div></details>
       <div class="modal-error" id="itemError"></div>
       <div class="modal-actions-split">
         <button type="button" class="btn-danger hidden" id="itemDeleteBtn">Deactivate</button>
@@ -1052,7 +1087,7 @@
 </div>
 
 <div id="userModal" class="modal-backdrop hidden">
-  <div class="modal">
+  <div class="modal modal-form">
     <div class="modal-drag-handle" aria-hidden="true"></div>
     <div class="modal-head">
       <div><div class="modal-eyebrow" id="userModalEyebrow"></div><h3 id="userModalTitle"></h3></div>
@@ -1060,21 +1095,23 @@
     </div>
     <form id="userForm">
       <input type="hidden" id="userOrigUsername">
-      <div class="field"><label for="userFormName">Name</label><input type="text" id="userFormName" required></div>
-      <div class="field"><label for="userUsername">Username</label><input type="text" id="userUsername" required></div>
-      <div class="field"><label for="userRole">Role</label>
-        <select id="userRole" required><option value="Admin">Admin</option><option value="Manager">Manager</option><option value="Supervisor">Supervisor</option></select>
-      </div>
-      <div class="field" id="userDeptField"><label for="userDept">Department</label><select id="userDept"></select></div>
-      <div class="field"><label for="userEmail">Email</label><input type="email" id="userEmail" required><div class="hint">Used for password reset codes.</div></div>
-      <div class="field"><label for="userPhone">Phone (optional)</label><input type="text" id="userPhone"></div>
-      <div class="field">
-        <label>Daily stock report</label>
-        <div style="display:flex;gap:20px;margin-top:2px">
-          <label class="check-inline"><input type="checkbox" id="userDailyMailRM"> RM Stock</label>
-          <label class="check-inline"><input type="checkbox" id="userDailyMailFG"> FG Stock</label>
+      <div class="form-grid">
+        <div class="field"><label for="userFormName">Name</label><input type="text" id="userFormName" required></div>
+        <div class="field"><label for="userUsername">Username</label><input type="text" id="userUsername" required></div>
+        <div class="field"><label for="userRole">Role</label>
+          <select id="userRole" required><option value="Admin">Admin</option><option value="Manager">Manager</option><option value="Supervisor">Supervisor</option></select>
         </div>
-        <div class="hint">Emails a full current-stock workbook every morning to whichever of these are checked.</div>
+        <div class="field" id="userDeptField"><label for="userDept">Department</label><select id="userDept"></select></div>
+        <div class="field"><label for="userEmail">Email</label><input type="email" id="userEmail" required><div class="hint">Used for password reset codes.</div></div>
+        <div class="field"><label for="userPhone">Phone (optional)</label><input type="text" id="userPhone"></div>
+        <div class="field span-2">
+          <label>Daily stock report</label>
+          <div style="display:flex;gap:20px;margin-top:2px">
+            <label class="check-inline"><input type="checkbox" id="userDailyMailRM"> RM Stock</label>
+            <label class="check-inline"><input type="checkbox" id="userDailyMailFG"> FG Stock</label>
+          </div>
+          <div class="hint">Emails a full current-stock workbook every morning to whichever of these are checked.</div>
+        </div>
       </div>
       <div class="form-note" id="userAddNote">A password-setup code will be emailed automatically once this person is added.</div>
       <div class="modal-error" id="userError"></div>
@@ -1209,7 +1246,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.3.0';
+const APP_VERSION = '3.3.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
