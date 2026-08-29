@@ -17,7 +17,7 @@
 // changes, so an already-installed client picks up the new shell instead
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
-const CACHE_VERSION = 'calgas-shell-v10';
+const CACHE_VERSION = 'calgas-shell-v11';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
