@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.3.1">
+<meta name="app-version" content="3.5.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -550,6 +550,10 @@
      Two columns at ~390px is the width a field is comfortable at, and it
      roughly halves the form's height so it stops needing a scrollbar. */
   .modal.modal-form { max-width: 860px; }
+  /* A data table is the opposite case to a form: more width is genuinely
+     better, because it stops six columns fighting over one narrow frame
+     and wrapping dates and names onto two lines. */
+  .modal.modal-table { max-width: 1180px; }
   .form-grid { display: block; }
   .form-grid > .span-2 { grid-column: 1 / -1; }
   /* The item modal fills #itemFieldsMain via innerHTML, so its fields are
@@ -573,6 +577,35 @@
 
   .icon-btn { background: var(--line-soft); border: none; color: var(--ink-soft); font-size: 18px; line-height: 1; padding: 8px; border-radius: 10px; transition: all 0.2s var(--ease); box-shadow: var(--shadow-sm); }
   .icon-btn:hover { color: var(--critical); background: var(--critical-soft); transform: rotate(90deg) scale(1.1); }
+
+  /* Inline form feedback. .modal-error had no rule at all, so failures
+     rendered as bare unstyled text. Both collapse when empty via :empty,
+     so no JS toggling is needed — setting textContent is enough. */
+  .modal-error, .modal-warn {
+    display: none; align-items: flex-start; gap: 10px; font-size: 13.5px; font-weight: 500;
+    line-height: 1.5; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 4px;
+    animation: feedbackIn 0.25s var(--spring) both;
+  }
+  .modal-error:not(:empty), .modal-warn:not(:empty) { display: flex; }
+  .modal-error { background: var(--critical-soft); color: var(--critical); border: 1px solid rgba(217, 80, 58, 0.25); }
+  .modal-warn  { background: var(--low-soft);      color: var(--low);      border: 1px solid rgba(201, 154, 62, 0.3); }
+  .modal-error::before, .modal-warn::before {
+    content: ''; flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px;
+    background-color: currentColor; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-size: contain; mask-size: contain;
+  }
+  /* Warning is a triangle, error a circle — distinguishable without relying
+     on colour alone, which matters for the colour-blind and in sunlight. */
+  .modal-warn::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3 1.5 21h21L12 3Zm0 6v6m0 3.2v.1' stroke='black' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3 1.5 21h21L12 3Zm0 6v6m0 3.2v.1' stroke='black' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .modal-error::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9.5' stroke='black' stroke-width='2' fill='none'/%3E%3Cpath d='M12 7v6m0 3.2v.1' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9.5' stroke='black' stroke-width='2' fill='none'/%3E%3Cpath d='M12 7v6m0 3.2v.1' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+  .field-warn { margin-top: 8px; margin-bottom: 0; font-size: 12.5px; padding: 10px 12px; }
+  @keyframes feedbackIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
   .modal-actions, .modal-actions-split { margin-top: 12px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
   .modal-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
@@ -599,7 +632,24 @@
   .receipt-fields-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); margin-bottom: 16px; }
 
   /* Ledger Table Upgrades */
-  .ledger-table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--panel); }
+  /* Grows with the viewport instead of a fixed 420px, so a tall desktop
+     window shows most of the history without an inner scrollbar. */
+  /* Horizontal scroll for any table wider than its container. Required
+     because .panel sets overflow:hidden, which clips a wide table instead
+     of letting it scroll. overscroll-behavior-x keeps a swipe that reaches
+     the end of the table from turning into a browser back-navigation. */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .ledger-table-wrap { max-height: min(58vh, 640px); overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--panel); }
+  /* Thin, always-visible scrollbars: on a touch device an overlay scrollbar
+     never appears until you already guessed the area scrolls. */
+  .table-scroll::-webkit-scrollbar, .ledger-table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
+  .table-scroll::-webkit-scrollbar-thumb, .ledger-table-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  .table-scroll::-webkit-scrollbar-track, .ledger-table-wrap::-webkit-scrollbar-track { background: transparent; }
+  /* Date, quantity and user are short, fixed-shape values — letting them
+     wrap wasted two lines per row and made the table hard to scan. */
+  .ledger-table-wrap td.col-date, .ledger-table-wrap td.col-qty, .ledger-table-wrap td.col-user,
+  .ledger-table-wrap td.col-dept { white-space: nowrap; }
+  .ledger-table-wrap td.col-ref { min-width: 200px; }
   .ledger-table-wrap table { font-size: 13.5px; margin-top: 0; border-collapse: collapse; min-width: auto; }
   .ledger-table-wrap tbody tr { box-shadow: none; border-radius: 0; background: transparent; border-bottom: 1px solid var(--line-soft); }
   .ledger-table-wrap tbody td { border-radius: 0; padding: 14px 20px; }
@@ -613,10 +663,50 @@
   .qty-bold { font-family: var(--font-mono); font-size: 15px; font-weight: 700; text-align: center; color: var(--ink); }
   .qty-positive { color: var(--ok); }
 
-  #toastContainer { position: fixed; bottom: 32px; right: 32px; z-index: 200; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-  .toast { background: rgba(20, 23, 28, 0.95); backdrop-filter: blur(8px); color: #fff; font-size: 14px; font-weight: 500; padding: 14px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(15px) scale(0.95); transition: all 0.3s var(--spring); max-width: 360px; pointer-events: auto; border: 1px solid rgba(255,255,255,0.1); }
+  /* Toasts anchor top-centre. Bottom-right put them under the thumb on
+     mobile and behind the nav rail; the top edge is the one place that is
+     never occupied on either form factor. */
+  #toastContainer {
+    position: fixed; top: calc(16px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+    z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    pointer-events: none; width: min(440px, calc(100vw - 32px));
+  }
+  .toast {
+    position: relative; width: 100%; display: flex; align-items: flex-start; gap: 12px; overflow: hidden;
+    background: var(--panel); color: var(--ink); font-size: 14px; font-weight: 500; line-height: 1.45;
+    padding: 14px 16px 14px 15px; border-radius: 12px; border: 1px solid var(--line);
+    box-shadow: var(--shadow-lift);
+    opacity: 0; transform: translateY(-14px) scale(0.97);
+    transition: opacity 0.28s var(--spring), transform 0.28s var(--spring);
+    pointer-events: auto;
+  }
   .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-  .toast-error { background: var(--critical); }
+  /* Leaving upward rather than just fading makes the direction of travel
+     match where it came from, so a burst of toasts reads as a stack. */
+  .toast.leaving { opacity: 0; transform: translateY(-10px) scale(0.97); }
+
+  .toast-icon { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .toast-icon svg { width: 12px; height: 12px; stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .toast-body { flex: 1; min-width: 0; word-break: break-word; }
+  .toast-close { flex: 0 0 auto; background: none; border: none; color: var(--ink-faint); font-size: 15px; line-height: 1; padding: 2px 2px; margin: -2px -2px 0 0; border-radius: 6px; transition: color 0.2s; }
+  .toast-close:hover { color: var(--ink); }
+
+  /* Left rail + matching icon fill carry the status, so the message itself
+     stays in normal ink and remains legible in both themes. */
+  .toast::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ink-faint); }
+  .toast-success::after { background: var(--ok); }       .toast-success .toast-icon { background: var(--ok); }
+  .toast-error::after   { background: var(--critical); } .toast-error .toast-icon   { background: var(--critical); }
+  .toast-warn::after    { background: var(--low); }      .toast-warn .toast-icon    { background: var(--low); }
+  .toast-info::after    { background: var(--azure); }    .toast-info .toast-icon    { background: var(--azure); }
+
+  /* Countdown bar — tells you the toast is going to leave on its own,
+     rather than it just vanishing mid-read. */
+  .toast-timer { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; background: currentColor; opacity: 0.35; }
+  .toast-success .toast-timer { color: var(--ok); } .toast-error .toast-timer { color: var(--critical); }
+  .toast-warn .toast-timer { color: var(--low); }   .toast-info .toast-timer { color: var(--azure); }
+  .toast.show .toast-timer { animation: toastTimer linear forwards; }
+  @keyframes toastTimer { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  @media (prefers-reduced-motion: reduce) { .toast-timer { display: none; } }
 
   .scroll-top-btn {
     position: fixed; right: 32px; bottom: 96px; z-index: 90;
@@ -661,7 +751,7 @@
   @media (max-width: 780px) {
     body, #appShell, .main { overflow-x: hidden; width: 100%; }
     #appShell { display: block; height: auto; min-height: 100vh; overflow-y: auto; }
-    .main { height: auto; min-height: 100vh; padding-bottom: 90px; display: block; }
+    .main { height: auto; min-height: 100vh; padding-bottom: calc(96px + env(safe-area-inset-bottom)); display: block; }
     .page { height: auto; overflow: visible; animation: none; padding: 20px 16px; }
 
     #page-rm > div:last-child, #page-fg > div:last-child, #page-users > div:last-child {
@@ -708,16 +798,64 @@
     .alert-row .status { grid-column: 1 / -1; width: fit-content; }
     .alert-row .alert-name { grid-column: 1 / -1; }
 
-    #toastContainer { bottom: 90px; right: 16px; left: 16px; align-items: center; }
-    .scroll-top-btn { right: 16px; bottom: 150px; }
-    .toast { max-width: 100%; width: 100%; text-align: center; }
+    .scroll-top-btn { right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); }
+
+    /* Tables keep their real width and scroll sideways rather than being
+       crushed into unreadable columns. Without a min-width the browser
+       compresses every column until the table "fits" and nothing scrolls. */
+    .table-scroll table { min-width: 720px; }
+    .ledger-table-wrap table { min-width: 620px; }
+    .ledger-table-wrap { max-height: 60vh; }
+    .ledger-table-wrap tbody td { padding: 12px 14px; }
+
+    /* iOS zooms the whole page when a focused input is under 16px. That
+       zoom then has to be pinched back out by hand on every single entry,
+       which is the single most irritating thing about a form on a phone. */
+    .field input, .field select, .toolbar input, .toolbar select { font-size: 16px; }
+
+    /* Every interactive target reaches the 44px minimum for a fingertip. */
+    .icon-btn { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { transform: none; }
+    table tbody td .icon-btn, .actions-cell .icon-btn { min-width: 40px; min-height: 40px; }
+
+    /* Filters sit two-up instead of one per row: the toolbar was taller
+       than the phone before any data appeared. */
+    .toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+    .toolbar > input[type="search"], .toolbar > .toolbar-hint, .toolbar > .btn-primary { grid-column: 1 / -1; }
+    .toolbar .freshness-label { grid-column: 1 / -1; text-align: center; font-size: 11.5px; }
+    .toolbar input[type="search"], .toolbar select, .toolbar .btn-ghost { width: 100%; min-width: 0; }
+    .toolbar .btn-ghost { min-height: 44px; }
+    .modal .toolbar { grid-template-columns: auto 1fr; }
+    .modal .toolbar input[type="text"] { grid-column: 1 / -1; }
+
+    /* The rail sits above the home indicator instead of under it. */
+    .rail { height: auto; min-height: 64px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
+    .nav-link { min-height: 52px; }
 
     /* Bottom sheet — modals anchor to the bottom edge and slide up
        instead of popping in centered, with a drag handle for
        swipe-to-dismiss (wired up in JS). */
     .modal-backdrop { align-items: flex-end; padding: 0; }
-    .modal { width: 100%; max-width: 100% !important; max-height: 88vh; border-radius: 20px 20px 0 0; padding: 10px 20px 24px; animation: sheetSlideUp 0.35s var(--spring) both; }
-    .modal-drag-handle { display: block; width: 40px; height: 4px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; }
+    .modal {
+      width: 100%; max-width: 100% !important; max-height: 92vh; border-radius: 20px 20px 0 0;
+      padding: 10px 20px calc(16px + env(safe-area-inset-bottom));
+      animation: sheetSlideUp 0.35s var(--spring) both;
+      display: flex; flex-direction: column;
+    }
+    .modal-drag-handle { display: block; width: 40px; height: 4px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; flex: 0 0 auto; }
+    .modal-head { flex: 0 0 auto; }
+    /* The form scrolls, not the whole sheet, so the header stays put and
+       the action buttons below stay reachable without scrolling to find
+       them — the usual complaint about long forms in a bottom sheet. */
+    .modal > form, .modal > .ledger-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; min-height: 0; }
+    .modal-actions, .modal-actions-split {
+      position: sticky; bottom: 0; z-index: 2;
+      background: var(--panel); padding-bottom: 4px;
+      box-shadow: 0 -8px 16px -8px rgba(0,0,0,0.18);
+    }
+    .modal-actions .btn-primary, .modal-actions-right .btn-primary { min-height: 48px; }
+    .modal-actions-right { width: 100%; }
+    .modal-actions-split .btn-danger { order: 2; min-height: 44px; }
   }
   @keyframes sheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 </style>
@@ -922,7 +1060,7 @@
         <button class="btn-primary btn-compact hidden" id="rmAddItemBtn">+ Add RM item</button>
       </div>
       <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
-      <div>
+      <div class="table-scroll">
         <table>
           <thead><tr>
             <th class="sortable" data-col="idNo">ID No.</th>
@@ -957,7 +1095,7 @@
         <button class="btn-primary btn-compact hidden" id="fgAddItemBtn">+ Add FG item</button>
       </div>
       <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
-      <div>
+      <div class="table-scroll">
         <table>
           <thead><tr>
             <th class="sortable" data-col="idNo">ID No.</th>
@@ -997,7 +1135,7 @@
         <button class="btn-ghost add-btn-spacer" id="ldgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
       </div>
       <p class="toolbar-hint">Date range, type and department filter on the server; category and search filter the loaded rows.</p>
-      <div>
+      <div class="table-scroll">
         <table>
           <thead><tr>
             <th class="sortable" data-col="ts">Date</th>
@@ -1021,7 +1159,7 @@
         <input type="search" id="userSearch" placeholder="Search name or username…">
         <button class="btn-primary btn-compact add-btn-spacer" id="addUserBtn">+ Add person</button>
       </div>
-      <div>
+      <div class="table-scroll">
         <table>
           <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Department</th><th>Email</th><th>Mail</th><th>Status</th><th class="actions-head" style="text-align:center">Actions</th></tr></thead>
           <tbody id="usersTableBody"></tbody>
@@ -1042,7 +1180,7 @@
       <input type="hidden" id="txnCode"><input type="hidden" id="txnKey">
       <div class="form-grid">
         <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
-        <div class="field"><label for="txnQty">Quantity</label><input type="number" id="txnQty" step="any" required><div class="hint" id="txnQtyHint"></div></div>
+        <div class="field"><label for="txnQty">Quantity</label><input type="number" id="txnQty" step="any" required><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
         <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any"></div>
 
@@ -1129,7 +1267,7 @@
 </div>
 
 <div id="ledgerModal" class="modal-backdrop hidden">
-  <div class="modal modal-wide">
+  <div class="modal modal-table">
     <div class="modal-drag-handle" aria-hidden="true"></div>
     <div class="modal-head">
       <div><div class="modal-eyebrow" id="ledgerModalEyebrow"></div><h3 id="ledgerModalTitle"></h3><div class="mono muted hidden" id="ledgerModalCode"></div></div>
@@ -1246,7 +1384,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.3.1';
+const APP_VERSION = '3.5.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1305,6 +1443,7 @@ const RM_CONFIG_UI = {
   key: 'rm', codeField: 'RM_Code', idField: 'ID_No.', nameField: 'RM_Name', categoryField: 'Category',
   unitField: 'Unit', reorderField: 'ReorderLevel',
   txnTypes: ['Receipt', 'Issue', 'Adjustment', 'Return'],
+  outTypes: ['Issue'],
   addAction: 'addRMTransaction', ledgerAction: 'getRMLedger', masterKey: 'rmMaster', stockKey: 'rmStock',
   addItemAction: 'addRMItem', updateItemAction: 'updateRMItem',
   deleteItemAction: 'deleteRMItem', reactivateItemAction: 'reactivateRMItem',
@@ -1326,6 +1465,7 @@ const FG_CONFIG_UI = {
   subCategoryField: 'Category', subCategoryLabel: 'Category', subCategoryDropdown: 'FG_Category',
   unitField: 'Unit', reorderField: 'ReorderLevel',
   txnTypes: ['Production', 'Dispatch', 'Adjustment', 'Return'],
+  outTypes: ['Dispatch'],
   addAction: 'addFGTransaction', ledgerAction: 'getFGLedger', masterKey: 'fgMaster', stockKey: 'fgStock',
   addItemAction: 'addFGItem', updateItemAction: 'updateFGItem',
   deleteItemAction: 'deleteFGItem', reactivateItemAction: 'reactivateFGItem',
@@ -1652,13 +1792,54 @@ function isTruthyFlag(val) {
 function debounce(fn, wait) {
   let t; return function () { clearTimeout(t); const args = arguments; t = setTimeout(function () { fn.apply(null, args); }, wait); };
 }
-function toast(message, isError) {
+const TOAST_ICONS = {
+  success: '<path d="M2.5 6.5 5 9l4.5-5"/>',
+  error:   '<path d="M3 3l6 6M9 3l-6 6"/>',
+  warn:    '<path d="M6 2.5v4M6 8.8v.2"/>',
+  info:    '<path d="M6 5.2v4M6 2.8v.2"/>'
+};
+
+// toast(msg) | toast(msg, true) for an error | toast(msg, 'warn'|'info'|'success').
+// The boolean form is kept because it is used throughout the app; passing a
+// string is the newer, clearer way to reach the other two variants.
+function toast(message, kind) {
+  const type = kind === true ? 'error' : (kind || 'success');
+  const ms = type === 'error' ? 6000 : 3800; // errors need longer to read
+
   const el = document.createElement('div');
-  el.className = 'toast' + (isError ? ' toast-error' : '');
-  el.textContent = message;
+  el.className = 'toast toast-' + type;
+  el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+  const icon = document.createElement('div');
+  icon.className = 'toast-icon';
+  icon.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true">' + (TOAST_ICONS[type] || TOAST_ICONS.info) + '</svg>';
+
+  const body = document.createElement('div');
+  body.className = 'toast-body';
+  body.textContent = message;
+
+  const close = document.createElement('button');
+  close.className = 'toast-close'; close.type = 'button';
+  close.setAttribute('aria-label', 'Dismiss'); close.textContent = '\u2715';
+
+  const timer = document.createElement('div');
+  timer.className = 'toast-timer';
+  timer.style.animationDuration = ms + 'ms';
+
+  el.appendChild(icon); el.appendChild(body); el.appendChild(close); el.appendChild(timer);
   document.getElementById('toastContainer').appendChild(el);
   requestAnimationFrame(function () { el.classList.add('show'); });
-  setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 300); }, 3500);
+
+  let done = false;
+  function dismiss() {
+    if (done) return; done = true;
+    clearTimeout(handle);
+    el.classList.add('leaving'); el.classList.remove('show');
+    setTimeout(function () { el.remove(); }, 300);
+  }
+  const handle = setTimeout(dismiss, ms);
+  close.addEventListener('click', dismiss);
+  return dismiss;
 }
 
 // Styled stand-in for window.confirm() — used for deactivate/delete/
@@ -2342,7 +2523,7 @@ function openTxnModal(key, code) {
   if (state.session.role === 'Supervisor') { deptSelect.innerHTML = '<option value="' + escapeHtml(state.session.department) + '">' + escapeHtml(state.session.department) + '</option>'; deptSelect.disabled = true; } 
   else { deptSelect.disabled = false; deptSelect.innerHTML = state.departments.map(function (d) { return '<option value="' + escapeHtml(d.DeptName) + '">' + escapeHtml(d.DeptName) + '</option>'; }).join(''); }
 
-  ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
+  ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
 
   // Supplier list comes from the Dropdowns tab, in the tab's own order.
   const suppliers = (state.dropdowns && state.dropdowns.Supplier) || [];
@@ -2351,10 +2532,57 @@ function openTxnModal(key, code) {
 
   updateTxnFormVisibility(); document.getElementById('txnModal').classList.remove('hidden'); document.getElementById('txnQty').focus();
 }
+// Current balance for the item the transaction modal is open on, or null
+// if it has no stock row yet (never received, so nothing can go out).
+function currentTxnBalance() {
+  if (!activeTxnConfig) return null;
+  const code = document.getElementById('txnCode').value;
+  const row = (state[activeTxnConfig.stockKey] || []).find(function (r) { return r[activeTxnConfig.codeField] === code; });
+  return row ? Number(row.CurrentBalance) || 0 : 0;
+}
+
 function updateTxnFormVisibility() {
   const type = document.getElementById('txnType').value;
-  document.getElementById('txnQtyHint').textContent = type === 'Adjustment' ? 'Positive to increase stock, negative to decrease.' : 'Enter a positive quantity.';
+  const hintEl = document.getElementById('txnQtyHint');
+  const removes = activeTxnConfig && activeTxnConfig.outTypes && activeTxnConfig.outTypes.indexOf(type) > -1;
+  const available = currentTxnBalance();
+
+  // Showing the ceiling up front beats letting someone fill the whole form
+  // and only then be told the stock isn't there. The backend still enforces
+  // it — this is the courtesy, not the control.
+  if (type === 'Adjustment') {
+    hintEl.textContent = 'Positive to increase stock, negative to decrease. On hand: ' + formatNum(available) + '.';
+  } else if (removes) {
+    hintEl.textContent = available > 0
+      ? 'Enter a positive quantity. Available: ' + formatNum(available) + '.'
+      : 'Nothing on hand to remove — post a Receipt first.';
+  } else {
+    hintEl.textContent = 'Enter a positive quantity.';
+  }
+
   document.getElementById('receiptFields').classList.toggle('hidden', !(activeTxnConfig && activeTxnConfig.key === 'rm' && type === 'Receipt'));
+  validateTxnQty();
+}
+
+// Warns as the operator types rather than on submit. Never blocks the
+// button: the server owns the decision, and a stale cached balance must
+// not be able to lock someone out of a transaction that is actually valid.
+function validateTxnQty() {
+  const warnEl = document.getElementById('txnWarn');
+  const type = document.getElementById('txnType').value;
+  const qty = Number(document.getElementById('txnQty').value);
+  if (!activeTxnConfig || !qty || isNaN(qty)) { warnEl.textContent = ''; return; }
+
+  const removes = activeTxnConfig.outTypes && activeTxnConfig.outTypes.indexOf(type) > -1;
+  const out = removes ? qty : (type === 'Adjustment' && qty < 0 ? -qty : 0);
+  const available = currentTxnBalance();
+  const over = out - available;
+
+  // Warn, don't block. The server makes the call; a stale cached balance
+  // must never stop someone posting a transaction that is actually valid.
+  warnEl.textContent = (out > 0 && over > 0.001)
+    ? 'Only ' + formatNum(available) + ' on hand — this is ' + formatNum(over) + ' more than available. Post the missing Receipt first, or reduce the quantity.'
+    : '';
 }
 function closeTxnModal() { document.getElementById('txnModal').classList.add('hidden'); activeTxnConfig = null; }
 
@@ -2404,7 +2632,7 @@ function renderLedgerRow(r) {
      refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
   }
 
-  return '<tr><td class="mono" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span></td><td class="' + qtyClass + '">' + formatNum(r.Qty) + '</td><td>' + escapeHtml(r.Department || '—') + '</td><td>' + refSuppHtml + '</td><td style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td></tr>';
+  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span></td><td class="col-qty ' + qtyClass + '">' + formatNum(r.Qty) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td></tr>';
 }
 
 function currentLedgerFilters() {
@@ -3423,6 +3651,7 @@ function wireStaticEvents() {
 
   document.getElementById('alertsList').addEventListener('click', function (e) { const card = e.target.closest('.alert-card'); if (card) openTxnModal(card.dataset.key, card.dataset.code); });
   document.getElementById('txnForm').addEventListener('submit', handleTxnSubmit); document.getElementById('txnType').addEventListener('change', updateTxnFormVisibility);
+  document.getElementById('txnQty').addEventListener('input', validateTxnQty);
   ['txnCloseBtn', 'txnCancelBtn', 'txnModal'].forEach(id => document.getElementById(id).addEventListener('click', function(e) { if (e.target.id === id || id !== 'txnModal') closeTxnModal(); }));
   document.getElementById('itemForm').addEventListener('submit', handleItemSubmit); document.getElementById('itemDeleteBtn').addEventListener('click', handleItemDelete);
   ['itemCloseBtn', 'itemCancelBtn', 'itemModal'].forEach(id => document.getElementById(id).addEventListener('click', function(e) { if (e.target.id === id || id !== 'itemModal') closeItemModal(); }));
