@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.6.0
+**Current version:** 3.6.2
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,23 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.6.2
+
+**Scroll-to-top works on the grid pages again.** The button already existed, but it watched `.page`, `#appShell` and `window` — and 3.6.0 moved the scrolling out of all three into `.table-scroll`. So on exactly the long lists that need it, it never appeared. It now collects every scrollable view for the visible page, including its table body, and takes the deepest. Scroll listeners are bound once at setup rather than per navigation, so repeated page changes can't stack duplicates on the same element.
+
+It was also sitting a single pixel above the pagination bar on desktop; moved from `bottom: 96px` to `124px` for real clearance.
+
+---
+
+## What changed in 3.6.1
+
+Two fixes to the 3.6.0 grid work.
+
+- **The sticky column header vanished behind a hovered row.** Hovered rows are raised to `z-index: 5` so their lift shadow sits over their neighbours; the new sticky header was only at `z-index: 3` and lost that contest. The header is now at 12.
+- **Account controls jumped to the left on Overview.** The top bar uses `space-between`, and Overview hides the title slot — leaving one flex child, which `space-between` parks at the start. `.user-badge` now carries `margin-left: auto`, so it stays right whether or not the title is present.
 
 ---
 
@@ -332,7 +349,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.6.0` / `3.6.0` / `calgas-shell-v14`.
+Currently `3.6.2` / `3.6.2` / `calgas-shell-v16`.
 
 ---
 
