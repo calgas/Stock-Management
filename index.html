@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.6.0">
+<meta name="app-version" content="3.6.2">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -321,7 +321,10 @@
   }
   [data-theme="dark"] .topbar { background: rgba(20, 23, 28, 0.7); }
 
-  .user-badge { display: flex; align-items: center; gap: 12px; text-align: right; }
+  /* margin-left:auto rather than relying on the topbar's space-between:
+     on Overview the title slot is hidden, leaving one flex child, which
+     space-between then parks on the left. */
+  .user-badge { display: flex; align-items: center; gap: 12px; text-align: right; margin-left: auto; }
   .user-name { font-size: 14px; font-weight: 700; color: var(--ink); }
   .user-role { font-size: 12px; color: var(--ink-faint); font-weight: 500; margin-top: 2px;}
   /* The profile block is a button (opens Change password) but shouldn't read
@@ -381,10 +384,14 @@
 
   /* Column headers stay put while the body scrolls. z-index keeps them
      above the row hover/shadow treatment. */
+  /* z-index must beat the row hover lift below, which raises the hovered
+     row to z-index 5 so its shadow sits over its neighbours. At 3 the
+     header lost that contest and disappeared behind the top row on hover. */
   .table-scroll thead th {
-    position: sticky; top: 0; z-index: 3;
+    position: sticky; top: 0; z-index: 12;
     background: var(--panel); box-shadow: inset 0 -1px 0 var(--line);
   }
+  .ledger-table-wrap thead th { z-index: 12; }
   [data-theme="dark"] .table-scroll thead th { background: var(--panel); }
 
   /* Topbar title — the tab's own heading, so the page never has to spend
@@ -774,7 +781,9 @@
   @media (prefers-reduced-motion: reduce) { .toast-timer { display: none; } }
 
   .scroll-top-btn {
-    position: fixed; right: 32px; bottom: 96px; z-index: 90;
+    /* Sits clear of the grid pages' pagination bar, which is pinned to the
+       bottom of the panel — at 96px the button's edge landed on it. */
+    position: fixed; right: 32px; bottom: 124px; z-index: 90;
     width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     background: var(--panel); color: var(--ink-soft); border: 1px solid var(--line); box-shadow: var(--shadow-lift);
     cursor: pointer; opacity: 0; transform: translateY(14px) scale(0.9); pointer-events: none;
@@ -1481,7 +1490,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.6.0';
+const APP_VERSION = '3.6.2';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2282,27 +2291,49 @@ function updateNavIndicator() {
   if (window.innerWidth > 780) { indicator.style.top = active.offsetTop + 'px'; indicator.style.height = active.offsetHeight + 'px'; indicator.style.opacity = '1'; } else { indicator.style.opacity = '0'; }
 }
 
-// Desktop scrolls within each .page independently; the mobile layout
-// instead scrolls #appShell itself (.page becomes overflow:visible there)
-// — checking all three possible sources means this works correctly on
-// both without branching on viewport width.
-function currentScrollDepth() {
+// Which element is actually scrolling depends on the page and the viewport:
+// Overview scrolls its own .page on desktop and #appShell on mobile, while
+// the grid pages scroll .table-scroll — the page itself is fixed there.
+// Collecting all the candidates and taking the deepest means this works
+// everywhere without branching on page type or viewport width.
+function scrollableViews() {
+  const views = [];
   const activePage = document.querySelector('.page:not(.hidden)');
+  if (activePage) {
+    views.push(activePage);
+    // Only the visible page's table — a hidden page's scroll position is
+    // not what the button should be reporting or resetting.
+    activePage.querySelectorAll('.table-scroll').forEach(function (el) { views.push(el); });
+  }
   const appShell = document.getElementById('appShell');
-  return Math.max(activePage ? activePage.scrollTop : 0, appShell ? appShell.scrollTop : 0, window.scrollY || document.documentElement.scrollTop || 0);
+  if (appShell) views.push(appShell);
+  return views;
 }
+
+function currentScrollDepth() {
+  const depths = scrollableViews().map(function (el) { return el.scrollTop || 0; });
+  depths.push(window.scrollY || document.documentElement.scrollTop || 0);
+  return Math.max.apply(null, depths);
+}
+
 function updateScrollTopBtn() {
   const btn = document.getElementById('scrollTopBtn');
   if (btn) btn.classList.toggle('show', currentScrollDepth() > 400);
 }
+
 function scrollActiveViewToTop() {
   const behavior = REDUCE_MOTION ? 'auto' : 'smooth';
-  const activePage = document.querySelector('.page:not(.hidden)'); if (activePage) activePage.scrollTo({ top: 0, behavior: behavior });
-  const appShell = document.getElementById('appShell'); if (appShell) appShell.scrollTo({ top: 0, behavior: behavior });
+  scrollableViews().forEach(function (el) { el.scrollTo({ top: 0, behavior: behavior }); });
   window.scrollTo({ top: 0, behavior: behavior });
+  updateScrollTopBtn();
 }
+
 function setupScrollToTop() {
   document.querySelectorAll('.page').forEach(function (page) { page.addEventListener('scroll', updateScrollTopBtn, { passive: true }); });
+  // Bound once here rather than per navigation: these containers are in the
+  // static markup, so re-binding on every page change would stack duplicate
+  // listeners on the same elements.
+  document.querySelectorAll('.table-scroll').forEach(function (el) { el.addEventListener('scroll', updateScrollTopBtn, { passive: true }); });
   const appShell = document.getElementById('appShell'); if (appShell) appShell.addEventListener('scroll', updateScrollTopBtn, { passive: true });
   window.addEventListener('scroll', updateScrollTopBtn, { passive: true });
   document.getElementById('scrollTopBtn').addEventListener('click', scrollActiveViewToTop);
