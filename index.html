@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.5.0">
+<meta name="app-version" content="3.6.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -312,7 +312,7 @@
   /* Main Layout & Topbar */
   .main { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .topbar {
-    height: 70px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end;
+    height: 70px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     padding: 0 32px; z-index: 40;
     background: rgba(243, 240, 234, 0.7);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -338,6 +338,66 @@
   .theme-btn { padding: 8px; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; }
 
   .page { flex: 1; overflow-y: auto; padding: 32px; animation: slideUpFade 0.5s var(--spring) forwards; content-visibility: auto; contain-intrinsic-size: auto 600px; }
+
+  /* ---------------------------------------------------------------------
+     Data-grid pages (RM, FG, Ledger, Team)
+     ---------------------------------------------------------------------
+     Previously the whole page scrolled and the table's horizontal scrollbar
+     lived at the bottom of a container as tall as all 50 rows — so reaching
+     it meant scrolling the entire page to the very end, and vertical
+     scrolling moved the page rather than the rows.
+
+     Here the page itself does not scroll. Title and filters are fixed, and
+     the table body is the only scrolling region, which puts the horizontal
+     scrollbar permanently at the bottom of the visible table and keeps the
+     column headers in view. That's what makes it behave like a table
+     rather than a very long document.  */
+  .page-grid { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+  .page-grid > .page-head { display: none; }       /* title now lives in the topbar */
+  .page-grid > .toolbar,
+  .page-grid > .toolbar-hint { flex: 0 0 auto; }
+  /* Table body and its pagination footer. The footer must live outside the
+     scrolling element or it scrolls away sideways with the rows. */
+  .grid-panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; min-height: 0;
+  }
+  .page-grid > .grid-panel { flex: 1 1 auto; margin-bottom: 32px; }
+  .page-grid .table-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  .grid-panel > .pagination { flex: 0 0 auto; }
+  /* A minimum width at every breakpoint, not just mobile. Without it the
+     browser satisfies a narrow window by crushing columns until a product
+     name breaks one word per line, which is unreadable and — because the
+     table then technically "fits" — leaves nothing to scroll to. Better to
+     hold the columns at a legible width and scroll. */
+  .table-scroll table { min-width: 1060px; }
+  /* The name column carries the longest values, so it gets an explicit
+     floor — at a purely proportional share it was breaking product names
+     into one word per line while narrow columns sat half empty. */
+  .page-grid .table-scroll td:nth-child(3), .page-grid .table-scroll th:nth-child(3) { min-width: 220px; }
+  /* Codes, quantities and status never need to wrap; only the name does. */
+  .table-scroll td.mono, .table-scroll th { white-space: nowrap; }
+  .page-grid > .table-scroll { flex: 1 1 auto; min-height: 0; margin-bottom: 32px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+  /* Column headers stay put while the body scrolls. z-index keeps them
+     above the row hover/shadow treatment. */
+  .table-scroll thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: var(--panel); box-shadow: inset 0 -1px 0 var(--line);
+  }
+  [data-theme="dark"] .table-scroll thead th { background: var(--panel); }
+
+  /* Topbar title — the tab's own heading, so the page never has to spend
+     vertical space on it and you can always see which tab you're in. */
+  .topbar-title { flex: 1 1 auto; min-width: 0; margin-right: 16px; }
+  .topbar-title h2 {
+    font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.02em; color: var(--ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-title p {
+    font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 0; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .page-head { margin-bottom: 32px; }
   .page-head h2 { font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.02em; background: linear-gradient(90deg, var(--ink), var(--ink-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .page-head p { font-size: 14.5px; color: var(--ink-soft); margin: 0; font-weight: 500; }
@@ -407,6 +467,11 @@
 
   /* Toolbars */
   .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  /* flex items default to min-width:auto but shrink past it on some
+     browsers once the row is crowded — these selects were collapsing to
+     nothing but their chevron. */
+  .toolbar select { min-width: 150px; flex: 0 1 auto; }
+  .toolbar input[type="search"] { min-width: 200px; }
   .toolbar input[type="search"] {
     flex: 1; min-width: 240px; padding: 12px 16px 12px 40px;
     border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 14px; font-weight: 500;
@@ -804,6 +869,28 @@
        crushed into unreadable columns. Without a min-width the browser
        compresses every column until the table "fits" and nothing scrolls. */
     .table-scroll table { min-width: 720px; }
+
+    /* Mobile can't give the page a fixed viewport height — the address bar
+       resizes it — so instead of the desktop flex-fill, the table body gets
+       a bounded height of its own. Same outcome: the horizontal scrollbar
+       stays at the bottom of the visible table instead of the bottom of a
+       50-row-tall element, and the header row stays put. */
+    .page-grid { display: block; overflow: visible; }
+    .page-grid > .grid-panel, .page-grid > .table-scroll { display: flex; margin-bottom: 24px; }
+    .page-grid .table-scroll { max-height: 62vh; overflow: auto; }
+
+    /* The topbar carries the tab name, so it becomes a two-row bar on
+       mobile: brand and controls above, title below. */
+    .topbar { height: auto; min-height: 64px; flex-wrap: wrap; padding: 10px 16px; row-gap: 4px; }
+    .topbar-title { order: 3; flex: 1 0 100%; margin-right: 0; }
+    .topbar-title h2 { font-size: 17px; }
+    .topbar-title p { font-size: 11.5px; }
+
+    /* Filters stay reachable while the rows scroll underneath. */
+    .page-grid > .toolbar {
+      position: sticky; top: 0; z-index: 20; background: var(--paper);
+      padding: 10px 0; margin-bottom: 8px;
+    }
     .ledger-table-wrap table { min-width: 620px; }
     .ledger-table-wrap { max-height: 60vh; }
     .ledger-table-wrap tbody td { padding: 12px 14px; }
@@ -984,6 +1071,10 @@
         <img class="js-company-logo-icon" alt="">
         <div><div class="mobile-brand-name js-company-name"></div><div class="mobile-brand-sub">Stock Management</div></div>
       </div>
+      <div class="topbar-title" id="topbarTitle">
+        <h2 id="topbarTitleText"></h2>
+        <p id="topbarTitleSub"></p>
+      </div>
       <div class="user-badge">
         <span class="conn-badge conn-online" id="connBadge"></span>
         <button id="themeToggleBtn" class="btn-ghost theme-btn" title="Toggle Dark Mode">
@@ -1043,7 +1134,7 @@
       </div>
     </section>
 
-    <section class="page hidden" id="page-rm">
+    <section class="page page-grid hidden" id="page-rm">
       <div class="page-head"><h2>Raw Material Stock</h2><p>BOPP/MPP film, contactors, consumables and packing — from film to finished can.</p></div>
       <div class="toolbar">
         <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
@@ -1060,24 +1151,26 @@
         <button class="btn-primary btn-compact hidden" id="rmAddItemBtn">+ Add RM item</button>
       </div>
       <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
-      <div class="table-scroll">
-        <table>
-          <thead><tr>
-            <th class="sortable" data-col="idNo">ID No.</th>
-            <th class="sortable" data-col="code">Code</th>
-            <th class="sortable" data-col="name">Name</th>
-            <th class="sortable" data-col="category">Category</th>
-            <th class="sortable" data-col="balance" style="text-align:right">Balance</th>
-            <th class="sortable" data-col="status">Health / Status</th>
-            <th class="actions-head" style="width: 120px; text-align: center; vertical-align: middle;">Actions</th>
-          </tr></thead>
-          <tbody id="rmTableBody"></tbody>
-        </table>
-        <div class="pagination"><span id="rmPageInfo"></span><div class="btns"><button class="btn-ghost" id="rmPrevBtn">Previous</button><button class="btn-ghost" id="rmNextBtn">Next</button></div></div>
+      <div class="grid-panel">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th class="sortable" data-col="idNo">ID No.</th>
+              <th class="sortable" data-col="code">Code</th>
+              <th class="sortable" data-col="name">Name</th>
+              <th class="sortable" data-col="category">Category</th>
+              <th class="sortable" data-col="balance" style="text-align:right">Balance</th>
+              <th class="sortable" data-col="status">Health / Status</th>
+              <th class="actions-head" style="width: 120px; text-align: center; vertical-align: middle;">Actions</th>
+            </tr></thead>
+            <tbody id="rmTableBody"></tbody>
+          </table>
+        </div>
+          <div class="pagination"><span id="rmPageInfo"></span><div class="btns"><button class="btn-ghost" id="rmPrevBtn">Previous</button><button class="btn-ghost" id="rmNextBtn">Next</button></div></div>
       </div>
     </section>
 
-    <section class="page hidden" id="page-fg">
+    <section class="page page-grid hidden" id="page-fg">
       <div class="page-head"><h2>FG Stock</h2><p>Finished capacitors — KVAR power-factor banks and MFD film capacitors.</p></div>
       <div class="toolbar">
         <input type="search" id="fgSearch" placeholder="Search ID, code or name…">
@@ -1095,25 +1188,27 @@
         <button class="btn-primary btn-compact hidden" id="fgAddItemBtn">+ Add FG item</button>
       </div>
       <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
-      <div class="table-scroll">
-        <table>
-          <thead><tr>
-            <th class="sortable" data-col="idNo">ID No.</th>
-            <th class="sortable" data-col="code">Code</th>
-            <th class="sortable" data-col="name">Name</th>
-            <th class="sortable" data-col="category">Family</th>
-            <th class="sortable" data-col="subCategory">Category</th>
-            <th class="sortable" data-col="balance" style="text-align:right">Balance</th>
-            <th class="sortable" data-col="status">Health / Status</th>
-            <th class="actions-head" style="text-align:center">Actions</th>
-          </tr></thead>
-          <tbody id="fgTableBody"></tbody>
-        </table>
-        <div class="pagination"><span id="fgPageInfo"></span><div class="btns"><button class="btn-ghost" id="fgPrevBtn">Previous</button><button class="btn-ghost" id="fgNextBtn">Next</button></div></div>
+      <div class="grid-panel">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th class="sortable" data-col="idNo">ID No.</th>
+              <th class="sortable" data-col="code">Code</th>
+              <th class="sortable" data-col="name">Name</th>
+              <th class="sortable" data-col="category">Family</th>
+              <th class="sortable" data-col="subCategory">Category</th>
+              <th class="sortable" data-col="balance" style="text-align:right">Balance</th>
+              <th class="sortable" data-col="status">Health / Status</th>
+              <th class="actions-head" style="text-align:center">Actions</th>
+            </tr></thead>
+            <tbody id="fgTableBody"></tbody>
+          </table>
+        </div>
+          <div class="pagination"><span id="fgPageInfo"></span><div class="btns"><button class="btn-ghost" id="fgPrevBtn">Previous</button><button class="btn-ghost" id="fgNextBtn">Next</button></div></div>
       </div>
     </section>
 
-    <section class="page hidden" id="page-ledger">
+    <section class="page page-grid hidden" id="page-ledger">
       <div class="page-head"><h2>Stock Ledger</h2><p>Every transaction across raw materials and finished goods.</p></div>
       <div class="toolbar">
         <select id="ldgKind">
@@ -1135,25 +1230,27 @@
         <button class="btn-ghost add-btn-spacer" id="ldgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
       </div>
       <p class="toolbar-hint">Date range, type and department filter on the server; category and search filter the loaded rows.</p>
-      <div class="table-scroll">
-        <table>
-          <thead><tr>
-            <th class="sortable" data-col="ts">Date</th>
-            <th class="sortable" data-col="code">Code</th>
-            <th class="sortable" data-col="name">Name</th>
-            <th class="sortable" data-col="type">Type</th>
-            <th class="sortable" data-col="qty" style="text-align:right">Qty</th>
-            <th class="sortable" data-col="department">Department</th>
-            <th class="sortable" data-col="reference">Reference</th>
-            <th class="sortable" data-col="enteredBy">Entered by</th>
-          </tr></thead>
-          <tbody id="ldgTableBody"></tbody>
-        </table>
-        <div class="pagination"><span id="ldgPageInfo"></span><div class="btns"><button class="btn-ghost" id="ldgPrevBtn">Previous</button><button class="btn-ghost" id="ldgNextBtn">Next</button></div></div>
+      <div class="grid-panel">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th class="sortable" data-col="ts">Date</th>
+              <th class="sortable" data-col="code">Code</th>
+              <th class="sortable" data-col="name">Name</th>
+              <th class="sortable" data-col="type">Type</th>
+              <th class="sortable" data-col="qty" style="text-align:right">Qty</th>
+              <th class="sortable" data-col="department">Department</th>
+              <th class="sortable" data-col="reference">Reference</th>
+              <th class="sortable" data-col="enteredBy">Entered by</th>
+            </tr></thead>
+            <tbody id="ldgTableBody"></tbody>
+          </table>
+        </div>
+          <div class="pagination"><span id="ldgPageInfo"></span><div class="btns"><button class="btn-ghost" id="ldgPrevBtn">Previous</button><button class="btn-ghost" id="ldgNextBtn">Next</button></div></div>
       </div>
     </section>
 
-    <section class="page hidden" id="page-users">
+    <section class="page page-grid hidden" id="page-users">
       <div class="page-head"><h2>Team &amp; Access</h2><p>Who can sign in, and what they can do.</p></div>
       <div class="toolbar">
         <input type="search" id="userSearch" placeholder="Search name or username…">
@@ -1384,7 +1481,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.5.0';
+const APP_VERSION = '3.6.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2147,10 +2244,27 @@ async function handleResetSubmit(e) {
 /* =========================================================================
    NAVIGATION
    ========================================================================= */
+// Mirrors the active page's own <h2>/<p> into the topbar. Reading them from
+// the page rather than a separate lookup table means the heading is defined
+// in exactly one place and the two can't drift apart.
+function syncTopbarTitle(pageEl) {
+  const wrap = document.getElementById('topbarTitle');
+  if (!wrap || !pageEl) return;
+  const head = pageEl.querySelector('.page-head');
+  const h = head && head.querySelector('h2');
+  const p = head && head.querySelector('p');
+  document.getElementById('topbarTitleText').textContent = h ? h.textContent : '';
+  document.getElementById('topbarTitleSub').textContent = p ? p.textContent : '';
+  // Overview keeps its in-page heading, so the topbar stays clear there and
+  // the title isn't stated twice on the same screen.
+  wrap.classList.toggle('hidden', !pageEl.classList.contains('page-grid'));
+}
+
 function navigateTo(page) {
   if (page === 'users' && state.session.role !== 'Admin') page = 'home';
   document.querySelectorAll('.nav-link').forEach(function (el) { el.classList.toggle('active', el.dataset.page === page); });
   document.querySelectorAll('.page').forEach(function (el) { el.classList.toggle('hidden', el.id !== 'page-' + page); });
+  syncTopbarTitle(document.getElementById('page-' + page));
   if (page === 'home') renderHome();
   if (page === 'rm') { renderRMPage(); updateFreshnessLabel('rm'); refreshStockData('rm'); }
   if (page === 'fg') { renderFGPage(); updateFreshnessLabel('fg'); refreshStockData('fg'); }
