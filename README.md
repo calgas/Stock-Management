@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.3.1
+**Current version:** 3.6.0
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,98 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.6.0
+
+The stock, ledger and team screens are now real data grids rather than long documents.
+
+### The table scrolls, not the page
+
+Previously the whole page scrolled and the table sat in a container as tall as all fifty rows, so its horizontal scrollbar was parked at the bottom of that container — you had to scroll the entire page to the end to reach it, and vertical scrolling moved the page rather than the rows.
+
+Those pages (`.page-grid`: RM, FG, Ledger, Team) no longer scroll themselves. The title and filters are fixed, and the table body is the only scrolling region. The horizontal scrollbar therefore sits permanently at the bottom of the visible table, and the column headers stay in view while the rows move.
+
+Two structural fixes were needed for this:
+
+- **Pagination was inside `.table-scroll`**, so it scrolled away sideways with the rows. Table and footer are now siblings inside a `.grid-panel`; only the body scrolls.
+- **`min-width` was set only inside the mobile media query.** In a narrowed desktop window the browser satisfied the width by crushing columns until product names broke one word per line — and because the table then technically fit, there was nothing to scroll. Tables now hold a 1060px floor at every breakpoint, with an explicit 220px minimum on the name column, which carries the longest values.
+
+Also fixed: toolbar selects collapsed to just their chevron in a narrow window; they now hold a 150px floor.
+
+### The tab name lives in the header
+
+The top bar had unused space on the left and the page heading scrolled away with the content. The active tab's title and description now render in the top bar, read from the page's own `<h2>`/`<p>` so the heading is defined in one place and the two can't drift. Grid pages drop their in-page heading, which returns that vertical space to the table; Overview keeps its own and leaves the top bar clear rather than stating the title twice.
+
+### Mobile
+
+Mobile can't use the desktop flex-fill — the address bar resizes the viewport — so the table body gets a bounded `62vh` height instead. Same outcome: scrollbar at the bottom of the visible table, headers fixed. The top bar becomes two rows (brand and controls above, tab title below), and the filter row is sticky so it stays reachable while the rows scroll.
+
+---
+
+## What changed in 3.5.0
+
+Interface release: mobile, notifications, and inline feedback.
+
+### Tables scroll sideways on mobile
+
+`.panel` sets `overflow: hidden` and the stock tables sat in a bare `<div>`, so a table wider than the panel was **clipped, not scrolled** — there was nothing to swipe. Every table now sits in a `.table-scroll` container, and tables keep a real `min-width` on mobile (720px for stock, 620px for the ledger) so they overflow and scroll instead of being compressed into unreadable columns. `overscroll-behavior-x: contain` stops a swipe that reaches the end of the table from triggering browser back-navigation, and scrollbars are given an explicit height so the area visibly announces itself as scrollable.
+
+### Warnings when an issue exceeds available stock
+
+A `.modal-warn` component (amber, triangle icon) now appears **directly under the Quantity field** as you type — not at the foot of the form, where the sticky action bar would cover it. It reads `Only 43.84 on hand — this is 56.16 more than available.` and never disables the submit button: the server owns that decision, and a stale cached balance must not block a valid transaction.
+
+`.modal-error` had no CSS rule at all and rendered as unstyled text; it is now a matching red component. Both collapse when empty via `:empty`, so setting `textContent` is the whole API. Error and warning use different icon *shapes*, not just colours, so they stay distinguishable to colour-blind users and in direct sunlight.
+
+### Toasts moved to top-centre
+
+Bottom-right put them under the thumb on mobile and behind the nav rail. Each toast now has a coloured status rail and icon badge, a dismiss button, and a countdown bar so it's clear it will leave on its own. Errors last 6s rather than 3.8s — long enough to actually read a stock message. `toast(msg, true)` still means error; `toast(msg, 'warn' | 'info' | 'success')` reaches the new variants.
+
+### Mobile interface
+
+- **Safe-area insets** on the nav rail, sheets and toasts, plus `viewport-fit=cover` on the viewport meta — without that meta, `env(safe-area-inset-*)` silently resolves to zero and every such rule does nothing.
+- **16px inputs**, which is the threshold below which iOS zooms the page on focus and forces a manual pinch-out after every field.
+- **44px minimum tap targets** on icon buttons and nav links.
+- **Two-up toolbar filters** instead of one control per row; the toolbar was taller than the phone before any data loaded.
+- **Sticky sheet header and actions** — the form scrolls, not the whole sheet, so Cancel/Save stay reachable without scrolling to the end of a long form.
+
+---
+
+## What changed in 3.4.0
+
+### Stock can no longer go negative
+
+Nothing prevented issuing more than was on hand, which is how balances like `-43.84 KG` and `-1,380 NOS` appeared. Those are not display bugs — the ledger really does record more going out than came in.
+
+`addTransaction_` now refuses any movement that would take a balance below zero. The check runs **inside the existing lock, before the ledger append**, because a check outside it can be raced: two Issues posted in the same moment could each read a sufficient balance and both commit.
+
+What is and isn't blocked:
+
+| Case | Result |
+|---|---|
+| Issue/Dispatch within the balance | allowed |
+| Issue/Dispatch of the **entire** balance | allowed |
+| Issue/Dispatch beyond the balance, or at zero | **blocked** |
+| Receipt / Production / Return | always allowed |
+| Positive Adjustment | always allowed — this is how you repair an existing negative |
+| Negative Adjustment past zero | **blocked** |
+
+The overdraw comparison uses the same `DRIFT_TOLERANCE` as the drift check, so issuing 56.56 out of a 56.56 balance isn't rejected by float noise.
+
+Bulk import applies the same floor: a negative Opening column is now skipped with a reason rather than seeding a balance nobody could then correct.
+
+`ALLOW_NEGATIVE_STOCK` (default `false`) exists as a deliberate escape hatch if a situation ever genuinely calls for it.
+
+**The existing negative balances are not fixed by this**, and Recalculate won't fix them either — it rebuilds from the ledger, and the ledger is what says the stock left. Correct each one by entering the Receipt that was missed, or by posting a positive Adjustment.
+
+### The transaction form shows what's available
+
+The Quantity hint now reads the item's balance (`Available: 118.32.`, or `Nothing on hand to remove — post a Receipt first.`), and a warning appears as you type past it rather than after you submit. It deliberately does **not** disable the submit button: the server owns the decision, and a stale cached balance must not lock someone out of a transaction that is actually valid.
+
+### History view uses the screen
+
+The ledger modal was on the 760px `.modal-wide` frame, which squeezed six columns until dates, departments and usernames each wrapped onto two lines. It now uses `.modal-table` (1180px), with date/qty/dept/user set to `nowrap` and the table body growing to `min(58vh, 640px)` instead of a fixed 420px. On a 1600px viewport every row is a single line and the inner scrollbar is gone.
 
 ---
 
@@ -240,7 +332,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.3.1` / `3.3.1` / `calgas-shell-v11`.
+Currently `3.6.0` / `3.6.0` / `calgas-shell-v14`.
 
 ---
 
@@ -257,6 +349,7 @@ Currently `3.3.1` / `3.3.1` / `calgas-shell-v11`.
 | `IDEMPOTENCY_SCAN_ROWS` | 300 | Ledger tail scanned for a duplicate `ClientTxnId`. |
 | `DRIFT_TOLERANCE` | 0.001 | Absorbs float noise on fractional quantities. |
 | `MAIL_FROM` | `noreply@calgas.in` | Requires a verified alias. |
+| `ALLOW_NEGATIVE_STOCK` | `false` | Escape hatch only. `true` restores the old unguarded behaviour. |
 
 ---
 
