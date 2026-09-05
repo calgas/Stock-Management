@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.6.2
+**Current version:** 3.6.3
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,16 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.6.3
+
+**Ledger filter dropdowns were cut off by the date row.** The toolbar `<select>`s are upgraded at runtime into custom comboboxes whose list is absolutely positioned page content — so unlike a native select popup, it can be painted over.
+
+3.5.0 made `.page-grid > .toolbar` sticky on mobile with a z-index and an opaque background. The ledger has *two* toolbar rows, so each became its own stacking context at the same z-index, and the later row won on DOM order — covering the first row's open dropdown. Both rows were also pinned to `top: 0`, so they stacked on each other while scrolling.
+
+All filter rows on every grid page now sit in a single `.filter-bar`, and that is what's sticky. One container means one stacking context, so `.combo-list` resolves against the panel below it rather than a sibling toolbar, and the rows can no longer overlap each other. The dropdown's own z-index went from 30 to 60 for headroom.
 
 ---
 
@@ -349,7 +359,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.6.2` / `3.6.2` / `calgas-shell-v16`.
+Currently `3.6.3` / `3.6.3` / `calgas-shell-v17`.
 
 ---
 
