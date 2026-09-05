@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.6.2">
+<meta name="app-version" content="3.6.3">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -211,7 +211,7 @@
   .combo-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 6px; color: var(--ink-faint); display: flex; cursor: pointer; border-radius: 6px; }
   .combo-toggle:hover { color: var(--copper); }
   .combo-list {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30;
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 60;
     max-height: 240px; overflow-y: auto; padding: 6px;
     background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-lift);
     animation: slideUpFade 0.15s var(--ease) both;
@@ -357,8 +357,15 @@
      rather than a very long document.  */
   .page-grid { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
   .page-grid > .page-head { display: none; }       /* title now lives in the topbar */
-  .page-grid > .toolbar,
-  .page-grid > .toolbar-hint { flex: 0 0 auto; }
+  /* All filter rows live in one container. Two separately-sticky toolbars
+     (the ledger has two) both pinned to top:0 would overlap each other, and
+     each would be its own stacking context — which is what let the second
+     row paint over the first row's open dropdown. One container gives one
+     stacking context, so .combo-list's z-index resolves against the panel
+     below it rather than against a sibling toolbar. */
+  .page-grid > .filter-bar { flex: 0 0 auto; }
+  .filter-bar > .toolbar:last-of-type { margin-bottom: 12px; }
+  .filter-bar > .toolbar-hint { margin-bottom: 16px; }
   /* Table body and its pagination footer. The footer must live outside the
      scrolling element or it scrolls away sideways with the rows. */
   .grid-panel {
@@ -895,10 +902,12 @@
     .topbar-title h2 { font-size: 17px; }
     .topbar-title p { font-size: 11.5px; }
 
-    /* Filters stay reachable while the rows scroll underneath. */
-    .page-grid > .toolbar {
+    /* Filters stay reachable while the rows scroll underneath. Sticky is
+       applied to the whole bar rather than each row, so the rows can't
+       stack on top of one another at the same offset. */
+    .page-grid > .filter-bar {
       position: sticky; top: 0; z-index: 20; background: var(--paper);
-      padding: 10px 0; margin-bottom: 8px;
+      padding: 10px 0 4px; margin-bottom: 8px;
     }
     .ledger-table-wrap table { min-width: 620px; }
     .ledger-table-wrap { max-height: 60vh; }
@@ -1145,21 +1154,23 @@
 
     <section class="page page-grid hidden" id="page-rm">
       <div class="page-head"><h2>Raw Material Stock</h2><p>BOPP/MPP film, contactors, consumables and packing — from film to finished can.</p></div>
-      <div class="toolbar">
-        <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
-        <select id="rmCategoryFilter"></select>
-        <select id="rmStatusFilter">
-          <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
-          <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
-        </select>
-        <label class="check-inline"><input type="checkbox" id="rmShowInactive"> Show inactive</label>
-        <button class="btn-ghost" id="rmExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
-        <button class="btn-ghost" id="rmRefreshBtn">Refresh</button>
-        <span class="freshness-label" id="rmFreshness"></span>
-        <button class="btn-ghost hidden add-btn-spacer" id="rmImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
-        <button class="btn-primary btn-compact hidden" id="rmAddItemBtn">+ Add RM item</button>
+      <div class="filter-bar">
+        <div class="toolbar">
+          <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
+          <select id="rmCategoryFilter"></select>
+          <select id="rmStatusFilter">
+            <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+          </select>
+          <label class="check-inline"><input type="checkbox" id="rmShowInactive"> Show inactive</label>
+          <button class="btn-ghost" id="rmExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
+          <button class="btn-ghost" id="rmRefreshBtn">Refresh</button>
+          <span class="freshness-label" id="rmFreshness"></span>
+          <button class="btn-ghost hidden add-btn-spacer" id="rmImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
+          <button class="btn-primary btn-compact hidden" id="rmAddItemBtn">+ Add RM item</button>
+        </div>
+        <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       </div>
-      <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       <div class="grid-panel">
         <div class="table-scroll">
           <table>
@@ -1181,22 +1192,24 @@
 
     <section class="page page-grid hidden" id="page-fg">
       <div class="page-head"><h2>FG Stock</h2><p>Finished capacitors — KVAR power-factor banks and MFD film capacitors.</p></div>
-      <div class="toolbar">
-        <input type="search" id="fgSearch" placeholder="Search ID, code or name…">
-        <select id="fgCategoryFilter"></select>
-        <select id="fgSubCategoryFilter"></select>
-        <select id="fgStatusFilter">
-          <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
-          <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
-        </select>
-        <label class="check-inline"><input type="checkbox" id="fgShowInactive"> Show inactive</label>
-        <button class="btn-ghost" id="fgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
-        <button class="btn-ghost" id="fgRefreshBtn">Refresh</button>
-        <span class="freshness-label" id="fgFreshness"></span>
-        <button class="btn-ghost hidden add-btn-spacer" id="fgImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
-        <button class="btn-primary btn-compact hidden" id="fgAddItemBtn">+ Add FG item</button>
+      <div class="filter-bar">
+        <div class="toolbar">
+          <input type="search" id="fgSearch" placeholder="Search ID, code or name…">
+          <select id="fgCategoryFilter"></select>
+          <select id="fgSubCategoryFilter"></select>
+          <select id="fgStatusFilter">
+            <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+          </select>
+          <label class="check-inline"><input type="checkbox" id="fgShowInactive"> Show inactive</label>
+          <button class="btn-ghost" id="fgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
+          <button class="btn-ghost" id="fgRefreshBtn">Refresh</button>
+          <span class="freshness-label" id="fgFreshness"></span>
+          <button class="btn-ghost hidden add-btn-spacer" id="fgImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
+          <button class="btn-primary btn-compact hidden" id="fgAddItemBtn">+ Add FG item</button>
+        </div>
+        <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       </div>
-      <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       <div class="grid-panel">
         <div class="table-scroll">
           <table>
@@ -1219,26 +1232,28 @@
 
     <section class="page page-grid hidden" id="page-ledger">
       <div class="page-head"><h2>Stock Ledger</h2><p>Every transaction across raw materials and finished goods.</p></div>
-      <div class="toolbar">
-        <select id="ldgKind">
-          <option value="rm">Raw Material</option>
-          <option value="fg">Finished Goods</option>
-        </select>
-        <input type="search" id="ldgSearch" placeholder="Search code, name, reference, remarks…">
-        <select id="ldgTypeFilter"></select>
-        <select id="ldgCatFilter"></select>
-        <select id="ldgDeptFilter"></select>
+      <div class="filter-bar">
+        <div class="toolbar">
+          <select id="ldgKind">
+            <option value="rm">Raw Material</option>
+            <option value="fg">Finished Goods</option>
+          </select>
+          <input type="search" id="ldgSearch" placeholder="Search code, name, reference, remarks…">
+          <select id="ldgTypeFilter"></select>
+          <select id="ldgCatFilter"></select>
+          <select id="ldgDeptFilter"></select>
+        </div>
+        <div class="toolbar">
+          <span class="toolbar-label">From</span><input type="date" id="ldgDateFrom">
+          <span class="toolbar-label">To</span><input type="date" id="ldgDateTo">
+          <input type="text" id="ldgUserFilter" placeholder="Entered by…">
+          <button class="btn-ghost" id="ldgApplyBtn">Apply</button>
+          <button class="btn-ghost" id="ldgResetBtn">Reset</button>
+          <span class="freshness-label" id="ldgCount"></span>
+          <button class="btn-ghost add-btn-spacer" id="ldgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
+        </div>
+        <p class="toolbar-hint">Date range, type and department filter on the server; category and search filter the loaded rows.</p>
       </div>
-      <div class="toolbar">
-        <span class="toolbar-label">From</span><input type="date" id="ldgDateFrom">
-        <span class="toolbar-label">To</span><input type="date" id="ldgDateTo">
-        <input type="text" id="ldgUserFilter" placeholder="Entered by…">
-        <button class="btn-ghost" id="ldgApplyBtn">Apply</button>
-        <button class="btn-ghost" id="ldgResetBtn">Reset</button>
-        <span class="freshness-label" id="ldgCount"></span>
-        <button class="btn-ghost add-btn-spacer" id="ldgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
-      </div>
-      <p class="toolbar-hint">Date range, type and department filter on the server; category and search filter the loaded rows.</p>
       <div class="grid-panel">
         <div class="table-scroll">
           <table>
@@ -1261,9 +1276,11 @@
 
     <section class="page page-grid hidden" id="page-users">
       <div class="page-head"><h2>Team &amp; Access</h2><p>Who can sign in, and what they can do.</p></div>
-      <div class="toolbar">
-        <input type="search" id="userSearch" placeholder="Search name or username…">
-        <button class="btn-primary btn-compact add-btn-spacer" id="addUserBtn">+ Add person</button>
+      <div class="filter-bar">
+        <div class="toolbar">
+          <input type="search" id="userSearch" placeholder="Search name or username…">
+          <button class="btn-primary btn-compact add-btn-spacer" id="addUserBtn">+ Add person</button>
+        </div>
       </div>
       <div class="table-scroll">
         <table>
@@ -1490,7 +1507,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.6.2';
+const APP_VERSION = '3.6.3';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
