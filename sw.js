@@ -5,19 +5,26 @@
 //  - Anything hitting the Apps Script backend (script.google.com /
 //    script.googleusercontent.com), and any non-GET request, is ALWAYS
 //    fetched from the network and never cached — stock numbers must never
-//    come from a cache. This preserves the original "no caching of data"
-//    guarantee exactly.
+//    come from a cache.
 //  - Everything else — the app shell (index.html, manifest.json) and the
 //    static libraries it loads — is cached so a repeat visit is instant,
 //    and an install with no signal shows the last-seen shell instead of a
 //    blank white screen. Cache-first, with a background refetch to keep
 //    the cache warm for next time.
 //
+// The sibling apps (ELE Tracker and the rest) are served from the same
+// origin, calgas.github.io, and Cache Storage is shared across an origin,
+// not per app. Every cache this worker owns carries CACHE_PREFIX, and
+// cleanup only touches caches with that prefix — deleting "everything that
+// isn't mine" would wipe each sibling's offline copy whenever this worker
+// updated. A new sibling app must use a prefix of its own.
+//
 // Bump CACHE_VERSION whenever index.html / manifest.json / this file
 // changes, so an already-installed client picks up the new shell instead
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
-const CACHE_VERSION = 'calgas-shell-v17';
+const CACHE_PREFIX = 'calgas-shell-';
+const CACHE_VERSION = CACHE_PREFIX + 'v18';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -42,7 +49,11 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((names) => Promise.all(names.filter((n) => n !== CACHE_VERSION).map((n) => caches.delete(n))))
+      .then((names) => Promise.all(
+        names
+          .filter((n) => n.startsWith(CACHE_PREFIX) && n !== CACHE_VERSION)
+          .map((n) => caches.delete(n))
+      ))
       .then(() => self.clients.claim()) // take control of already-open tabs
   );
 });
