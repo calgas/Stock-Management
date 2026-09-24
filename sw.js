@@ -24,7 +24,7 @@
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
 const CACHE_PREFIX = 'calgas-shell-';
-const CACHE_VERSION = CACHE_PREFIX + 'v18';
+const CACHE_VERSION = CACHE_PREFIX + 'v19';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
@@ -42,8 +42,14 @@ self.addEventListener('install', (e) => {
       .then((cache) => cache.addAll(APP_SHELL))
       .catch(() => {}) // don't block install if a shell asset is briefly unreachable
   );
-  self.skipWaiting(); // don't wait for every open tab to close before a
-                       // newly deployed version of this file takes over
+  // NOT skipWaiting() here. Taking over immediately would swap the shell
+  // under someone mid-entry, and on a shop floor that means a half-typed
+  // transaction disappearing. The new worker waits; the page notices it and
+  // offers a Reload, and only then does the message below let it through.
+});
+
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
