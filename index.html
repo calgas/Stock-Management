@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.6.4">
+<meta name="app-version" content="3.7.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -740,6 +740,36 @@
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
   .qty-bold { font-family: var(--font-mono); font-size: 15px; font-weight: 700; text-align: center; color: var(--ink); }
+  /* Unit pinned inside the quantity box. The input keeps right padding for
+     it so a long value can't run underneath the label. */
+  .update-bar {
+    position: fixed; left: 12px; right: 12px; margin: 0 auto; max-width: 460px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    /* Above the login screen and modal backdrops (100) and the install
+       banner (150), below toasts (300): an update offer that can't be
+       tapped is no offer at all. */
+    z-index: 160; display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-lift);
+  }
+  .update-bar-text { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  /* .btn-primary is full-width by default; inside the bar it must not be. */
+  .update-bar-btn { flex: none; width: auto !important; white-space: nowrap; padding: 9px 14px !important; font-size: 13px !important; min-height: 40px; }
+  .update-bar-dismiss {
+    flex: none; white-space: nowrap;
+    background: none; border: none; color: var(--ink-soft); font-family: var(--font-ui);
+    font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px; min-height: 40px;
+  }
+  /* Clear of the bottom navigation on phones. */
+  @media (max-width: 768px) { .update-bar { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
+  .input-with-unit { position: relative; display: block; }
+  .input-with-unit input { width: 100%; padding-right: 64px !important; }
+  .input-unit {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+    color: var(--ink-soft); pointer-events: none; text-transform: uppercase;
+    max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .qty-positive { color: var(--ok); }
 
   /* Toasts anchor top-centre. Bottom-right put them under the thumb on
@@ -1048,6 +1078,13 @@
   </div>
 </div>
 
+<!-- Shown when a newer version has been deployed and is installed and
+     waiting. Never reloads on its own: an operator mid-entry would lose it. -->
+<div id="updateBar" class="update-bar hidden" role="status">
+  <span class="update-bar-text">A new version is ready.</span>
+  <button type="button" class="btn-primary update-bar-btn" id="updateReloadBtn">Reload now</button>
+  <button type="button" class="update-bar-dismiss" id="updateDismissBtn" aria-label="Later">Later</button>
+</div>
 <div id="appShell" class="hidden">
   <nav class="rail">
     <div class="rail-brand"><img class="js-company-logo-icon" alt=""><div><div class="rail-brand-name js-company-name"></div><div class="rail-brand-sub">Stock Management</div></div></div>
@@ -1303,7 +1340,7 @@
       <input type="hidden" id="txnCode"><input type="hidden" id="txnKey">
       <div class="form-grid">
         <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
-        <div class="field"><label for="txnQty">Quantity</label><input type="number" id="txnQty" step="any" required><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
+        <div class="field"><label for="txnQty">Quantity</label><div class="input-with-unit"><input type="number" id="txnQty" step="any" required><span class="input-unit hidden" id="txnQtyUnit"></span></div><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
         <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any"></div>
 
@@ -1507,7 +1544,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.6.4';
+const APP_VERSION = '3.7.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1554,9 +1591,78 @@ function ensureChartJs() {
 }
 
 // Register Service Worker for PWA if supported (deferred so it never blocks boot)
+/* =========================================================================
+   UPDATES
+
+   A service worker caches the app shell, so an already-installed tablet
+   keeps running the version it has until its worker is replaced. Left to
+   itself that can be days — someone's tablet stays on an old build without
+   anyone knowing.
+
+   So: check for a new deployment periodically and whenever the app is
+   brought back to the foreground; when one is installed and waiting, show
+   a bar offering a reload. The reload is always the operator's decision —
+   swapping the app out from under a half-typed transaction is exactly the
+   kind of silent data loss this app exists to avoid.
+   ========================================================================= */
+const UPDATE_CHECK_MS = 15 * 60 * 1000;
+
+function showUpdateBar(worker) {
+  const bar = document.getElementById('updateBar');
+  if (!bar || !worker || bar.dataset.shown === '1') return;
+  bar.dataset.shown = '1';
+  bar.classList.remove('hidden');
+  document.getElementById('updateReloadBtn').onclick = function () {
+    // From here a reload is wanted, whatever happens next. Tracked
+    // explicitly rather than inferred, because a page that installed its
+    // first worker during this very visit has no previous controller to
+    // compare against and would otherwise sit there doing nothing.
+    updateAccepted = true;
+    worker.postMessage({ type: 'SKIP_WAITING' });
+    // Fallback: if the worker never takes over — the message was missed, or
+    // it had already activated — reload anyway rather than leave the
+    // operator tapping a button that does nothing.
+    setTimeout(reloadOnce, 3000);
+  };
+  document.getElementById('updateDismissBtn').onclick = function () {
+    bar.classList.add('hidden');
+  };
+}
+
+let updateAccepted = false;
+let reloading = false;
+function reloadOnce() {
+  if (reloading) return;
+  reloading = true;
+  window.location.reload();
+}
+
 if ('serviceWorker' in navigator) {
+  // Captured before registration: with no controller this is a first
+  // install, and the handover that follows must not reload a page nobody
+  // asked to reload.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!updateAccepted && !hadController) return;
+    reloadOnce();
+  });
+
   const registerSw = function () {
-    navigator.serviceWorker.register('./sw.js').catch(function (err) { console.log('SW registration missed', err); });
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      if (reg.waiting && hadController) showUpdateBar(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        const incoming = reg.installing;
+        if (!incoming) return;
+        incoming.addEventListener('statechange', function () {
+          // 'installed' with a controller already in place means this is an
+          // update rather than the first install.
+          if (incoming.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar(incoming);
+        });
+      });
+      const checkForUpdate = function () { reg.update().catch(function () {}); };
+      setInterval(checkForUpdate, UPDATE_CHECK_MS);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) checkForUpdate(); });
+    }).catch(function (err) { console.log('SW registration missed', err); });
   };
   if ('requestIdleCallback' in window) requestIdleCallback(registerSw, { timeout: 3000 });
   else window.addEventListener('load', registerSw, { once: true });
@@ -1638,9 +1744,9 @@ const state = {
   rmLastUpdated: null, fgLastUpdated: null,
   userSearch: '', canEditMaster: false, isDarkMode: false
 };
-let activeTxnConfig = null;
+let activeTxnConfig = null, activeTxnClientId = null;
 let activeItemConfig = null, activeItemMode = null, activeItemCode = null;
-let activeLedgerConfig = null, activeLedgerCode = null;
+let activeLedgerConfig = null, activeLedgerCode = null, activeLedgerUnit = '';
 let activeUserMode = null;
 let otpCooldownTimer = null;
 let rmChartInstance = null;
@@ -1668,7 +1774,16 @@ async function api(action, params) {
 
 // Actions that change server state. Only these need idempotency protection;
 // everything else is a read and is free to retry on a transport failure.
-const MUTATING_ACTIONS = { addRMTransaction: true, addFGTransaction: true };
+const MUTATING_ACTIONS = {
+  addRMTransaction: true, addFGTransaction: true,
+  recalculateRMStock: true, recalculateFGStock: true,
+  addRMItem: true, updateRMItem: true, deleteRMItem: true, reactivateRMItem: true,
+  addFGItem: true, updateFGItem: true, deleteFGItem: true, reactivateFGItem: true,
+  bulkAddRMItems: true, bulkAddFGItems: true,
+  addUser: true, updateUser: true, deactivateUser: true, reactivateUser: true,
+  adminResetUserPassword: true, changePassword: true,
+  sendTestStockMail: true, requestPasswordReset: true, resetPasswordWithOtp: true
+};
 
 // crypto.randomUUID is unavailable on http:// origins and older WebViews,
 // which the shop-floor tablets may still be on — fall back to random bytes.
@@ -1695,8 +1810,24 @@ async function _apiRequest(action, params, retries) {
       body: JSON.stringify(body),
       signal: controller.signal
     });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error || 'Request failed');
+    let json;
+    try {
+      json = await res.json();
+    } catch (parseErr) {
+      // Apps Script answered with something that isn't JSON — usually an HTML
+      // error or sign-in page. The request may still have executed, so this
+      // is an unknown outcome, not a failure.
+      const unreadable = new Error('The server\u2019s reply could not be read. The entry may still have gone through.');
+      unreadable.indeterminate = true;
+      throw unreadable;
+    }
+    if (!json.success) {
+      const failed = new Error(json.error || 'Request failed');
+      // doGet's reply. A POST that gets bounced through a redirect arrives
+      // as a GET, so this says nothing about whether the original POST ran.
+      if (/POST requests only/i.test(json.error || '')) failed.indeterminate = true;
+      throw failed;
+    }
     return json.data;
   } catch (err) {
     // A timed-out request may already have committed server-side, so a blind
@@ -1704,17 +1835,105 @@ async function _apiRequest(action, params, retries) {
     // the action does not mutate state, or it carries a clientTxnId the
     // backend de-duplicates against.
     const transportFailure = err.name === 'AbortError' || (err.message && err.message.indexOf('fetch') > -1);
+    // A request that never came back may still have been carried out. The
+    // caller needs to know the difference between "refused" and "unknown".
+    if (transportFailure) err.indeterminate = true;
     const safeToRetry = !MUTATING_ACTIONS[action] || body.clientTxnId;
     const retryable = transportFailure && safeToRetry;
     if (retries > 0 && retryable) {
       await new Promise(function (r) { setTimeout(r, 700); });
       return _apiRequest(action, params, retries - 1);
     }
-    if (err.name === 'AbortError') throw new Error('Request timed out — check your connection and try again.');
+    if (err.name === 'AbortError') {
+      const timedOut = new Error('Request timed out — check your connection and try again.');
+      timedOut.indeterminate = true;
+      throw timedOut;
+    }
     throw err;
   } finally {
     clearTimeout(timer);
   }
+}
+
+/* =========================================================================
+   UNFINISHED ENTRIES
+
+   The failure this exists for: a transaction is posted, the connection drops
+   before the reply gets back, and the operator — with no way to know the row
+   landed — posts it again. Two rows for one movement.
+
+   The rule is that the client transaction ID belongs to the ENTRY, not to
+   the attempt. It's minted when the form opens and kept until that entry is
+   known to be recorded, so every resend of it carries the same ID and the
+   backend recognises it. The ID and the entry are also written to
+   localStorage before the request goes out, so a reload or a flat battery
+   doesn't lose track of an entry whose fate is unknown.
+
+   When the outcome is unknown, the app never guesses and never re-posts
+   blind: it asks the backend whether that ID is in the ledger
+   (checkTransaction, a read) and says plainly which it was.
+   ========================================================================= */
+const PENDING_TXN_KEY = 'stock_pending_txn';
+// A request the client gave up on can still be running on Google's side for
+// a while. "Not in the ledger" is only trusted once the original attempt is
+// too old to still be in flight — otherwise a late-landing write would be
+// reported as lost and typed in again.
+const PENDING_SETTLE_MS = 45000;
+const PENDING_RECHECK_MS = 8000;
+
+function savePendingTxn(p) { try { localStorage.setItem(PENDING_TXN_KEY, JSON.stringify(p)); } catch (e) {} }
+function loadPendingTxn() { try { return JSON.parse(localStorage.getItem(PENDING_TXN_KEY) || 'null'); } catch (e) { return null; } }
+function clearPendingTxn() { try { localStorage.removeItem(PENDING_TXN_KEY); } catch (e) {} }
+
+function describePendingTxn(p) {
+  return p.txnType + ' · ' + p.code + ' · ' + qtyWithUnit(p.qty, p.unit);
+}
+
+// Returns 'saved', 'not-saved', 'unknown' or 'none'. Never posts anything.
+async function resolvePendingTxn(options) {
+  options = options || {};
+  const p = loadPendingTxn();
+  if (!p || !p.clientTxnId) return 'none';
+  if (!state.session) return 'unknown';
+  if (navigator.onLine === false) return 'unknown';
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let answer;
+    try {
+      answer = await api('checkTransaction', { clientTxnId: p.clientTxnId, key: p.key });
+    } catch (err) {
+      return 'unknown'; // still can't reach the backend — leave it pending
+    }
+    if (answer && answer.found) {
+      clearPendingTxn();
+      const config = p.key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+      if (typeof answer.newBalance === 'number') {
+        applyLocalStockUpdate(config, p.code, answer.newBalance);
+        state[config.key + 'LastUpdated'] = new Date();
+        if (config.key === 'rm') renderRMPage(); else renderFGPage();
+        renderHome();
+      }
+      // If the form for this entry is still open, its work is done — close it
+      // so nobody is left looking at an entry that has already been recorded.
+      if (activeTxnClientId === p.clientTxnId) closeTxnModal();
+      if (!options.silent) toast('Recovered: ' + describePendingTxn(p) + ' was saved. No second entry was made.');
+      return 'saved';
+    }
+    // Not there yet. If the attempt is recent enough that it could still be
+    // running on the server, wait and look again before calling it lost.
+    if (Date.now() - (p.at || 0) > PENDING_SETTLE_MS) break;
+    await new Promise(function (r) { setTimeout(r, PENDING_RECHECK_MS); });
+  }
+
+  clearPendingTxn();
+  // The entry is gone but its form may still be open; say so there too,
+  // replacing the "waiting" message it is currently showing.
+  if (activeTxnClientId === p.clientTxnId) {
+    const errEl = document.getElementById('txnError');
+    if (errEl) errEl.textContent = 'Not saved. Press Post transaction to try again.';
+  }
+  if (!options.silent) toast('Your last entry (' + describePendingTxn(p) + ') was not saved — please post it again.', true);
+  return 'not-saved';
 }
 
 function invalidateMergeCache() { _dataGeneration++; _mergeCache = {}; }
@@ -1798,7 +2017,12 @@ function updateConnBadge() {
     el.className = 'conn-badge conn-online';
   }
 }
-window.addEventListener('online', updateConnBadge);
+window.addEventListener('online', function () {
+  updateConnBadge();
+  // An entry left unresolved by the drop is settled against the backend
+  // before anyone can be tempted to type it in again.
+  resolvePendingTxn();
+});
 window.addEventListener('offline', updateConnBadge);
 
 /* =========================================================================
@@ -1886,6 +2110,16 @@ if (isIOSDevice() && !isStandaloneDisplay()) {
    ========================================================================= */
 function escapeHtml(str) { return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function formatNum(n) { n = Number(n) || 0; return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+// Quantities are NOT money and must not be rounded to two places: film is
+// issued to three decimals, so 0.504 has to read as 0.504, never 0.5.
+// Trailing zeros are still dropped, so whole numbers stay clean.
+function formatQty(n) { n = Number(n) || 0; return n.toLocaleString('en-IN', { maximumFractionDigits: 4 }); }
+// A quantity is meaningless without its unit, so the two travel together
+// everywhere a quantity is shown.
+function qtyWithUnit(n, unit) {
+  unit = unit ? String(unit).trim() : '';
+  return formatQty(n) + (unit ? ' ' + unit : '');
+}
 function formatDateTime(d) {
   if (!d) return '—';
   const date = new Date(d);
@@ -2120,6 +2354,10 @@ async function boot() {
     toast(err.message, true);
   }
   populateCategoryFilters();
+  // An entry whose outcome was never learned — the tablet lost signal, or was
+  // closed mid-post — is settled here, before the operator sees the stock
+  // figures and wonders whether to enter it again.
+  resolvePendingTxn();
   setLoaderProgress(94, 'Preparing dashboard…');
   navigateTo('home');
   startFreshnessInterval();
@@ -2534,7 +2772,7 @@ function renderStockTable(config) {
       '<td>' + escapeHtml(r.name || '') + (r.active ? '' : ' <span class="muted">(inactive)</span>') + '</td>' +
       '<td><span class="tag' + tagExtra + '">' + escapeHtml(r.category || '—') + '</span></td>' +
       (config.subCategoryField ? '<td><span class="tag">' + escapeHtml(r.subCategory || '—') + '</span></td>' : '') +
-      '<td class="mono num">' + formatNum(r.balance) + ' ' + escapeHtml(r.unit) + '</td>' +
+      '<td class="mono num">' + formatQty(r.balance) + ' ' + escapeHtml(r.unit) + '</td>' +
       '<td><span class="status status-' + statusClass(r.status) + '">' + statusIcon(statusClass(r.status)) + escapeHtml(r.status) + '</span>' + healthPctText + '</td>' +
       '<td class="actions-cell"><button class="row-action" data-action="history" title="Transaction history">' + HISTORY_ICON + '</button>' + editBtn + '</td>' +
       '</tr>';
@@ -2614,7 +2852,7 @@ function renderHome() {
       return '<div class="alert-card ' + cardClass + '" data-code="' + escapeHtml(r.code) + '" data-key="' + r.key + '">' +
         '<div class="alert-card-header"><div class="alert-card-name">' + escapeHtml(r.name || r.code) + '</div><span class="status status-' + statusClass(r.status) + '">' + statusIcon(statusClass(r.status)) + escapeHtml(r.status) + '</span></div>' +
         '<div class="alert-card-sub"><span class="tag">' + r.type + '</span> <span class="mono">' + escapeHtml(r.code) + '</span></div>' +
-        '<div class="alert-card-metrics"><div><span class="alert-card-val">' + formatNum(r.balance) + '</span> <span class="alert-card-unit">' + escapeHtml(r.unit) + '</span></div><div class="alert-card-pct">' + pct + '% of Min</div></div>' +
+        '<div class="alert-card-metrics"><div><span class="alert-card-val">' + formatQty(r.balance) + '</span> <span class="alert-card-unit">' + escapeHtml(r.unit) + '</span></div><div class="alert-card-pct">' + pct + '% of Min</div></div>' +
         '<div class="alert-card-bar-bg"><div class="alert-card-bar-fill" style="width: ' + barWidth + '%;"></div></div>' +
       '</div>';
     }).join('');
@@ -2673,6 +2911,9 @@ function renderCharts(rmRows, fgRows) {
    ========================================================================= */
 function openTxnModal(key, code) {
   activeTxnConfig = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+  // One ID per entry. It survives failed attempts so a resend is recognised
+  // as the same movement; a fresh one is only minted when a new entry starts.
+  activeTxnClientId = newClientTxnId();
   const master = state[activeTxnConfig.masterKey]; const item = master.find(function (m) { return m[activeTxnConfig.codeField] === code; });
   if (!item) return;
 
@@ -2703,20 +2944,37 @@ function currentTxnBalance() {
   return row ? Number(row.CurrentBalance) || 0 : 0;
 }
 
+// Master owns the unit; the stock row carries a mirror of it, used when an
+// item has movements but no master row yet.
+function currentTxnUnit() {
+  if (!activeTxnConfig) return '';
+  const code = document.getElementById('txnCode').value;
+  const field = activeTxnConfig.unitField;
+  const master = (state[activeTxnConfig.masterKey] || []).find(function (m) { return m[activeTxnConfig.codeField] === code; });
+  if (master && master[field]) return String(master[field]);
+  const row = (state[activeTxnConfig.stockKey] || []).find(function (r) { return r[activeTxnConfig.codeField] === code; });
+  return row && row[field] ? String(row[field]) : '';
+}
+
 function updateTxnFormVisibility() {
   const type = document.getElementById('txnType').value;
   const hintEl = document.getElementById('txnQtyHint');
   const removes = activeTxnConfig && activeTxnConfig.outTypes && activeTxnConfig.outTypes.indexOf(type) > -1;
   const available = currentTxnBalance();
+  const unit = currentTxnUnit();
+  // The unit sits against the quantity box itself, so what is being counted
+  // is visible while typing rather than only in the hint underneath.
+  const unitEl = document.getElementById('txnQtyUnit');
+  if (unitEl) { unitEl.textContent = unit; unitEl.classList.toggle('hidden', !unit); }
 
   // Showing the ceiling up front beats letting someone fill the whole form
   // and only then be told the stock isn't there. The backend still enforces
   // it — this is the courtesy, not the control.
   if (type === 'Adjustment') {
-    hintEl.textContent = 'Positive to increase stock, negative to decrease. On hand: ' + formatNum(available) + '.';
+    hintEl.textContent = 'Positive to increase stock, negative to decrease. On hand: ' + qtyWithUnit(available, unit) + '.';
   } else if (removes) {
     hintEl.textContent = available > 0
-      ? 'Enter a positive quantity. Available: ' + formatNum(available) + '.'
+      ? 'Enter a positive quantity. Available: ' + qtyWithUnit(available, unit) + '.'
       : 'Nothing on hand to remove — post a Receipt first.';
   } else {
     hintEl.textContent = 'Enter a positive quantity.';
@@ -2743,10 +3001,10 @@ function validateTxnQty() {
   // Warn, don't block. The server makes the call; a stale cached balance
   // must never stop someone posting a transaction that is actually valid.
   warnEl.textContent = (out > 0 && over > 0.001)
-    ? 'Only ' + formatNum(available) + ' on hand — this is ' + formatNum(over) + ' more than available. Post the missing Receipt first, or reduce the quantity.'
+    ? 'Only ' + qtyWithUnit(available, currentTxnUnit()) + ' on hand — this is ' + qtyWithUnit(over, currentTxnUnit()) + ' more than available. Post the missing Receipt first, or reduce the quantity.'
     : '';
 }
-function closeTxnModal() { document.getElementById('txnModal').classList.add('hidden'); activeTxnConfig = null; }
+function closeTxnModal() { document.getElementById('txnModal').classList.add('hidden'); activeTxnConfig = null; activeTxnClientId = null; }
 
 async function handleTxnSubmit(e) {
   e.preventDefault(); const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
@@ -2754,20 +3012,52 @@ async function handleTxnSubmit(e) {
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
   const rateRaw = document.getElementById('txnRate').value; if(rateRaw !== '') payload.rate = Number(rateRaw);
-  // Generated once per submit attempt, not per network attempt, so a retry
-  // after a timeout carries the same ID and the backend recognises it as a
-  // duplicate rather than posting the stock movement twice.
-  payload.clientTxnId = newClientTxnId();
+  // The ID identifies this ENTRY, not this attempt. It was minted when the
+  // form opened and is reused by every resend, so pressing Post again after
+  // a dropped connection cannot produce a second row.
+  if (!activeTxnClientId) activeTxnClientId = newClientTxnId();
+  payload.clientTxnId = activeTxnClientId;
   if (config.key === 'rm' && txnType === 'Receipt') { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
+
+  const unit = currentTxnUnit();
+  // Written down before the request leaves, so an entry whose outcome is
+  // never learned can still be tracked down afterwards.
+  savePendingTxn({ clientTxnId: activeTxnClientId, key: config.key, code: code, txnType: txnType, qty: payload.qty, unit: unit, at: Date.now() });
 
   try {
     const result = await api(config.addAction, payload); applyLocalStockUpdate(config, code, result.newBalance);
+    clearPendingTxn();
     state[config.key + 'LastUpdated'] = new Date(); updateFreshnessLabel(config.key);
-    closeTxnModal(); toast('Posted ' + txnType + ' · ' + code + ' · new balance ' + formatNum(result.newBalance));
+    closeTxnModal();
+    toast(result.duplicate
+      ? 'Already recorded · ' + code + ' · balance ' + qtyWithUnit(result.newBalance, unit) + ' (no second entry made)'
+      : 'Posted ' + txnType + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit));
     if (result.warning) toast(result.warning, true);
     if (config.key === 'rm') renderRMPage(); else renderFGPage();
     renderHome();
-  } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, 'Post transaction'); }
+  } catch (err) {
+    if (!err.indeterminate) {
+      // The server answered and said no — nothing was written.
+      clearPendingTxn();
+      errEl.textContent = err.message;
+      return;
+    }
+    // The answer was lost. Ask the backend what actually happened instead of
+    // leaving the operator to decide by pressing Post again.
+    errEl.textContent = 'Connection lost. Checking whether this entry was saved…';
+    const outcome = await resolvePendingTxn({ silent: true });
+    if (outcome === 'saved') {
+      closeTxnModal();
+      toast('Saved · ' + txnType + ' · ' + code + ' · ' + qtyWithUnit(payload.qty, unit) + ' — it had gone through, so no second entry was made.');
+      await refreshStockData(config.key);
+      if (config.key === 'rm') renderRMPage(); else renderFGPage();
+      renderHome();
+    } else if (outcome === 'not-saved') {
+      errEl.textContent = 'Not saved. Press Post transaction to try again — the same entry cannot be recorded twice.';
+    } else {
+      errEl.textContent = 'Still offline. This entry is held on this device and will be checked automatically when the connection returns — do not retype it.';
+    }
+  } finally { clearBtnLoading(btn, 'Post transaction'); }
 }
 function applyLocalStockUpdate(config, code, newBalance) {
   const list = state[config.stockKey]; const idx = list.findIndex(function (s) { return s[config.codeField] === code; });
@@ -2824,6 +3114,8 @@ async function loadLedgerRows() {
 async function openLedgerModal(key, code) {
   const config = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI; activeLedgerConfig = config; activeLedgerCode = code;
   const master = state[config.masterKey]; const item = master.find(function (m) { return m[config.codeField] === code; }); if (!item) return;
+  // Used for ledger rows written before the Unit column existed.
+  activeLedgerUnit = item[config.unitField] || '';
 
   document.getElementById('ledgerModalEyebrow').textContent = 'HISTORY';
   document.getElementById('ledgerModalTitle').textContent = 'Ledger: ' + (item[config.nameField] || code);
@@ -3340,9 +3632,12 @@ async function loadLedgerPage() {
     const catField = config.subCategoryField || config.categoryField;
     const nameByCode = {};
     const catByCode = {};
+    // Older ledger rows predate the Unit column, so master fills the gap.
+    const unitByCode = {};
     master.forEach(function (m) {
       nameByCode[m[config.codeField]] = m[config.nameField] || '';
       catByCode[m[config.codeField]] = m[catField] || '';
+      unitByCode[m[config.codeField]] = m[config.unitField] || '';
     });
 
     state.ledgerRows = rows.map(function (r) {
@@ -3353,7 +3648,7 @@ async function loadLedgerPage() {
         code: r[config.codeField] || '',
         name: nameByCode[r[config.codeField]] || '',
         category: catByCode[r[config.codeField]] || '',
-        type: r.TxnType || '', qty: Number(r.Qty) || 0,
+        type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
         department: r.Department || '', reference: r.Reference || '',
         supplier: r.Supplier || '', invoiceNo: r.InvoiceNo || '',
         invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
@@ -3419,7 +3714,7 @@ function renderLedgerPage() {
       '<td class="mono" data-label="Code">' + escapeHtml(r.code) + '</td>' +
       '<td data-label="Name">' + escapeHtml(r.name || '—') + '</td>' +
       '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span></td>' +
-      '<td class="mono num" data-label="Qty">' + formatNum(r.qty) + '</td>' +
+      '<td class="mono num" data-label="Qty">' + qtyWithUnit(r.qty, r.unit) + '</td>' +
       '<td data-label="Department">' + escapeHtml(r.department || '—') + '</td>' +
       '<td data-label="Reference">' + escapeHtml(r.reference || '—') + '</td>' +
       '<td data-label="Entered by">' + escapeHtml(r.enteredBy || '—') + '</td>' +
