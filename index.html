@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.9.1">
+<meta name="app-version" content="3.10.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1649,7 +1649,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.9.1';
+const APP_VERSION = '3.10.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3084,7 +3084,14 @@ function openTxnModal(key, code) {
   // HOD, Management or any role, not only one that happens to be named
   // Supervisor.
   if (!can('stock.post.any')) { deptSelect.innerHTML = '<option value="' + escapeHtml(state.session.department) + '">' + escapeHtml(state.session.department) + '</option>'; deptSelect.disabled = true; } 
-  else { deptSelect.disabled = false; deptSelect.innerHTML = state.departments.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join(''); }
+  else {
+    deptSelect.disabled = false;
+    // Only departments stock is booked to — not Admin, Management or
+    // Manager, which are tiers of people rather than places material goes.
+    const places = stockDepartments();
+    deptSelect.innerHTML = places.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
+    deptSelect.value = defaultStockDepartment(places);
+  }
 
   ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
 
@@ -3110,6 +3117,22 @@ function currentTxnBalance() {
 
 // Master owns the unit; the stock row carries a mirror of it, used when an
 // item has movements but no master row yet.
+// Departments stock can be booked to. An older backend sends no stockUse
+// flag, and then every department is offered, as before.
+function stockDepartments() {
+  return (state.departments || []).filter(function (d) { return d.stockUse !== false; });
+}
+
+// Your own department where stock is booked to it; otherwise Stores, where
+// receipts land; otherwise the first on the list.
+function defaultStockDepartment(places) {
+  const names = places.map(function (d) { return d.name; });
+  const own = state.session && state.session.department;
+  if (own && names.indexOf(own) > -1) return own;
+  if (names.indexOf('Stores') > -1) return 'Stores';
+  return names[0] || '';
+}
+
 function currentTxnUnit() {
   if (!activeTxnConfig) return '';
   const code = document.getElementById('txnCode').value;
@@ -3146,6 +3169,7 @@ function updateTxnFormVisibility() {
 
   document.getElementById('receiptFields').classList.toggle('hidden', !(activeTxnConfig && activeTxnConfig.key === 'rm' && type === 'Receipt'));
   if (typeof txnQtyMinSync === 'function') txnQtyMinSync();
+  if (activeTxnConfig) renderTxnPrice(priceCache[activeTxnConfig.key + ':' + document.getElementById('txnCode').value]);
   validateTxnQty();
 }
 
@@ -3216,24 +3240,50 @@ function renderLedgerStock() {
 // or deleted straight in the spreadsheet — and Recalculate rebuilds it.
 // Skipped whenever the list might be partial: filtered, or cut off at the
 // row limit.
-function checkLedgerAgreement(rows, filtered, limit) {
-  const warn = document.getElementById('ledgerDriftWarn');
-  warn.classList.add('hidden');
-  const config = activeLedgerConfig;
-  if (!config || filtered || rows.length >= limit) return;
-  const row = stockRowFor(config, activeLedgerCode);
-  if (!row) return;
+// Folds a balance that came back with the history into what the rest of the
+// app shows, so the stock list and the history agree about the same moment.
+function syncStockFromLedger(config, code, stock) {
+  const list = state[config.stockKey] || [];
+  const row = list.find(function (r) { return r[config.codeField] === code; });
+  if (row) Object.assign(row, stock);
+}
 
-  const opening = Number(row.OpeningStock) || 0;
-  const fromLedger = rows.reduce(function (sum, r) {
+function ledgerTotal(config, rows, opening) {
+  return rows.reduce(function (sum, r) {
     const q = Number(r.Qty) || 0;
     if ((config.outTypes || []).indexOf(r.TxnType) > -1) return sum - Math.abs(q);
     if (r.TxnType === 'Adjustment') return sum + q;
     return sum + Math.abs(q);
   }, opening);
-  const stored = Number(row.CurrentBalance) || 0;
-  if (Math.abs(fromLedger - stored) < 0.0005) return;
+}
 
+// When the history on screen is the item's whole history, the stored
+// balance can be checked against it. The two are read in the same request,
+// because a history from one moment and a balance from another disagree
+// whenever someone posts in between — which is what a first version of this
+// check got wrong, reporting a healthy balance as broken. A disagreement is
+// also asked about twice before it is shown, so an entry landing between
+// the two reads can't raise the alarm either.
+async function checkLedgerAgreement(rows, filtered, limit, stock, filters) {
+  const warn = document.getElementById('ledgerDriftWarn');
+  warn.classList.add('hidden');
+  const config = activeLedgerConfig;
+  if (!config || filtered || !stock || rows.length >= limit) return;
+
+  const agrees = function (r, st) {
+    return Math.abs(ledgerTotal(config, r, Number(st.OpeningStock) || 0) - (Number(st.CurrentBalance) || 0)) < 0.0005;
+  };
+  if (agrees(rows, stock)) return;
+
+  let again;
+  try {
+    again = await api(config.ledgerAction, Object.assign({ code: activeLedgerCode, limit: limit, withStock: true }, filters || {}));
+  } catch (err) { return; }
+  if (Array.isArray(again) || !again.stock || agrees(again.rows || [], again.stock)) return;
+
+  const opening = Number(again.stock.OpeningStock) || 0;
+  const fromLedger = ledgerTotal(config, again.rows || [], opening);
+  const stored = Number(again.stock.CurrentBalance) || 0;
   const master = (state[config.masterKey] || []).find(function (m) { return m[config.codeField] === activeLedgerCode; }) || {};
   const unit = master[config.unitField] || activeLedgerUnit;
   warn.textContent = 'The stored balance (' + qtyWithUnit(stored, unit) + ') doesn\u2019t match this history, which adds up to ' +
@@ -3265,14 +3315,19 @@ function renderTxnStock() {
   afterEl.classList.remove('hidden');
 }
 
-/* ---- current price ----
+/* ---- the rate ----
 
-   The last price paid for this item, looked up when the form opens and put
-   in the Rate box so the entry is valued without anyone digging out the
-   previous invoice. It is a suggestion, not a fact about this delivery: the
-   hint says where it came from, and once the operator types their own rate
-   it is never overwritten. Kept per item so reopening the form shows it at
-   once while a fresh copy is fetched behind it. */
+   Each item carries a Standard cost in its master row — the price the
+   company works to — so that is what goes in the Rate box, straight away
+   and without a lookup, since the master is already loaded. It is the same
+   figure for every movement of the item, which is what keeps stock values
+   comparable from one entry to the next.
+
+   The last price actually paid, from the most recent receipt that carried a
+   rate, is fetched behind it and shown in the hint when it differs, so a
+   receipt at a new price is easy to spot. It only fills the box for an item
+   with no Standard cost. Either way the figure is a suggestion: once the
+   operator types their own rate it is never overwritten. */
 
 const priceCache = {};
 let txnRateTouched = false;
@@ -3287,43 +3342,68 @@ function shortDate(d) {
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function showTxnPrice(price) {
+// The item's Standard cost, or null when none is set. Zero is "not set", not
+// a price: a rate of nothing would value the movement at nothing.
+function standardCost() {
+  if (!activeTxnConfig) return null;
+  const code = document.getElementById('txnCode').value;
+  const m = (state[activeTxnConfig.masterKey] || []).find(function (r) { return r[activeTxnConfig.codeField] === code; });
+  const n = m ? Number(m.StandardCost) : NaN;
+  return !isNaN(n) && n > 0 ? n : null;
+}
+
+// lastPrice: undefined while the lookup is still out, null or {rate:null}
+// when there is none.
+function renderTxnPrice(lastPrice) {
   const head = document.getElementById('txnStockPrice');
   const hint = document.getElementById('txnRateHint');
   const rateEl = document.getElementById('txnRate');
   const unit = currentTxnUnit();
+  const per = unit ? ' / ' + unit : '';
+  const std = standardCost();
+  const paid = lastPrice && lastPrice.rate ? lastPrice : null;
+  const isReceipt = activeTxnConfig && (activeTxnConfig.inTypes || []).indexOf(document.getElementById('txnType').value) > -1;
 
-  if (!price || price.rate === null || price.rate === undefined) {
-    head.classList.add('hidden');
-    hint.textContent = price ? 'No price recorded for this item yet.' : '';
-    return;
+  let rate = null;
+  if (std !== null) {
+    rate = std;
+    head.textContent = 'std cost ' + formatRupees(std) + per;
+    let text = 'Standard cost from the item\u2019s details.';
+    if (paid && Math.abs(paid.rate - std) > 0.00005) {
+      const when = shortDate(paid.date);
+      text += ' Last paid ' + formatRupees(paid.rate) + (when ? ' on ' + when : '') + (paid.supplier ? ' \u00b7 ' + paid.supplier : '') + '.';
+    }
+    if (isReceipt) text += ' Change it if this invoice differs.';
+    hint.textContent = text;
+  } else if (paid) {
+    rate = paid.rate;
+    head.textContent = 'last price ' + formatRupees(paid.rate) + per;
+    const when = shortDate(paid.date);
+    hint.textContent = paid.source === 'receipt'
+      ? 'No Standard cost set, so this is the last receipt' + (when ? ' on ' + when : '') + (paid.supplier ? ' \u00b7 ' + paid.supplier : '') + '.'
+      : 'No Standard cost set, and no receipt had a rate — this is the last priced entry' + (when ? ' on ' + when : '') + '.';
+  } else {
+    head.textContent = '';
+    hint.textContent = lastPrice === undefined ? '' : 'No Standard cost set for this item. Add one in the item\u2019s details to have it filled in here.';
   }
 
-  head.textContent = 'last price ' + formatRupees(price.rate) + (unit ? ' / ' + unit : '');
-  head.classList.remove('hidden');
-
-  const when = shortDate(price.date);
-  const from = price.source === 'receipt'
-    ? 'Last receipt' + (when ? ' on ' + when : '') + (price.supplier ? ' · ' + price.supplier : '')
-    : 'Last priced entry' + (when ? ' on ' + when : '') + ' (no receipt had a rate)';
-  hint.textContent = from + (price.source === 'receipt' ? ' — change it if this invoice differs.' : '.');
-
-  if (!txnRateTouched && rateEl.value === '') rateEl.value = String(price.rate);
+  head.classList.toggle('hidden', rate === null);
+  if (rate !== null && !txnRateTouched && rateEl.value === '') rateEl.value = String(rate);
 }
 
 async function loadTxnPrice(key, code) {
   const cacheKey = key + ':' + code;
-  if (priceCache[cacheKey]) showTxnPrice(priceCache[cacheKey]);
-  else document.getElementById('txnRateHint').textContent = 'Looking up the last price…';
+  // The Standard cost is on screen at once; the last-paid lookup only adds to it.
+  renderTxnPrice(priceCache[cacheKey]);
   try {
     const price = await api('getItemPrice', { key: key, code: code });
     priceCache[cacheKey] = price;
     // The form may have been closed, or opened on another item, meanwhile.
     if (activeTxnConfig && activeTxnConfig.key === key && document.getElementById('txnCode').value === code) {
-      showTxnPrice(price);
+      renderTxnPrice(price);
     }
   } catch (err) {
-    if (!priceCache[cacheKey]) document.getElementById('txnRateHint').textContent = '';
+    if (activeTxnConfig && document.getElementById('txnCode').value === code) renderTxnPrice(priceCache[cacheKey] || null);
   }
 }
 
@@ -3475,7 +3555,13 @@ async function loadLedgerRows() {
   document.getElementById('ledgerDriftWarn').classList.add('hidden');
   const filters = currentLedgerFilters();
   try {
-    const rows = await api(config.ledgerAction, Object.assign({ code: code, limit: 100 }, filters));
+    const reply = await api(config.ledgerAction, Object.assign({ code: code, limit: 100, withStock: true }, filters));
+    // A backend from before this change answers with the bare list and no
+    // balance; the agreement check is then skipped rather than run against a
+    // balance loaded at some other moment.
+    const rows = Array.isArray(reply) ? reply : (reply.rows || []);
+    const stockNow = Array.isArray(reply) ? null : reply.stock;
+    if (stockNow) syncStockFromLedger(config, code, stockNow);
     if (rows.length === 0) {
       const hasFilters = filters.dateFrom || filters.dateTo || filters.enteredBy;
       tbody.innerHTML = '<tr><td colspan="7" class="empty">' + (hasFilters ? 'No transactions match these filters.' : 'No transactions yet for this item.') + '</td></tr>';
@@ -3485,7 +3571,7 @@ async function loadLedgerRows() {
     tbody.innerHTML = rows.map(renderLedgerRow).join('');
     syncLedgerActionColumns();
     renderLedgerStock();
-    checkLedgerAgreement(rows, !!(filters.dateFrom || filters.dateTo || filters.enteredBy), 100);
+    await checkLedgerAgreement(rows, !!(filters.dateFrom || filters.dateTo || filters.enteredBy), 100, stockNow, filters);
   } catch (err) { tbody.innerHTML = '<tr><td colspan="7" class="empty">' + escapeHtml(err.message) + '</td></tr>'; }
 }
 
@@ -3967,8 +4053,12 @@ function openFixModal(txnId, key) {
   document.getElementById('fixType').value = entry.type;
   document.getElementById('fixQty').value = entry.qty;
   document.getElementById('fixType').dispatchEvent(new Event('change'));
-  document.getElementById('fixDept').innerHTML = (state.departments || [])
-    .map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
+  // Stock departments, plus the one this entry is already booked to — so an
+  // old entry booked to Admin still shows where it is while it's corrected.
+  const fixPlaces = stockDepartments().map(function (d) { return d.name; });
+  if (entry.department && fixPlaces.indexOf(entry.department) === -1) fixPlaces.push(entry.department);
+  document.getElementById('fixDept').innerHTML = fixPlaces
+    .map(function (n) { return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>'; }).join('');
   document.getElementById('fixDept').value = entry.department || '';
   document.getElementById('fixReference').value = entry.reference || '';
   document.getElementById('fixRemarks').value = entry.remarks || '';
@@ -4542,8 +4632,8 @@ function refreshAccessPreview() {
 
   if (role === 'Admin') {
     section.classList.remove('hidden');
-    line.textContent = 'Admin — holds every feature. This cannot be narrowed.';
-    grid.innerHTML = '';
+    // Keeps whatever mail they already had when their role is switched here.
+    renderAdminAccess(String(record.role) === 'Admin' ? record.effective : (record.effective || {}));
     return;
   }
 
@@ -4568,7 +4658,7 @@ function refreshAccessPreview() {
 function renderPermGrid(container, values, baseline, options) {
   options = options || {};
   const groups = [];
-  accessCatalog().forEach(function (p) {
+  accessCatalog().filter(function (p) { return !options.only || options.only.indexOf(p.key) > -1; }).forEach(function (p) {
     let g = groups.filter(function (x) { return x.name === p.group; })[0];
     if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
     g.items.push(p);
@@ -4608,6 +4698,22 @@ function readPermGrid(container) {
   return out;
 }
 
+// What an account RECEIVES rather than what it may DO. Admins hold every
+// power, but get the daily mails only if they tick them — so for an Admin
+// these are the only switches shown.
+const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg'];
+
+function renderAdminAccess(values) {
+  const line = document.getElementById('userTierLine');
+  const grid = document.getElementById('userPermGrid');
+  line.textContent = 'Admin — holds every feature, which can\u2019t be narrowed. Only the daily mails are a choice:';
+  const off = {};
+  SUBSCRIPTION_KEYS.forEach(function (k) { off[k] = false; });
+  const shown = {};
+  SUBSCRIPTION_KEYS.forEach(function (k) { shown[k] = !!(values && values[k]); });
+  renderPermGrid(grid, shown, null, { only: SUBSCRIPTION_KEYS });
+}
+
 function renderUserAccess(username) {
   const section = document.getElementById('userAccessSection');
   const line = document.getElementById('userTierLine');
@@ -4623,8 +4729,7 @@ function renderUserAccess(username) {
   section.classList.remove('hidden');
 
   if (String(record.role) === 'Admin') {
-    line.textContent = 'Admin — holds every feature. This cannot be narrowed.';
-    grid.innerHTML = '';
+    renderAdminAccess(record.effective);
     return;
   }
 
@@ -4669,9 +4774,9 @@ function renderPermChips(grid, baseline) {
 
 async function saveUserAccess(username, newRole) {
   const record = accessUser(username);
-  // An account that is Admin — before or after this save — has nothing to
-  // narrow, and the backend would refuse the attempt.
-  if (!record || newRole === 'Admin') return;
+  if (!record) return;
+  // For an Admin the grid holds only the mail switches, and that is all the
+  // backend accepts for one; everything else about an Admin is fixed.
   const wanted = readPermGrid(document.getElementById('userPermGrid'));
   if (!Object.keys(wanted).length) return;
   await api('setUserAccess', { username: username, permissions: wanted });
