@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.7.0">
+<meta name="app-version" content="3.8.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1313,6 +1313,7 @@
               <th class="sortable" data-col="department">Department</th>
               <th class="sortable" data-col="reference">Reference</th>
               <th class="sortable" data-col="enteredBy">Entered by</th>
+              <th class="actions-head ledger-actions-col hidden" style="text-align:center">Fix</th>
             </tr></thead>
             <tbody id="ldgTableBody"></tbody>
           </table>
@@ -1453,7 +1454,7 @@
     </div>
     <div class="ledger-table-wrap">
       <table>
-        <thead><tr><th>Date</th><th>Type</th><th style="text-align:center">Qty</th><th>Dept</th><th>Ref / Supp</th><th>User</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th style="text-align:center">Qty</th><th>Dept</th><th>Ref / Supp</th><th>User</th><th class="ledger-actions-col hidden" style="text-align:center">Fix</th></tr></thead>
         <tbody id="ledgerTableBody"></tbody>
       </table>
     </div>
@@ -1511,6 +1512,35 @@
       <div class="modal-actions-right">
         <button type="button" class="btn-ghost" id="tierCancelBtn">Cancel</button>
         <button type="button" class="btn-primary" id="tierSaveBtn">Save tier</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="fixModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">CORRECT ENTRY</div><h3 class="modal-title" id="fixTitle"></h3>
+        <div class="muted mono" style="font-size:12px" id="fixTxnId"></div></div>
+      <button class="icon-btn" id="fixCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label for="fixType">Transaction type</label><select id="fixType"></select></div>
+        <div class="field"><label for="fixQty">Quantity</label><input type="number" id="fixQty" step="any"></div>
+        <div class="field"><label for="fixDept">Department</label><select id="fixDept"></select></div>
+        <div class="field"><label for="fixReference">Reference</label><input type="text" id="fixReference"></div>
+        <div class="field span-2"><label for="fixRemarks">Remarks</label><input type="text" id="fixRemarks"></div>
+      </div>
+      <div class="hint">The balance moves by the difference, and the change is recorded against your name.
+        Picking the wrong item isn't a correction — delete the entry and post it again.</div>
+      <div class="modal-error hidden" id="fixError"></div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-danger" id="fixDeleteBtn">Delete entry</button>
+      <div class="modal-actions-right">
+        <button type="button" class="btn-ghost" id="fixCancelBtn">Cancel</button>
+        <button type="button" class="btn-primary" id="fixSaveBtn">Save correction</button>
       </div>
     </div>
   </div>
@@ -1574,7 +1604,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.7.0';
+const APP_VERSION = '3.8.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1767,7 +1797,7 @@ const state = {
   session: null,
   rmMaster: [], fgMaster: [], rmStock: [], fgStock: [], departments: [], users: [], dropdowns: {},
   rmSearch: '', fgSearch: '', rmCategory: 'All', fgCategory: 'All', fgSubCategory: 'All', rmStatus: 'All', fgStatus: 'All',
-  ledgerKind: 'rm', ledgerRows: [], ledgerLoaded: false, ledgerSearch: '', ledgerType: '', ledgerDept: '', ledgerCat: '',
+  ledgerKind: 'rm', ledgerRows: [], ledgerModalRows: [], ledgerLoaded: false, ledgerSearch: '', ledgerType: '', ledgerDept: '', ledgerCat: '',
   ledgerPage: 1, ledgerSort: { col: 'ts', dir: 'desc' },
   rmPage: 1, fgPage: 1, rmShowInactive: false, fgShowInactive: false,
   rmSort: { col: 'idNo', dir: 'asc' }, fgSort: { col: 'idNo', dir: 'asc' },
@@ -3144,11 +3174,13 @@ async function loadLedgerRows() {
     const rows = await api(config.ledgerAction, Object.assign({ code: code, limit: 100 }, filters));
     if (rows.length === 0) {
       const hasFilters = filters.dateFrom || filters.dateTo || filters.enteredBy;
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">' + (hasFilters ? 'No transactions match these filters.' : 'No transactions yet for this item.') + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">' + (hasFilters ? 'No transactions match these filters.' : 'No transactions yet for this item.') + '</td></tr>';
       return;
     }
+    state.ledgerModalRows = rows;
     tbody.innerHTML = rows.map(renderLedgerRow).join('');
-  } catch (err) { tbody.innerHTML = '<tr><td colspan="6" class="empty">' + escapeHtml(err.message) + '</td></tr>'; }
+    syncLedgerActionColumns();
+  } catch (err) { tbody.innerHTML = '<tr><td colspan="7" class="empty">' + escapeHtml(err.message) + '</td></tr>'; }
 }
 
 async function openLedgerModal(key, code) {
@@ -3564,6 +3596,146 @@ let ledgerPageInited = false;
 
 function ledgerConfig_() { return state.ledgerKind === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI; }
 
+/* =========================================================================
+   CORRECTING AN ENTRY
+
+   A mistyped entry used to mean opening the spreadsheet — and a sheet edit
+   changes the ledger without moving the running totals, so the balance
+   silently stops matching its own history. Doing it here keeps the two
+   together, refuses a change that would push stock negative, and records
+   who changed what.
+   ========================================================================= */
+
+let activeFixTxn = null;
+
+function canFixLedger() { return can('stock.ledger.edit') || can('stock.ledger.delete'); }
+
+function ledgerActionsCell(txnId, key) {
+  if (!canFixLedger() || !txnId) return canFixLedger() ? '<td class="ledger-actions-col"></td>' : '';
+  return '<td class="ledger-actions-col" style="text-align:center;white-space:nowrap">' +
+    (can('stock.ledger.edit')
+      ? '<button class="icon-btn" data-fix-edit="' + escapeHtml(txnId) + '" data-key="' + escapeHtml(key || 'rm') + '" title="Correct this entry">✎</button>'
+      : '') +
+    (can('stock.ledger.delete')
+      ? '<button class="icon-btn" data-fix-delete="' + escapeHtml(txnId) + '" data-key="' + escapeHtml(key || 'rm') + '" title="Delete this entry">🗑</button>'
+      : '') +
+    '</td>';
+}
+
+// Shows or hides the whole column, so the header and the rows agree.
+function syncLedgerActionColumns() {
+  document.querySelectorAll('.ledger-actions-col').forEach(function (el) {
+    el.classList.toggle('hidden', !canFixLedger());
+  });
+}
+
+function findLedgerEntry(txnId, key) {
+  const fromPage = (state.ledgerRows || []).filter(function (r) { return r.txnId === txnId; })[0];
+  if (fromPage) {
+    return { txnId: txnId, key: key, code: fromPage.code, name: fromPage.name, type: fromPage.type,
+             qty: fromPage.qty, unit: fromPage.unit, department: fromPage.department,
+             reference: fromPage.reference, remarks: fromPage.remarks };
+  }
+  const fromItem = (state.ledgerModalRows || []).filter(function (r) { return r.TxnID === txnId; })[0];
+  if (fromItem) {
+    const config = activeLedgerConfig || RM_CONFIG_UI;
+    return { txnId: txnId, key: key, code: fromItem[config.codeField], name: '', type: fromItem.TxnType,
+             qty: Number(fromItem.Qty) || 0, unit: fromItem.Unit || '', department: fromItem.Department,
+             reference: fromItem.Reference, remarks: fromItem.Remarks };
+  }
+  return null;
+}
+
+function openFixModal(txnId, key) {
+  const entry = findLedgerEntry(txnId, key);
+  if (!entry) return toast('That entry is no longer on screen — reload the ledger and try again.', true);
+  activeFixTxn = entry;
+
+  const config = key === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
+  document.getElementById('fixTitle').textContent = entry.code + (entry.name ? ' · ' + entry.name : '');
+  document.getElementById('fixTxnId').textContent = entry.txnId;
+  document.getElementById('fixType').innerHTML = config.txnTypes
+    .map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
+  document.getElementById('fixType').value = entry.type;
+  document.getElementById('fixQty').value = entry.qty;
+  document.getElementById('fixDept').innerHTML = (state.departments || [])
+    .map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
+  document.getElementById('fixDept').value = entry.department || '';
+  document.getElementById('fixReference').value = entry.reference || '';
+  document.getElementById('fixRemarks').value = entry.remarks || '';
+  document.getElementById('fixError').textContent = '';
+  document.getElementById('fixError').classList.add('hidden');
+  document.getElementById('fixDeleteBtn').classList.toggle('hidden', !can('stock.ledger.delete'));
+  document.getElementById('fixSaveBtn').classList.toggle('hidden', !can('stock.ledger.edit'));
+  document.getElementById('fixModal').classList.remove('hidden');
+  enhanceAllSelects_();
+}
+
+function closeFixModal() {
+  document.getElementById('fixModal').classList.add('hidden');
+  activeFixTxn = null;
+}
+
+async function saveFix() {
+  if (!activeFixTxn) return;
+  const btn = document.getElementById('fixSaveBtn');
+  const errEl = document.getElementById('fixError');
+  errEl.classList.add('hidden');
+  setBtnLoading(btn, 'Saving…');
+  try {
+    const action = activeFixTxn.key === 'fg' ? 'updateFGTransaction' : 'updateRMTransaction';
+    const result = await api(action, {
+      txnId: activeFixTxn.txnId,
+      txnType: document.getElementById('fixType').value,
+      qty: Number(document.getElementById('fixQty').value),
+      department: document.getElementById('fixDept').value,
+      reference: document.getElementById('fixReference').value.trim(),
+      remarks: document.getElementById('fixRemarks').value.trim()
+    });
+    closeFixModal();
+    toast('Corrected ' + result.code + ' · balance now ' + formatQty(result.newBalance));
+    await afterLedgerFix(activeFixTxn && activeFixTxn.key);
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    clearBtnLoading(btn, 'Save correction');
+  }
+}
+
+async function deleteFix() {
+  if (!activeFixTxn) return;
+  const entry = activeFixTxn;
+  if (!confirm('Delete this entry?\n\n' + entry.type + ' · ' + formatQty(entry.qty) + ' · ' + entry.code +
+               '\n\nThe balance moves back by the same amount. The full row is kept in the audit log.')) return;
+  const btn = document.getElementById('fixDeleteBtn');
+  const errEl = document.getElementById('fixError');
+  errEl.classList.add('hidden');
+  setBtnLoading(btn, 'Deleting…');
+  try {
+    const action = entry.key === 'fg' ? 'deleteFGTransaction' : 'deleteRMTransaction';
+    const result = await api(action, { txnId: entry.txnId });
+    closeFixModal();
+    toast('Deleted · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
+    await afterLedgerFix(entry.key);
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    clearBtnLoading(btn, 'Delete entry');
+  }
+}
+
+// A correction changes both the ledger and the balances, so both views are
+// reloaded rather than patched locally.
+async function afterLedgerFix(key) {
+  state.ledgerLoaded = false;
+  await refreshAllData();
+  if (!document.getElementById('page-ledger').classList.contains('hidden')) await loadLedgerPage();
+  if (key === 'fg') renderFGPage(); else renderRMPage();
+  renderHome();
+}
+
 // Populates the type and department pickers. Types come from the active
 // config (Receipt/Issue vs Production/Dispatch), departments from the
 // Departments sheet already loaded at bootstrap.
@@ -3688,6 +3860,7 @@ async function loadLedgerPage() {
         code: r[config.codeField] || '',
         name: nameByCode[r[config.codeField]] || '',
         category: catByCode[r[config.codeField]] || '',
+        txnId: r.TxnID || '',
         type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
         department: r.Department || '', reference: r.Reference || '',
         supplier: r.Supplier || '', invoiceNo: r.InvoiceNo || '',
@@ -3758,9 +3931,11 @@ function renderLedgerPage() {
       '<td data-label="Department">' + escapeHtml(r.department || '—') + '</td>' +
       '<td data-label="Reference">' + escapeHtml(r.reference || '—') + '</td>' +
       '<td data-label="Entered by">' + escapeHtml(r.enteredBy || '—') + '</td>' +
+      ledgerActionsCell(r.txnId, state.ledgerKind) +
       '</tr>';
   }).join('');
 
+  syncLedgerActionColumns();
   document.getElementById('ldgPageInfo').textContent = 'Showing ' + (start + 1) + '–' + Math.min(start + LEDGER_PAGE_SIZE, total) + ' of ' + total;
   // Flags when the server cap was hit, so a truncated view is never mistaken
   // for the complete history.
@@ -4401,6 +4576,16 @@ function wireStaticEvents() {
 
   document.getElementById('addUserBtn').addEventListener('click', function () { openUserModal(null); });
   document.getElementById('tierDefaultsBtn').addEventListener('click', openTierModal);
+  document.getElementById('fixCloseBtn').addEventListener('click', closeFixModal);
+  document.getElementById('fixCancelBtn').addEventListener('click', closeFixModal);
+  document.getElementById('fixSaveBtn').addEventListener('click', saveFix);
+  document.getElementById('fixDeleteBtn').addEventListener('click', deleteFix);
+  document.addEventListener('click', function (e) {
+    const edit = e.target.closest('[data-fix-edit]');
+    if (edit) return openFixModal(edit.dataset.fixEdit, edit.dataset.key);
+    const del = e.target.closest('[data-fix-delete]');
+    if (del) { openFixModal(del.dataset.fixDelete, del.dataset.key); deleteFix(); }
+  });
   document.getElementById('tierModalClose').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
   document.getElementById('tierCancelBtn').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
   document.getElementById('tierSaveBtn').addEventListener('click', saveTier);
