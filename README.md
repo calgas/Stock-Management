@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.8.1
+**Current version:** 3.9.1
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,67 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.9.1
+
+### Reset on the stock pages
+
+RM Stock and FG Stock have a Reset beside Refresh that clears the search, category, sub-category, status and Show inactive in one go. It is greyed out when nothing is filtered, so an enabled Reset is itself a sign that the list is narrowed.
+
+### Current stock in an item's history
+
+The history shows the item's current stock in its header, coloured by the same low/critical thresholds as the stock table.
+
+When the list on screen is the item's whole history — not filtered, and not cut off at the row limit — it also checks that the stored balance agrees with it (opening stock plus receipts and returns, minus issues, plus adjustments). They should always agree. When they don't, the balance was changed without a ledger entry — most often a row edited or deleted straight in the spreadsheet — and the history says so, with both figures, and points to Recalculate.
+
+### Fixes
+
+- **The history rounded quantities to two decimals.** 0.504 read as 0.5 and no unit was shown: the 3.7.0 change to full precision with units never applied to this one view. It now matches everywhere else.
+- **A correction made from an item's history didn't refresh that history.** A deleted row stayed on screen until the history was reopened; it now reloads, stock figure included.
+
+---
+
+## What changed in 3.9.0
+
+### The current price, fetched into the entry form
+
+Nothing in the item master records a price — the only prices in the system are the optional Rate on individual ledger entries. So the current price is the rate on the **most recent receipt that carried one**: what was last paid. A new read action, `getItemPrice`, finds it by scanning the ledger from the newest entry backwards, and stops at the first match, so a recent price costs a single chunk read however long the ledger grows. A later receipt with no rate is skipped rather than read as zero.
+
+When the entry form opens, that price goes into the Rate box and under the stock figure in the header, with a hint saying where it came from — the date and supplier of the receipt. It is a suggestion, not a fact about this delivery: once the operator types their own rate it is never overwritten.
+
+If no receipt ever carried a rate, the latest priced entry of any type is used and the hint says so. An item never priced leaves the box empty and says that, rather than guessing. The price is read from the ledger each time rather than stored on the stock row, so correcting or deleting a receipt can never leave a stale price behind. Posting a receipt at a new rate makes that the current price immediately.
+
+The Rate box also refuses a minus sign.
+
+---
+
+## What changed in 3.8.3
+
+### The quantity box can't hold a minus sign by mistake
+
+Receipts, issues and returns are always positive — the type already says which way stock moves — so a minus sign there is only ever a slip. It used to sit in the box, with a hint underneath, until the backend refused it. Now it never gets in: the key is ignored, a pasted `-12` becomes `12`, and the arrow keys and spinner stop at zero. The `e` and `+` of scientific notation are ignored for every type, so `1e3` can't sneak in as 1000.
+
+Adjustment is left alone, because there the sign means decrease. Switching an adjustment of `-7` to a Receipt clears the box rather than quietly turning it into `+7`, which would reverse what was meant. The correction form has the same guard.
+
+### Current stock in the entry form
+
+The item's current stock sits in the top-right of the entry form, in the low or critical colour when it's under its reorder level. Once a quantity is typed, it also shows what the balance will be after this entry — in red if that would go negative. On a phone it drops to its own line under the item name.
+
+---
+
+## What changed in 3.8.2
+
+### Ledger search works on its own
+
+Searching the ledger by code with no other filter showed every entry unfiltered. The search called `.toLowerCase()` on each row's text fields, but a spreadsheet cell holding a PO or invoice number typed as digits arrives as a number — and one such row threw, aborting the render and leaving the previous, unfiltered table on screen. It only appeared to work with Type and Category set because that subset happened to contain no such row.
+
+Every search now goes through `lc()`, which turns any cell into lower-case text, and the ledger's view rows are built as text from the start. The same fault was in the RM and FG stock searches and in Team & Access, where a blank role would have stopped the whole table rendering; all are fixed, and role badge class names are sanitised so a role like "Shift Incharge" produces a valid class.
+
+### Correct and delete in an item's history
+
+The history modal showed a Fix column with nothing in it: the change that adds the buttons to its rows never applied, while the one adding the header did. Both views now carry the buttons.
 
 ---
 
@@ -453,7 +514,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.8.1` / `3.8.1` / `calgas-shell-v21`.
+Currently `3.9.1` / `3.9.1` / `calgas-shell-v25`.
 
 ---
 
