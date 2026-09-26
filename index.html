@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.8.1">
+<meta name="app-version" content="3.8.2">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1605,7 +1605,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.8.1';
+const APP_VERSION = '3.8.2';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2170,6 +2170,14 @@ if (isIOSDevice() && !isStandaloneDisplay()) {
    UTILS
    ========================================================================= */
 function escapeHtml(str) { return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+// Anything read from a spreadsheet cell may not be text: a PO or invoice
+// number typed as digits arrives as a number, and a blank cell as nothing.
+// Calling .toLowerCase() on either throws — and inside a filter that one bad
+// row aborts the whole render, leaving the unfiltered table on screen with
+// no sign anything went wrong. Every search goes through this instead.
+function lc(v) { return v === null || v === undefined ? '' : String(v).toLowerCase(); }
+function asText(v) { return v === null || v === undefined ? '' : String(v); }
+
 function formatNum(n) { n = Number(n) || 0; return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
 // Quantities are NOT money and must not be rounded to two places: film is
 // issued to three decimals, so 0.504 has to read as 0.504, never 0.5.
@@ -2806,7 +2814,7 @@ function renderStockTable(config) {
   const sortState = isRM ? state.rmSort : state.fgSort; let page = isRM ? state.rmPage : state.fgPage;
 
   let rows = mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive);
-  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return r.code.toLowerCase().indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
+  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
   if (category && category !== 'All') rows = rows.filter(function (r) { return r.category === category; });
   const subCategory = config.subCategoryField ? state.fgSubCategory : 'All';
   if (subCategory && subCategory !== 'All') rows = rows.filter(function (r) { return r.subCategory === subCategory; });
@@ -3160,7 +3168,8 @@ function renderLedgerRow(r) {
      refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
   }
 
-  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span></td><td class="col-qty ' + qtyClass + '">' + formatNum(r.Qty) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td></tr>';
+  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span></td><td class="col-qty ' + qtyClass + '">' + formatNum(r.Qty) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
+    ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key) + '</tr>';
 }
 
 function currentLedgerFilters() {
@@ -3868,10 +3877,10 @@ async function loadLedgerPage() {
         category: catByCode[r[config.codeField]] || '',
         txnId: r.TxnID || '',
         type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
-        department: r.Department || '', reference: r.Reference || '',
-        supplier: r.Supplier || '', invoiceNo: r.InvoiceNo || '',
+        department: asText(r.Department), reference: asText(r.Reference),
+        supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
         invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
-        remarks: r.Remarks || '', enteredBy: r.EnteredBy || ''
+        remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy)
       };
     });
     state.ledgerLoaded = true;
@@ -3891,9 +3900,8 @@ function filteredLedgerRows() {
   const q = state.ledgerSearch;
   if (q) {
     rows = rows.filter(function (r) {
-      return r.code.toLowerCase().indexOf(q) > -1 || r.name.toLowerCase().indexOf(q) > -1 ||
-        r.reference.toLowerCase().indexOf(q) > -1 || r.remarks.toLowerCase().indexOf(q) > -1 ||
-        r.supplier.toLowerCase().indexOf(q) > -1 || r.invoiceNo.toLowerCase().indexOf(q) > -1;
+      return [r.code, r.name, r.reference, r.remarks, r.supplier, r.invoiceNo]
+        .some(function (field) { return lc(field).indexOf(q) > -1; });
     });
   }
   const s = state.ledgerSort;
@@ -4448,7 +4456,7 @@ function renderUsersPage() {
     const wantsFG = record ? !!record.effective['stock.mail.fg'] : isTruthyFlag(u.DailyMailFG);
     const tier = record ? (record.category || 'Default') : '';
     const mailBadges = '<div class="mail-badges"><span class="mail-badge' + (wantsRM ? ' on' : '') + '">RM</span><span class="mail-badge' + (wantsFG ? ' on' : '') + '">FG</span></div>';
-    return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + u.Role.toLowerCase() + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
+    return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + lc(u.Role).replace(/[^a-z0-9]+/g, '-') + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
   }).join('');
 }
 function openUserModal(username) {
@@ -4532,7 +4540,7 @@ async function exportToExcel(config) {
   const isRM = config.key === 'rm'; const search = isRM ? state.rmSearch : state.fgSearch; const category = isRM ? state.rmCategory : state.fgCategory;
   const status = isRM ? state.rmStatus : state.fgStatus; const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
   let rows = mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive);
-  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return r.code.toLowerCase().indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
+  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
   if (category && category !== 'All') rows = rows.filter(function (r) { return r.category === category; });
   const subCategory = config.subCategoryField ? state.fgSubCategory : 'All';
   if (subCategory && subCategory !== 'All') rows = rows.filter(function (r) { return r.subCategory === subCategory; });
