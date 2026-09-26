@@ -739,6 +739,16 @@
   .txn-type-receipt { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+  .perm-grid { display: grid; gap: 4px; margin-top: 6px; }
+  .perm-group-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin: 10px 0 2px; }
+  .perm-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .perm-row input[type="checkbox"] { width: 17px; height: 17px; flex: none; }
+  .perm-row label { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--ink); margin: 0; text-transform: none; letter-spacing: 0; }
+  .perm-row.is-override { border-color: var(--copper); }
+  .perm-chip { flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--copper); background: rgba(181, 101, 46, 0.12); border-radius: 999px; padding: 3px 8px; }
+  .perm-revert { flex: none; background: none; border: none; color: var(--ink-soft); font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 6px; }
+  .access-tier { font-size: 13px; font-weight: 600; color: var(--ink-soft); margin: 2px 0 6px; }
+  .tier-badge { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; margin-left: 6px; }
   .qty-bold { font-family: var(--font-mono); font-size: 15px; font-weight: 700; text-align: center; color: var(--ink); }
   /* Unit pinned inside the quantity box. The input keeps right padding for
      it so a long value can't run underneath the label. */
@@ -1316,6 +1326,7 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="userSearch" placeholder="Search name or username…">
+          <button class="btn-ghost btn-compact" id="tierDefaultsBtn">Tier defaults</button>
           <button class="btn-primary btn-compact add-btn-spacer" id="addUserBtn">+ Add person</button>
         </div>
       </div>
@@ -1397,18 +1408,16 @@
         <div class="field"><label for="userFormName">Name</label><input type="text" id="userFormName" required></div>
         <div class="field"><label for="userUsername">Username</label><input type="text" id="userUsername" required></div>
         <div class="field"><label for="userRole">Role</label>
-          <select id="userRole" required><option value="Admin">Admin</option><option value="Manager">Manager</option><option value="Supervisor">Supervisor</option></select>
+          <select id="userRole" required></select>
         </div>
         <div class="field" id="userDeptField"><label for="userDept">Department</label><select id="userDept"></select></div>
         <div class="field"><label for="userEmail">Email</label><input type="email" id="userEmail" required><div class="hint">Used for password reset codes.</div></div>
         <div class="field"><label for="userPhone">Phone (optional)</label><input type="text" id="userPhone"></div>
-        <div class="field span-2">
-          <label>Daily stock report</label>
-          <div style="display:flex;gap:20px;margin-top:2px">
-            <label class="check-inline"><input type="checkbox" id="userDailyMailRM"> RM Stock</label>
-            <label class="check-inline"><input type="checkbox" id="userDailyMailFG"> FG Stock</label>
-          </div>
-          <div class="hint">Emails a full current-stock workbook every morning to whichever of these are checked.</div>
+        <div class="field span-2" id="userAccessSection">
+          <label>Access</label>
+          <div class="access-tier" id="userTierLine"></div>
+          <div id="userPermGrid" class="perm-grid"></div>
+          <div class="hint">Ticked is what this person can do. Anything that differs from their tier is marked — Follow tier puts it back.</div>
         </div>
       </div>
       <div class="form-note" id="userAddNote">A password-setup code will be emailed automatically once this person is added.</div>
@@ -1485,6 +1494,27 @@
   </div>
 </div>
 
+
+<div class="modal-backdrop hidden" id="tierModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">ACCESS</div><h3 class="modal-title">Tier defaults</h3></div>
+      <button class="modal-close" id="tierModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label for="tierCategory">Tier</label><select id="tierCategory"></select></div>
+      <div class="hint" id="tierWhoLine"></div>
+      <div id="tierPermGrid" class="perm-grid"></div>
+      <div class="modal-error hidden" id="tierError"></div>
+    </div>
+    <div class="modal-actions">
+      <div class="modal-actions-right">
+        <button type="button" class="btn-ghost" id="tierCancelBtn">Cancel</button>
+        <button type="button" class="btn-primary" id="tierSaveBtn">Save tier</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="toastContainer"></div>
 
 <button type="button" id="scrollTopBtn" class="scroll-top-btn" aria-label="Scroll to top">
@@ -2317,6 +2347,8 @@ async function init() {
       const who = await api('whoAmI');
       state.session.role = who.role;
       state.session.department = who.department;
+      // Before boot(), because boot() decides which buttons exist from these.
+      state.permissions = who.permissions || {};
       await boot();
       return;
     } catch (err) { clearSession(); }
@@ -2332,10 +2364,14 @@ async function boot() {
   document.getElementById('appShell').classList.remove('hidden');
   document.getElementById('userName').textContent = state.session.name || state.session.username;
   document.getElementById('userRoleDept').textContent = state.session.role + (state.session.department ? ' · ' + state.session.department : '');
-  document.getElementById('adminRecalcBtn').classList.toggle('hidden', state.session.role !== 'Admin');
+  // Gated on the resolved permission, not the role name — that's what the
+  // backend checks, and a button that only fails on click is worse than no
+  // button. Team & Access stays keyed to Admin because managing accounts
+  // isn't a grantable feature.
+  document.getElementById('adminRecalcBtn').classList.toggle('hidden', !can('stock.recalculate'));
   document.getElementById('navUsers').classList.toggle('hidden', state.session.role !== 'Admin');
 
-  state.canEditMaster = state.session.role === 'Admin' || state.session.role === 'Manager';
+  state.canEditMaster = can('stock.rm.items') || can('stock.fg.items');
   document.getElementById('rmAddItemBtn').classList.toggle('hidden', !state.canEditMaster);
   document.getElementById('fgAddItemBtn').classList.toggle('hidden', !state.canEditMaster);
   document.getElementById('rmImportBtn').classList.toggle('hidden', !state.canEditMaster);
@@ -2376,6 +2412,9 @@ async function refreshAllData() {
   const data = await api('getBootstrap');
   state.rmMaster = data.rmMaster; state.fgMaster = data.fgMaster; state.rmStock = data.rmStock; state.fgStock = data.fgStock; state.departments = data.departments;
   state.dropdowns = data.dropdowns || {};
+  // Refreshed on every load: an Admin may have changed this person's access
+  // while they were signed in.
+  if (data.permissions) state.permissions = data.permissions;
   if (data.users) state.users = data.users;
   state.rmLastUpdated = new Date(); state.fgLastUpdated = new Date();
   invalidateMergeCache();
@@ -2431,6 +2470,7 @@ async function handleLogin(e) {
   try {
     const data = await api('login', { username: document.getElementById('loginUsername').value.trim(), password: document.getElementById('loginPassword').value });
     saveSession(data);
+    state.permissions = data.permissions || {};
     if (loader) { loader.classList.remove('hidden', 'loader-exit'); loader.setAttribute('aria-busy', 'true'); }
     setLoaderProgress(55, 'Signing you in…');
     await boot();
@@ -3340,7 +3380,7 @@ function openItemModal(key, code) {
   document.getElementById('itemFieldsMain').innerHTML = mainHtml; document.getElementById('itemFieldsMore').innerHTML = moreHtml; document.getElementById('itemFieldsMoreWrap').classList.toggle('hidden', !moreHtml);
 
   const deleteBtn = document.getElementById('itemDeleteBtn');
-  if (isEdit && state.session.role === 'Admin') { const active = isActiveValue(item.Active); deleteBtn.classList.remove('hidden'); deleteBtn.textContent = active ? 'Deactivate' : 'Reactivate'; deleteBtn.classList.toggle('positive', !active); deleteBtn.dataset.mode = active ? 'deactivate' : 'reactivate'; } else { deleteBtn.classList.add('hidden'); }
+  if (isEdit && can(activeItemConfig && activeItemConfig.key === 'fg' ? 'stock.fg.retire' : 'stock.rm.retire')) { const active = isActiveValue(item.Active); deleteBtn.classList.remove('hidden'); deleteBtn.textContent = active ? 'Deactivate' : 'Reactivate'; deleteBtn.classList.toggle('positive', !active); deleteBtn.dataset.mode = active ? 'deactivate' : 'reactivate'; } else { deleteBtn.classList.add('hidden'); }
   document.getElementById('itemSubmit').textContent = isEdit ? 'Save changes' : 'Create item'; document.getElementById('itemError').textContent = '';
   document.getElementById('itemModal').classList.remove('hidden'); document.getElementById('itemCode').focus();
 }
@@ -3928,6 +3968,11 @@ function enhanceSelect_(select) {
   // keep showing the last submitted value. Re-sync on the next tick, once
   // the browser has applied the reset.
   if (select.form) select.form.addEventListener('reset', function () { setTimeout(syncDisplay, 0); });
+  // Also resync when the select changes by any route the value setter below
+  // can't see — selectedIndex being set directly, or the browser restoring
+  // a value — otherwise the box can show one thing while the form holds
+  // another.
+  select.addEventListener('change', syncDisplay);
 
   // Programmatic `select.value = x` fires no event, so intercept the setter
   // on this instance and refresh from it.
@@ -3948,7 +3993,218 @@ function enhanceAllSelects_() {
   document.querySelectorAll('select:not(.no-combo)').forEach(enhanceSelect_);
 }
 
+/* =========================================================================
+   ADMIN PANEL
+
+   Two layers, shown the way they resolve: a tier default from the person's
+   department category, and per-account differences on top of it. Only the
+   differences are sent back, so an account keeps following its tier for
+   everything it hasn't been singled out for.
+
+   Admin is deliberately not editable here — it holds everything by
+   definition, and offering switches that do nothing would be a lie.
+   ========================================================================= */
+
+const KNOWN_ROLES = ['Admin', 'Management', 'Manager', 'HOD', 'Supervisor'];
+
+// What the signed-in person may do, resolved by the backend on every load.
+function can(key) {
+  return !!(state.permissions && state.permissions[key]);
+}
+
+function accessCatalog() { return (state.access && state.access.permissions) || []; }
+function accessTemplates() { return (state.access && state.access.templates) || {}; }
+
+function accessUser(username) {
+  return ((state.access && state.access.users) || []).find(function (u) { return u.username === username; }) || null;
+}
+
+// Roles are free text in the sheet, so the picker offers the ones known
+// plus any already in use — otherwise editing someone whose role is
+// Management or HOD would show a blank box and silently change their role
+// on save.
+function fillRoleOptions(selected) {
+  const inUse = ((state.access && state.access.users) || []).map(function (u) { return u.role; });
+  const roles = KNOWN_ROLES.slice();
+  inUse.concat([selected]).forEach(function (r) { if (r && roles.indexOf(r) === -1) roles.push(r); });
+  document.getElementById('userRole').innerHTML = roles
+    .map(function (r) { return '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>'; }).join('');
+}
+
+// One row per feature: the tick is what the person can do, the chip marks
+// where that differs from their tier.
+function renderPermGrid(container, values, baseline, options) {
+  options = options || {};
+  const groups = [];
+  accessCatalog().forEach(function (p) {
+    let g = groups.filter(function (x) { return x.name === p.group; })[0];
+    if (!g) { g = { name: p.group, items: [] }; groups.push(g); }
+    g.items.push(p);
+  });
+
+  container.innerHTML = groups.map(function (g) {
+    return '<div class="perm-group-title">' + escapeHtml(g.name) + '</div>' + g.items.map(function (p) {
+      const on = !!values[p.key];
+      const base = baseline ? !!baseline[p.key] : on;
+      const differs = baseline && on !== base;
+      return '<div class="perm-row' + (differs ? ' is-override' : '') + '" data-key="' + escapeHtml(p.key) + '">' +
+        '<input type="checkbox" id="perm-' + escapeHtml(p.key) + '"' + (on ? ' checked' : '') + (options.disabled ? ' disabled' : '') + '>' +
+        '<label for="perm-' + escapeHtml(p.key) + '">' + escapeHtml(p.label) + '</label>' +
+        (differs ? '<span class="perm-chip">tier says ' + (base ? 'on' : 'off') + '</span>' +
+                   '<button type="button" class="perm-revert" data-revert="' + escapeHtml(p.key) + '">Follow tier</button>' : '') +
+        '</div>';
+    }).join('');
+  }).join('');
+
+  container.querySelectorAll('input[type="checkbox"]').forEach(function (box) {
+    box.addEventListener('change', function () { options.onChange && options.onChange(); });
+  });
+  container.querySelectorAll('[data-revert]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.dataset.revert;
+      container.querySelector('#perm-' + CSS.escape(key)).checked = !!baseline[key];
+      options.onChange && options.onChange();
+    });
+  });
+}
+
+function readPermGrid(container) {
+  const out = {};
+  container.querySelectorAll('.perm-row').forEach(function (row) {
+    out[row.dataset.key] = row.querySelector('input[type="checkbox"]').checked;
+  });
+  return out;
+}
+
+function renderUserAccess(username) {
+  const section = document.getElementById('userAccessSection');
+  const line = document.getElementById('userTierLine');
+  const grid = document.getElementById('userPermGrid');
+  const record = username ? accessUser(username) : null;
+
+  if (!record) {
+    // A person being added has no tier until their department is saved.
+    section.classList.add('hidden');
+    grid.innerHTML = '';
+    return;
+  }
+  section.classList.remove('hidden');
+
+  if (String(record.role) === 'Admin') {
+    line.textContent = 'Admin — holds every feature. This cannot be narrowed.';
+    grid.innerHTML = '';
+    return;
+  }
+
+  const tier = record.category || 'Default';
+  const baseline = accessTemplates()[tier] || {};
+  line.innerHTML = 'Tier <span class="tier-badge">' + escapeHtml(tier) + '</span> ' +
+    'from department ' + escapeHtml(record.department || 'none set') +
+    ' · <button type="button" class="perm-revert" id="userFollowAll">Follow tier for everything</button>';
+
+  renderPermGrid(grid, record.effective, baseline, {
+    onChange: function () { renderPermChips(grid, baseline); }
+  });
+  document.getElementById('userFollowAll').addEventListener('click', function () {
+    renderPermGrid(grid, baseline, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
+  });
+}
+
+// Re-marks the rows after a tick without rebuilding the grid, so focus and
+// scroll position survive.
+function renderPermChips(grid, baseline) {
+  const values = readPermGrid(grid);
+  grid.querySelectorAll('.perm-row').forEach(function (row) {
+    const key = row.dataset.key;
+    const differs = !!values[key] !== !!baseline[key];
+    row.classList.toggle('is-override', differs);
+    const chip = row.querySelector('.perm-chip');
+    const btn = row.querySelector('.perm-revert');
+    if (differs && !chip) {
+      row.insertAdjacentHTML('beforeend',
+        '<span class="perm-chip">tier says ' + (baseline[key] ? 'on' : 'off') + '</span>' +
+        '<button type="button" class="perm-revert" data-revert="' + escapeHtml(key) + '">Follow tier</button>');
+      row.querySelector('[data-revert]').addEventListener('click', function () {
+        row.querySelector('input[type="checkbox"]').checked = !!baseline[key];
+        renderPermChips(grid, baseline);
+      });
+    } else if (!differs) {
+      if (chip) chip.remove();
+      if (btn) btn.remove();
+    }
+  });
+}
+
+async function saveUserAccess(username) {
+  const record = accessUser(username);
+  if (!record || String(record.role) === 'Admin') return;
+  const wanted = readPermGrid(document.getElementById('userPermGrid'));
+  if (!Object.keys(wanted).length) return;
+  await api('setUserAccess', { username: username, permissions: wanted });
+}
+
+/* ---- tier defaults ---- */
+
+function openTierModal() {
+  const select = document.getElementById('tierCategory');
+  const tiers = Object.keys(accessTemplates());
+  select.innerHTML = tiers.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
+  document.getElementById('tierError').classList.add('hidden');
+  showTier(tiers[0]);
+  document.getElementById('tierModal').classList.remove('hidden');
+}
+
+function showTier(category) {
+  const grid = document.getElementById('tierPermGrid');
+  renderPermGrid(grid, accessTemplates()[category] || {}, null, {});
+  const on = ((state.access && state.access.users) || []).filter(function (u) {
+    return String(u.role) !== 'Admin' && (u.category || 'Default') === category;
+  });
+  document.getElementById('tierWhoLine').textContent = on.length
+    ? 'Applies to ' + on.map(function (u) { return u.name || u.username; }).join(', ') +
+      ' — except where an account has been set differently.'
+    : 'Nobody is on this tier yet.';
+}
+
+async function saveTier() {
+  const btn = document.getElementById('tierSaveBtn');
+  const errEl = document.getElementById('tierError');
+  const category = document.getElementById('tierCategory').value;
+  errEl.classList.add('hidden');
+  setBtnLoading(btn, 'Saving…');
+  try {
+    await api('setAccessTemplate', { category: category, permissions: readPermGrid(document.getElementById('tierPermGrid')) });
+    await loadAccessControl();
+    showTier(category);
+    toast('Tier defaults saved for ' + category);
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    clearBtnLoading(btn, 'Save tier');
+  }
+}
+
+let _accessLoading = false;
+function ensureAccessControl() {
+  if (state.access || _accessLoading || !state.session || state.session.role !== 'Admin') return;
+  _accessLoading = true;
+  loadAccessControl()
+    .then(function () { renderUsersPage(); })
+    .catch(function (err) { toast(err.message, true); })
+    .finally(function () { _accessLoading = false; });
+}
+
+async function loadAccessControl() {
+  state.access = await api('getAccessControl');
+  return state.access;
+}
+
 function renderUsersPage() {
+  // Rendered from the access data when it's there; on the first paint it
+  // may not be yet, so the table falls back to the plain user rows and is
+  // repainted by ensureAccessControl below.
+  ensureAccessControl();
   document.getElementById('userDept').innerHTML = '<option value="">No department</option>' + state.departments.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
   const q = state.userSearch.toLowerCase(); let rows = state.users;
   if (q) rows = rows.filter(function (u) { return (u.Name || '').toLowerCase().indexOf(q) > -1 || (u.Username || '').toLowerCase().indexOf(q) > -1; });
@@ -3956,9 +4212,14 @@ function renderUsersPage() {
   if (rows.length === 0) { body.innerHTML = '<tr><td colspan="8" class="empty">No matching people.</td></tr>'; return; }
   body.innerHTML = rows.map(function (u) {
     const active = isActiveValue(u.Active);
-    const wantsRM = isTruthyFlag(u.DailyMailRM), wantsFG = isTruthyFlag(u.DailyMailFG);
+    // Mail is a permission now, so the badges must read the resolved set —
+    // the old columns no longer decide who gets the morning workbook.
+    const record = accessUser(u.Username);
+    const wantsRM = record ? !!record.effective['stock.mail.rm'] : isTruthyFlag(u.DailyMailRM);
+    const wantsFG = record ? !!record.effective['stock.mail.fg'] : isTruthyFlag(u.DailyMailFG);
+    const tier = record ? (record.category || 'Default') : '';
     const mailBadges = '<div class="mail-badges"><span class="mail-badge' + (wantsRM ? ' on' : '') + '">RM</span><span class="mail-badge' + (wantsFG ? ' on' : '') + '">FG</span></div>';
-    return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + u.Role.toLowerCase() + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
+    return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + u.Role.toLowerCase() + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
   }).join('');
 }
 function openUserModal(username) {
@@ -3966,10 +4227,10 @@ function openUserModal(username) {
   document.getElementById('userModalEyebrow').textContent = isEdit ? 'EDIT PERSON' : 'NEW PERSON'; document.getElementById('userModalTitle').textContent = isEdit ? user.Name : 'Add someone';
   document.getElementById('userOrigUsername').value = isEdit ? username : ''; document.getElementById('userFormName').value = isEdit ? user.Name : '';
   document.getElementById('userUsername').value = isEdit ? user.Username : ''; document.getElementById('userUsername').disabled = isEdit;
+  fillRoleOptions(isEdit ? user.Role : 'Supervisor');
   document.getElementById('userRole').value = isEdit ? user.Role : 'Supervisor'; document.getElementById('userDept').value = isEdit ? (user.Department || '') : '';
   document.getElementById('userEmail').value = isEdit ? (user.Email || '') : ''; document.getElementById('userPhone').value = isEdit ? (user.Phone || '') : '';
-  document.getElementById('userDailyMailRM').checked = isEdit ? isTruthyFlag(user.DailyMailRM) : false;
-  document.getElementById('userDailyMailFG').checked = isEdit ? isTruthyFlag(user.DailyMailFG) : false;
+  renderUserAccess(isEdit ? username : null);
   document.getElementById('userAddNote').classList.toggle('hidden', isEdit); document.getElementById('userResendBtn').classList.toggle('hidden', !isEdit);
   document.getElementById('userTestMailBtn').classList.toggle('hidden', !isEdit);
   document.getElementById('userSubmit').textContent = isEdit ? 'Save changes' : 'Add person'; document.getElementById('userError').textContent = '';
@@ -3981,15 +4242,25 @@ function closeUserModal() { document.getElementById('userModal').classList.add('
 async function handleUserSubmit(e) {
   e.preventDefault(); const errEl = document.getElementById('userError'); const btn = document.getElementById('userSubmit');
   errEl.textContent = ''; setBtnLoading(btn, activeUserMode === 'add' ? 'Adding…' : 'Saving…');
-  const params = { Username: document.getElementById('userUsername').value.trim(), Name: document.getElementById('userFormName').value.trim(), Role: document.getElementById('userRole').value, Department: document.getElementById('userDept').value, Email: document.getElementById('userEmail').value.trim(), Phone: document.getElementById('userPhone').value.trim(), DailyMailRM: document.getElementById('userDailyMailRM').checked, DailyMailFG: document.getElementById('userDailyMailFG').checked };
+  const params = { Username: document.getElementById('userUsername').value.trim(), Name: document.getElementById('userFormName').value.trim(), Role: document.getElementById('userRole').value, Department: document.getElementById('userDept').value, Email: document.getElementById('userEmail').value.trim(), Phone: document.getElementById('userPhone').value.trim(), };
   try {
     if (activeUserMode === 'add') {
       const result = await api('addUser', params);
       toast(result.emailSent
         ? 'Added ' + params.Name + ' — an invite email is on its way.'
         : 'Added ' + params.Name + ', but the invite email failed to send — use "Resend reset email" to try again.');
-    } else { params.Username = document.getElementById('userOrigUsername').value; await api('updateUser', params); toast('Saved ' + params.Name); }
-    closeUserModal(); await refreshAllData(); renderUsersPage();
+    } else {
+      params.Username = document.getElementById('userOrigUsername').value;
+      await api('updateUser', params);
+      // Access is saved after the details, because moving someone to
+      // another department changes the tier its differences are measured
+      // against.
+      await saveUserAccess(params.Username);
+      toast('Saved ' + params.Name);
+    }
+    closeUserModal();
+    await Promise.all([refreshAllData(), loadAccessControl()]);
+    renderUsersPage();
   } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, activeUserMode === 'add' ? 'Add person' : 'Save changes'); }
 }
 async function handleUserActiveToggle() {
@@ -4129,6 +4400,11 @@ function wireStaticEvents() {
   document.getElementById('importConfirmBtn').addEventListener('click', confirmBulkImport);
 
   document.getElementById('addUserBtn').addEventListener('click', function () { openUserModal(null); });
+  document.getElementById('tierDefaultsBtn').addEventListener('click', openTierModal);
+  document.getElementById('tierModalClose').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
+  document.getElementById('tierCancelBtn').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
+  document.getElementById('tierSaveBtn').addEventListener('click', saveTier);
+  document.getElementById('tierCategory').addEventListener('change', function () { showTier(this.value); });
   document.getElementById('userSearch').addEventListener('input', debounce(function (e) { state.userSearch = e.target.value; renderUsersPage(); }, 150));
   document.getElementById('usersTableBody').addEventListener('click', function (e) { const btn = e.target.closest('.row-action'); if (btn) { const tr = btn.closest('tr[data-username]'); if (tr) openUserModal(tr.dataset.username); } });
   document.getElementById('userForm').addEventListener('submit', handleUserSubmit); document.getElementById('userDeactivateBtn').addEventListener('click', handleUserActiveToggle); document.getElementById('userResendBtn').addEventListener('click', handleResendInvite); document.getElementById('userTestMailBtn').addEventListener('click', handleSendTestMail);
