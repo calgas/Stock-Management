@@ -2924,7 +2924,7 @@ function openTxnModal(key, code) {
   document.getElementById('txnType').innerHTML = activeTxnConfig.txnTypes.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
   const deptSelect = document.getElementById('txnDept');
   if (state.session.role === 'Supervisor') { deptSelect.innerHTML = '<option value="' + escapeHtml(state.session.department) + '">' + escapeHtml(state.session.department) + '</option>'; deptSelect.disabled = true; } 
-  else { deptSelect.disabled = false; deptSelect.innerHTML = state.departments.map(function (d) { return '<option value="' + escapeHtml(d.DeptName) + '">' + escapeHtml(d.DeptName) + '</option>'; }).join(''); }
+  else { deptSelect.disabled = false; deptSelect.innerHTML = state.departments.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join(''); }
 
   ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
 
@@ -3546,7 +3546,7 @@ function populateLedgerFilters() {
     cats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
   catSel.value = state.ledgerCat || '';
 
-  const depts = (state.departments || []).map(function (d) { return d.DeptName || ''; }).filter(Boolean);
+  const depts = (state.departments || []).map(function (d) { return d.name || ''; }).filter(Boolean);
   const deptSel = document.getElementById('ldgDeptFilter');
   deptSel.innerHTML = '<option value="">All departments</option>' +
     depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>'; }).join('');
@@ -3949,7 +3949,7 @@ function enhanceAllSelects_() {
 }
 
 function renderUsersPage() {
-  document.getElementById('userDept').innerHTML = '<option value="">No department</option>' + state.departments.map(function (d) { return '<option value="' + escapeHtml(d.DeptName) + '">' + escapeHtml(d.DeptName) + '</option>'; }).join('');
+  document.getElementById('userDept').innerHTML = '<option value="">No department</option>' + state.departments.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join('');
   const q = state.userSearch.toLowerCase(); let rows = state.users;
   if (q) rows = rows.filter(function (u) { return (u.Name || '').toLowerCase().indexOf(q) > -1 || (u.Username || '').toLowerCase().indexOf(q) > -1; });
   const body = document.getElementById('usersTableBody');
