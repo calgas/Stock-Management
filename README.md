@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.8.0
+**Current version:** 3.8.1
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,26 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.8.1
+
+### Roles are labels; the last Admin is protected
+
+Saving anyone whose role was HOD or Management failed with "Role must be one of: Admin, Manager, Supervisor" — the backend still validated against the three names that existed before access control. Since access now comes from the department's tier and the account's own overrides, Role is a label: any name is accepted, and **+ New role…** in the person form adds one. `Admin` is the only role with meaning, and known names are matched regardless of case, so "admin" can't produce a look-alike account with no powers.
+
+A non-Admin now needs a department, because that is what decides which tier they start from.
+
+Deactivating the last Admin was already blocked, but **changing the last Admin's role** was not — one save would have left nobody able to open Team & Access. That is now refused until another active Admin exists.
+
+A role or department change is pushed to the person's open sessions along with the access it resolves to, so demoting an Admin takes effect on their next action rather than when their session expires.
+
+### The form stays truthful while you edit it
+
+Changing someone's department re-bases the access matrix on the new tier straight away, keeping their own grants — otherwise saving would have frozen the old department's access in as overrides without anyone choosing that. Setting a role to Admin replaces the switches with "holds every feature".
+
+The stock entry form's department choice follows `stock.post.any` rather than a role literally named Supervisor, so an HOD limited to their own department is offered only that department instead of every one and then refused on submit.
 
 ---
 
@@ -433,7 +453,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.8.0` / `3.8.0` / `calgas-shell-v20`.
+Currently `3.8.1` / `3.8.1` / `calgas-shell-v21`.
 
 ---
 
