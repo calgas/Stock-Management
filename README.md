@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.6.3
+**Current version:** 3.8.0
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,80 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.8.0
+
+### Two-layer access control, and an Admin Panel to run it
+
+Admin holds everything and cannot be narrowed — no template or override touches it, so the last Admin can't lock everyone out. Everyone else inherits the template for their department's `Dept_category` (Admin, Management, Manager, HOD, Production) and is then adjusted per account.
+
+Both layers live in the sheet, so a new tier or a changed default is an edit rather than a deployment:
+
+- **`Access_Templates`** — one row per tier, one column per feature, seeded from the categories in the Departments tab plus a `Default` row for an account whose department has no category.
+- **`Users.Access`** — per-account overrides, stored as only the differences (`-stock.rm.post,+stock.recalculate`), so an account keeps following its tier for everything else.
+
+The resolved set is written onto the session row at sign-in, which is how ELE Tracker and Production Tracker will read it — they already read that row to validate the token. Changing access rewrites the person's live sessions, so it applies on their next action rather than their next sign-in.
+
+Managing accounts is deliberately not in the catalog: it stays Admin-only and ungrantable.
+
+**Run `ADMIN_migrateAccess()` once.** It keeps whatever each account could do under the old role rules, so nobody loses a button on the day this goes in, and logs both what it preserved and what its tier widens. `ADMIN_explainAccess('username')` answers "why can't they see this?".
+
+### Correcting a ledger entry in the app
+
+A mistyped entry meant opening the spreadsheet — and a sheet edit moves the ledger without moving the running totals, so the balance quietly stops matching its own history.
+
+Admin (or anyone granted `stock.ledger.edit` / `stock.ledger.delete`) can now correct or delete an entry from the ledger page or an item's history. The row and the totals move together inside one lock, a change that would push stock negative is refused with the resulting figure, and the department scope still applies — correcting another department's entry is posting for them by another name.
+
+Both are safe to send twice on a dropped connection: a correction's values are absolute, so a repeat computes no change, and a repeat of a delete finds the row already gone. Deletions keep the whole row in the audit log.
+
+### Departments
+
+The tab is read as `{id, name, category}` and tolerates either header spelling, so renaming `DeptName` to `Dept_Name` can't silently empty every department dropdown in the app. The tier now shows beside the department in Team & Access.
+
+---
+
+## What changed in 3.7.0
+
+### A dropped connection can no longer produce a duplicate entry
+
+The failure: post a transaction, lose signal before the reply gets back, press Post again — and the movement is recorded twice.
+
+The cause was that a fresh client transaction ID was minted on **every press of Post**. The backend has always refused a repeat of the same ID, but a second press produced a different one, so it looked like a new movement. The error some operators saw, "This API accepts POST requests only", is the same problem seen from the other side: it comes from `doGet`, so a POST had been turned into a GET in transit — which says nothing about whether the entry was written, but the app treated it as a plain failure.
+
+What changed:
+
+- **The ID belongs to the entry, not the attempt.** It is minted when the form opens and kept until that entry is known to be recorded, so every resend carries the same ID and the backend recognises it.
+- **The entry is journalled to the device before the request goes out** (`stock_pending_txn` in localStorage), so a reload or a flat battery doesn't lose track of an entry whose fate is unknown.
+- **An unknown outcome is resolved by asking, never by guessing.** A new read-only action, `checkTransaction`, reports whether an ID is in the ledger. The app calls it after a failed submit, when the connection returns, and at startup, then says plainly: saved, or not saved.
+- **"Not saved" is only trusted once the original attempt is too old to still be running** on Google's side (45s). Otherwise a slow write would be reported as lost and typed in again.
+- **Every state-changing action is now covered** by the no-blind-retry rule. It previously listed only the two transaction actions, so item edits, imports and user changes could be re-sent automatically.
+
+### Posting a transaction is roughly twice as fast
+
+One posted transaction made **41 spreadsheet round trips**; it now makes **18**. Each one is a network call to the Sheets service, and they were the whole of the 8–12 second wait.
+
+- The header row was read five times per request; it is now read once and cached for that execution.
+- The item's stock row was read three times — once for the overdraw guard, twice inside the balance update. It is now read once and passed along.
+- The balance update was six single-cell writes; it is now one range write, grouping adjacent columns. Columns that aren't changing are never rewritten, so a formula in a neighbouring column survives.
+- The idempotency scan reads only the `ClientTxnId` column, which costs the same one round trip whatever the window size — so the window went from 300 rows to 2000, wide enough that an entry left unresolved overnight is still recognised the next morning.
+
+### Quantities keep their precision, and carry their unit
+
+The display formatter rounded to two decimals — right for money, wrong for stock, which is why 0.504 read as 0.5. Quantities now keep up to four decimals with trailing zeros dropped, and the unit travels with the number: in the ledger, the item history, the availability hint, the over-issue warning, the posted confirmation, and against the quantity box itself.
+
+### The app offers its own updates
+
+An installed tablet kept running whatever version its service worker had, which could be days old. The worker now waits instead of taking over silently, and the page shows a bar offering a reload. It never reloads on its own — swapping the app out from under a half-typed transaction is exactly the kind of silent loss this app exists to prevent. It checks for a new version every 15 minutes and whenever the app is brought back to the foreground.
+
+---
+
+## What changed in 3.6.4
+
+**The service worker no longer deletes sibling apps' offline copies.** ELE Tracker and this app are both served from `calgas.github.io`, and Cache Storage is shared across an origin, not per app. The activate step deleted every cache not named exactly `CACHE_VERSION`, so each Stock Management update wiped ELE Tracker's cached shell — and ELE's worker did the same in return. An operator opening ELE on a dead connection after a Stock Management update got nothing.
+
+Caches now carry `CACHE_PREFIX` (`calgas-shell-`), and cleanup only touches caches with that prefix. ELE Tracker 1.2.0 carries the matching fix on its side, using `ele-tracker-shell-`. **Any future sibling app on this origin must use a prefix of its own.**
 
 ---
 
@@ -359,7 +433,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.6.3` / `3.6.3` / `calgas-shell-v17`.
+Currently `3.8.0` / `3.8.0` / `calgas-shell-v20`.
 
 ---
 
