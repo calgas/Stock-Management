@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.8.0">
+<meta name="app-version" content="3.8.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1410,6 +1410,7 @@
         <div class="field"><label for="userUsername">Username</label><input type="text" id="userUsername" required></div>
         <div class="field"><label for="userRole">Role</label>
           <select id="userRole" required></select>
+          <input type="text" id="userRoleNew" class="hidden" placeholder="Name the new role, e.g. Shift Incharge" maxlength="40" style="margin-top:8px">
         </div>
         <div class="field" id="userDeptField"><label for="userDept">Department</label><select id="userDept"></select></div>
         <div class="field"><label for="userEmail">Email</label><input type="email" id="userEmail" required><div class="hint">Used for password reset codes.</div></div>
@@ -1604,7 +1605,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.8.0';
+const APP_VERSION = '3.8.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2993,7 +2994,12 @@ function openTxnModal(key, code) {
 
   document.getElementById('txnType').innerHTML = activeTxnConfig.txnTypes.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
   const deptSelect = document.getElementById('txnDept');
-  if (state.session.role === 'Supervisor') { deptSelect.innerHTML = '<option value="' + escapeHtml(state.session.department) + '">' + escapeHtml(state.session.department) + '</option>'; deptSelect.disabled = true; } 
+  // Whoever can't post for other departments is offered only their own —
+  // the same rule the backend enforces, so the form never offers a choice
+  // that would be refused on submit. Decided by permission, so it holds for
+  // HOD, Management or any role, not only one that happens to be named
+  // Supervisor.
+  if (!can('stock.post.any')) { deptSelect.innerHTML = '<option value="' + escapeHtml(state.session.department) + '">' + escapeHtml(state.session.department) + '</option>'; deptSelect.disabled = true; } 
   else { deptSelect.disabled = false; deptSelect.innerHTML = state.departments.map(function (d) { return '<option value="' + escapeHtml(d.name) + '">' + escapeHtml(d.name) + '</option>'; }).join(''); }
 
   ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
@@ -4203,7 +4209,53 @@ function fillRoleOptions(selected) {
   const roles = KNOWN_ROLES.slice();
   inUse.concat([selected]).forEach(function (r) { if (r && roles.indexOf(r) === -1) roles.push(r); });
   document.getElementById('userRole').innerHTML = roles
-    .map(function (r) { return '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>'; }).join('');
+    .map(function (r) { return '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>'; }).join('') +
+    '<option value="__new__">+ New role…</option>';
+  document.getElementById('userRoleNew').classList.add('hidden');
+  document.getElementById('userRoleNew').value = '';
+}
+
+// The role the form will actually save: a picked one, or a new one typed in.
+function chosenRole() {
+  const picked = document.getElementById('userRole').value;
+  return picked === '__new__' ? document.getElementById('userRoleNew').value.trim() : picked;
+}
+
+// Keeps the access matrix honest while the form is being edited. Moving
+// someone to another department changes the tier their access is measured
+// against, so the ticks shown must be the new tier plus this person's own
+// differences — otherwise saving would freeze the old department's access
+// in as overrides without anyone having chosen that.
+function refreshAccessPreview() {
+  const username = document.getElementById('userOrigUsername').value;
+  const record = username ? accessUser(username) : null;
+  const section = document.getElementById('userAccessSection');
+  if (!record) return;
+  const role = chosenRole();
+  const line = document.getElementById('userTierLine');
+  const grid = document.getElementById('userPermGrid');
+
+  if (role === 'Admin') {
+    section.classList.remove('hidden');
+    line.textContent = 'Admin — holds every feature. This cannot be narrowed.';
+    grid.innerHTML = '';
+    return;
+  }
+
+  const deptName = document.getElementById('userDept').value;
+  const dept = (state.departments || []).filter(function (d) { return d.name === deptName; })[0];
+  const tier = (dept && dept.category) || 'Default';
+  const baseline = accessTemplates()[tier] || accessTemplates()['Default'] || {};
+  const values = Object.assign({}, baseline, record.overrides || {});
+
+  section.classList.remove('hidden');
+  line.innerHTML = 'Tier <span class="tier-badge">' + escapeHtml(tier) + '</span> from department ' +
+    escapeHtml(deptName || 'none set') +
+    ' · <button type="button" class="perm-revert" id="userFollowAll">Follow tier for everything</button>';
+  renderPermGrid(grid, values, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
+  document.getElementById('userFollowAll').addEventListener('click', function () {
+    renderPermGrid(grid, baseline, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
+  });
 }
 
 // One row per feature: the tick is what the person can do, the chip marks
@@ -4310,9 +4362,11 @@ function renderPermChips(grid, baseline) {
   });
 }
 
-async function saveUserAccess(username) {
+async function saveUserAccess(username, newRole) {
   const record = accessUser(username);
-  if (!record || String(record.role) === 'Admin') return;
+  // An account that is Admin — before or after this save — has nothing to
+  // narrow, and the backend would refuse the attempt.
+  if (!record || newRole === 'Admin') return;
   const wanted = readPermGrid(document.getElementById('userPermGrid'));
   if (!Object.keys(wanted).length) return;
   await api('setUserAccess', { username: username, permissions: wanted });
@@ -4417,7 +4471,12 @@ function closeUserModal() { document.getElementById('userModal').classList.add('
 async function handleUserSubmit(e) {
   e.preventDefault(); const errEl = document.getElementById('userError'); const btn = document.getElementById('userSubmit');
   errEl.textContent = ''; setBtnLoading(btn, activeUserMode === 'add' ? 'Adding…' : 'Saving…');
-  const params = { Username: document.getElementById('userUsername').value.trim(), Name: document.getElementById('userFormName').value.trim(), Role: document.getElementById('userRole').value, Department: document.getElementById('userDept').value, Email: document.getElementById('userEmail').value.trim(), Phone: document.getElementById('userPhone').value.trim(), };
+  if (document.getElementById('userRole').value === '__new__' && !chosenRole()) {
+    errEl.textContent = 'Name the new role, or pick one from the list.';
+    clearBtnLoading(btn, activeUserMode === 'add' ? 'Add person' : 'Save changes');
+    return;
+  }
+  const params = { Username: document.getElementById('userUsername').value.trim(), Name: document.getElementById('userFormName').value.trim(), Role: chosenRole(), Department: document.getElementById('userDept').value, Email: document.getElementById('userEmail').value.trim(), Phone: document.getElementById('userPhone').value.trim(), };
   try {
     if (activeUserMode === 'add') {
       const result = await api('addUser', params);
@@ -4430,7 +4489,7 @@ async function handleUserSubmit(e) {
       // Access is saved after the details, because moving someone to
       // another department changes the tier its differences are measured
       // against.
-      await saveUserAccess(params.Username);
+      await saveUserAccess(params.Username, params.Role);
       toast('Saved ' + params.Name);
     }
     closeUserModal();
@@ -4576,6 +4635,14 @@ function wireStaticEvents() {
 
   document.getElementById('addUserBtn').addEventListener('click', function () { openUserModal(null); });
   document.getElementById('tierDefaultsBtn').addEventListener('click', openTierModal);
+  document.getElementById('userRole').addEventListener('change', function () {
+    const isNew = this.value === '__new__';
+    document.getElementById('userRoleNew').classList.toggle('hidden', !isNew);
+    if (isNew) document.getElementById('userRoleNew').focus();
+    refreshAccessPreview();
+  });
+  document.getElementById('userRoleNew').addEventListener('input', refreshAccessPreview);
+  document.getElementById('userDept').addEventListener('change', refreshAccessPreview);
   document.getElementById('fixCloseBtn').addEventListener('click', closeFixModal);
   document.getElementById('fixCancelBtn').addEventListener('click', closeFixModal);
   document.getElementById('fixSaveBtn').addEventListener('click', saveFix);
