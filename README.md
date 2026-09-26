@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.9.1
+**Current version:** 3.10.0
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,70 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.10.0
+
+### Daily mail is a subscription, not a power
+
+Since 3.8.0, "Admin holds every feature" included the two daily mails, so every Admin was mailed every report with no way to opt out — noreply@calgas.in has been mailing the workbook to itself. Mail is now what a person *receives*, separate from what they may *do*. Admins still hold every power, but get the daily mails only if they tick them: an Admin's form in Team & Access shows just those two switches. Everyone else is unchanged — mail follows their tier and their own overrides.
+
+The old `DailyMailRM` / `DailyMailFG` columns are no longer read, written or recreated, and can be deleted.
+
+`ADMIN_migrateAccess()` now carries access over **once**. Run again, it used to re-apply the old role rules — re-granting any power an Admin had since removed — and would have read deleted mail columns as "unsubscribe". It now recognises that it has already run (the Access_Templates tab exists) and leaves every account's access alone.
+
+### Weekly off-day
+
+A **Weekly Off** column in the Dropdowns tab — "Sunday", or "Sun" — holds automatic mail every week, so the Holidays list only needs festivals and one-off closures. A dated holiday that falls on the weekly off-day is reported by its own name.
+
+### Departments that stock is booked to
+
+Admin, Management and Manager are tiers of people, not places material goes, but they appeared in the stock entry form's department list and stock could be booked to them. They are now left out of the entry and correction forms, and the backend refuses them. An Admin's entry form starts on Stores rather than "Admin".
+
+This follows the department's category by default. A **Stock_Use** column (TRUE/FALSE) in the Departments tab overrides it per department where filled in. An old entry already booked to Admin can still be corrected, and moved to a real department.
+
+### Before and after in the audit log
+
+Account edits record only the fields that changed, both ways — `{"Department":"Purchase"}` → `{"Department":"Stores"}` — and a save with no changes writes nothing. Access changes record the previous and new overrides, tier changes record only the switch that moved, and activating or deactivating says which way. Account edits also now go through the same guard as every other write, so a name starting with `=` is stored as text.
+
+### Entry IDs no longer collide
+
+Entry IDs were the time to the second plus three random digits, so two entries in the same second shared an ID about once in 900. That was harmless while IDs were only labels, but correcting and deleting find an entry by its ID. The random part is now six hex characters. Existing IDs stay valid, and if two older entries ever do share an ID, correcting or deleting either is refused rather than acting on whichever comes first.
+
+---
+
+## What changed in 3.9.3
+
+Fixes found by reviewing the live sheets.
+
+### No automatic mail on holidays
+
+Dates in the **Holidays** column of the Dropdowns tab (with an optional **Holiday Reason** beside them) get no automatic mail — neither the morning stock workbook nor the drift alert. Nothing is lost: stock and drift are states, so the next working day's mail reports them as they then stand. Mail sent by hand is never held back. Dates are compared as calendar days in the spreadsheet's time zone, so 27/09/2026 matches the morning of 27 September in India rather than the UTC instant on the 26th.
+
+### The history's mismatch warning raised a false alarm
+
+3.9.1 compared an item's history with a balance loaded at a different moment. When someone posted from another device in between — exactly what happened on 26 Sep, when an issue of 0.18 KG went in at 14:12 and the history on screen had been loaded before it — a correct balance was reported as broken. The history and its balance are now read in the same request (`withStock` on the ledger read), the history shows that balance, and a disagreement is only reported if a second read confirms it.
+
+### #ERROR! in AuditLog, and typed text that could run as a formula
+
+Sheets reads a cell beginning with `=`, `+`, `-` or `@` as a formula. Access overrides such as `+stock.recalculate` were logged that way and showed as `#ERROR!`; a remark someone types starting with `=` would have been run as a formula inside the spreadsheet. Every value written by the app is now guarded with a leading apostrophe when it would otherwise be read as a formula. Sheets drops the apostrophe itself, so the stored text is exactly what was written.
+
+### Invoice dates showed 05:30
+
+A form's date, `2026-09-24`, was read as midnight UTC and shown in India as 05:30 — the right day with a spurious time, and the wrong day for anyone west of Greenwich. Dates from forms are now built as midnight in the script's own time zone. Existing rows keep their 05:30; the day is still right.
+
+---
+
+## What changed in 3.9.2
+
+### The Rate box fills from Standard cost
+
+3.9.0 was built on a wrong premise: that the item master held no price. It does — `StandardCost`, on both RM_Master and FG_Master — and it was missed because the search for a price column looked for "Rate" and "Price" but not "Cost". With receipts rarely carrying a rate, the Rate box was left empty for almost every item.
+
+The entry form now fills the Rate box from the item's Standard cost. The master is already loaded, so it appears at once, with no lookup. It is the same figure for every movement of the item, which keeps stock values comparable from one entry to the next. The header shows it as "std cost".
+
+The last price actually paid is still fetched, and now sits beside it in the hint when it differs — "Last paid ₹12.25 on 22 Aug 2026 · NILRAJ…" — so a receipt at a new price stands out. It fills the box only for an item with no Standard cost, and the hint says so. With neither, the box stays empty and the hint says where to set one. A rate the operator types is never overwritten.
 
 ---
 
@@ -43,7 +107,7 @@ When the list on screen is the item's whole history — not filtered, and not cu
 
 ### The current price, fetched into the entry form
 
-Nothing in the item master records a price — the only prices in the system are the optional Rate on individual ledger entries. So the current price is the rate on the **most recent receipt that carried one**: what was last paid. A new read action, `getItemPrice`, finds it by scanning the ledger from the newest entry backwards, and stops at the first match, so a recent price costs a single chunk read however long the ledger grows. A later receipt with no rate is skipped rather than read as zero.
+*(Corrected in 3.9.2: the master does record a price, `StandardCost`, and the form now uses it first.)* The current price here is the rate on the **most recent receipt that carried one**: what was last paid. A new read action, `getItemPrice`, finds it by scanning the ledger from the newest entry backwards, and stops at the first match, so a recent price costs a single chunk read however long the ledger grows. A later receipt with no rate is skipped rather than read as zero.
 
 When the entry form opens, that price goes into the Rate box and under the stock figure in the header, with a hint saying where it came from — the date and supplier of the receipt. It is a suggestion, not a fact about this delivery: once the operator types their own rate it is never overwritten.
 
@@ -514,7 +578,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.9.1` / `3.9.1` / `calgas-shell-v25`.
+Currently `3.10.0` / `3.10.0` / `calgas-shell-v28`.
 
 ---
 
