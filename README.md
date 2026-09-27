@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.10.0
+**Current version:** 3.10.1
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,26 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.10.1
+
+### "This API accepts POST requests only"
+
+That message is the backend's `doGet` reply: a request left the app as a POST and reached Google as a GET, bounced through a redirect on Google's side. It came in bursts — a correction would go through, then reads would fail, first with an HTML page and then with this message, and even signing in failed the same way. Since sign-in carries no session, the session was never the problem; signing out and back in only helped because time passed. Several things in the app made those bursts hurt far more than they needed to:
+
+- **Retrying what is safe to retry.** Reads, and writes that can't do their work twice — a correction's values are absolute, a repeated delete finds the entry already gone, account and access saves set values — are now retried through an odd reply, three times, 1.5 s, 3 s and 6 s apart. Most hiccups pass unnoticed. A delete whose first reply was lost is reported as done. A write that isn't safe to repeat, such as adding an item, is sent once, and says it isn't certain it went through.
+- **The newer writes were missing from the list of writes.** Corrections, deletes and access changes were treated as reads, so a delete that timed out was quietly re-sent and then reported "Entry not found" — a failure message for a delete that had worked.
+- **Starting up no longer signs you out over a hiccup.** Any failure while restoring the session used to throw the session away. Now only a session the backend actually refuses is ended; otherwise the sign-in screen says you're still signed in and offers Try again.
+- **The service worker is out of the API path.** It re-sent every API request itself while caching none of them — a layer that could only add failures.
+- **What Google sent back is recorded.** When a reply isn't the app's JSON, its status, final URL and first 300 characters are kept — the last ten — under `localStorage.stock_api_diag`, and logged to the console as `[CALGAS] Unexpected reply from Google`. If Google's reply is its own sign-in page, the app says the deployment's "Who has access" isn't set to Anyone, rather than retrying.
+
+### One sign-in per account
+
+Signing in now closes the account's other sessions — a phone left signed in, another browser, a tab closed without signing out — so the Sessions tab holds one row per account. The device that was replaced goes to the sign-in screen on its next action and is told why. Tabs and apps in the same browser share one sign-in (ELE Tracker uses the same one), and follow whichever signed in last rather than closing each other.
+
+A shared login such as "production", used on two devices at once, will now keep signing the other device out. That account needs splitting into one per person.
 
 ---
 
@@ -578,7 +598,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.10.0` / `3.10.0` / `calgas-shell-v28`.
+Currently `3.10.1` / `3.10.1` / `calgas-shell-v29`.
 
 ---
 
