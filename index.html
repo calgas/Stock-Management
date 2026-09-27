@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.10.0">
+<meta name="app-version" content="3.10.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1649,7 +1649,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.10.0';
+const APP_VERSION = '3.10.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1889,8 +1889,33 @@ const MUTATING_ACTIONS = {
   bulkAddRMItems: true, bulkAddFGItems: true,
   addUser: true, updateUser: true, deactivateUser: true, reactivateUser: true,
   adminResetUserPassword: true, changePassword: true,
-  sendTestStockMail: true, requestPasswordReset: true, resetPasswordWithOtp: true
+  sendTestStockMail: true, requestPasswordReset: true, resetPasswordWithOtp: true,
+  // Added with ledger corrections and access control, and missing from here
+  // until 3.10.1 — so they were treated as reads, and a delete that timed out
+  // was quietly re-sent and then reported "Entry not found" as a failure.
+  updateRMTransaction: true, updateFGTransaction: true, deleteRMTransaction: true, deleteFGTransaction: true,
+  setUserAccess: true, setAccessTemplate: true, login: true, logout: true
 };
+
+// Writes that are safe to send again when a reply is lost, because a second
+// copy can't do the work twice: a correction's values are absolute, so a
+// repeat changes nothing; a repeated delete finds the entry already gone
+// (and that is then reported as done); account and access saves set values
+// rather than adding to them; and a repeated sign-in simply replaces the
+// first, since an account has one sign-in at a time.
+const REPEATABLE_WRITES = {
+  updateRMTransaction: true, updateFGTransaction: true, deleteRMTransaction: true, deleteFGTransaction: true,
+  updateUser: true, setUserAccess: true, setAccessTemplate: true, login: true, logout: true
+};
+
+// Waits before each retry when Google's reply isn't ours. Its hiccups tend
+// to pass within seconds, so a few spaced tries ride through most of them.
+const ODD_REPLY_BACKOFF_MS = [1500, 3000, 6000];
+
+// The backend's words for a session it won't accept.
+function isSessionRejection(message) {
+  return /Invalid session|Session expired|Missing session token|signed in on another device/i.test(message || '');
+}
 
 // crypto.randomUUID is unavailable on http:// origins and older WebViews,
 // which the shop-floor tablets may still be on — fall back to random bytes.
@@ -1902,12 +1927,46 @@ function newClientTxnId() {
   return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-async function _apiRequest(action, params, retries) {
-  retries = retries !== undefined ? retries : 1;
+// When Google's reply isn't the app's own JSON, what it actually was is kept
+// here — the last ten — so the cause can be seen rather than guessed at:
+// copy(localStorage.stock_api_diag) in the browser console.
+function recordOddReply(action, res, text, kind) {
+  const entry = {
+    at: new Date().toISOString(), action: action, kind: kind,
+    status: res ? res.status : null, url: res ? res.url : null, redirected: res ? res.redirected : null,
+    type: res ? res.headers.get('content-type') : null,
+    body: String(text || '').replace(/\s+/g, ' ').slice(0, 300)
+  };
+  try {
+    const list = JSON.parse(localStorage.getItem('stock_api_diag') || '[]');
+    list.push(entry);
+    localStorage.setItem('stock_api_diag', JSON.stringify(list.slice(-10)));
+  } catch (err) {}
+  if (window.console && console.warn) console.warn('[CALGAS] Unexpected reply from Google', entry);
+}
+
+// Another tab or app on this browser — ELE Tracker shares this sign-in — may
+// have signed in since this page loaded. Its token is the live one now, so
+// it's used rather than the one this page started with, which the backend
+// will have closed.
+function adoptLatestToken() {
+  if (!state.session) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem('stock_session') || 'null');
+    if (stored && stored.token && stored.username === state.session.username && stored.token !== state.session.token) {
+      state.session.token = stored.token;
+    }
+  } catch (err) {}
+}
+
+async function _apiRequest(action, params, attempt, afterUnknown) {
+  attempt = attempt || 0;
+  adoptLatestToken();
   const body = Object.assign({ action: action }, params);
   if (state.session && action !== 'login' && action !== 'requestPasswordReset' && action !== 'resetPasswordWithOtp') {
     body.token = state.session.token;
   }
+  const isWrite = !!MUTATING_ACTIONS[action];
   const controller = new AbortController();
   const timer = setTimeout(function () { controller.abort(); }, API_TIMEOUT_MS);
   try {
@@ -1917,44 +1976,72 @@ async function _apiRequest(action, params, retries) {
       body: JSON.stringify(body),
       signal: controller.signal
     });
+    const text = await res.text();
     let json;
     try {
-      json = await res.json();
+      json = JSON.parse(text);
     } catch (parseErr) {
-      // Apps Script answered with something that isn't JSON — usually an HTML
-      // error or sign-in page. The request may still have executed, so this
-      // is an unknown outcome, not a failure.
-      const unreadable = new Error('The server\u2019s reply could not be read. The entry may still have gone through.');
+      recordOddReply(action, res, text, 'unreadable');
+      // Sent to Google's sign-in page: the deployment isn't open to everyone.
+      // No amount of retrying fixes that, so it's said plainly instead.
+      if (/accounts\.google\.com|ServiceLogin/i.test((res.url || '') + ' ' + text.slice(0, 2000))) {
+        throw new Error('Google asked for a sign-in, which means the backend deployment\u2019s \u201cWho has access\u201d ' +
+                        'isn\u2019t set to Anyone. An Admin needs to change it under Deploy \u2192 Manage deployments.');
+      }
+      const unreadable = new Error('unreadable');
+      unreadable.oddReply = true;
       unreadable.indeterminate = true;
       throw unreadable;
     }
     if (!json.success) {
       const failed = new Error(json.error || 'Request failed');
-      // doGet's reply. A POST that gets bounced through a redirect arrives
-      // as a GET, so this says nothing about whether the original POST ran.
-      if (/POST requests only/i.test(json.error || '')) failed.indeterminate = true;
+      // doGet's reply: the POST arrived at Google as a GET, bounced through a
+      // redirect. It says nothing about whether the original POST ran.
+      if (/POST requests only/i.test(json.error || '')) {
+        recordOddReply(action, res, text, 'bounced');
+        failed.oddReply = true;
+        failed.indeterminate = true;
+      }
+      if (isSessionRejection(json.error)) failed.sessionRejected = true;
       throw failed;
     }
     return json.data;
   } catch (err) {
-    // A timed-out request may already have committed server-side, so a blind
-    // retry can double-post. Only retry when that is provably safe: either
-    // the action does not mutate state, or it carries a clientTxnId the
-    // backend de-duplicates against.
-    const transportFailure = err.name === 'AbortError' || (err.message && err.message.indexOf('fetch') > -1);
-    // A request that never came back may still have been carried out. The
-    // caller needs to know the difference between "refused" and "unknown".
-    if (transportFailure) err.indeterminate = true;
-    const safeToRetry = !MUTATING_ACTIONS[action] || body.clientTxnId;
-    const retryable = transportFailure && safeToRetry;
-    if (retries > 0 && retryable) {
-      await new Promise(function (r) { setTimeout(r, 700); });
-      return _apiRequest(action, params, retries - 1);
+    const timedOut = err.name === 'AbortError';
+    const transport = timedOut || (err.message && err.message.indexOf('fetch') > -1);
+    if (transport) err.indeterminate = true;
+    const safeToRepeat = !isWrite || body.clientTxnId || REPEATABLE_WRITES[action];
+
+    // A delete re-sent after its first reply was lost finds the entry gone —
+    // which means the first one worked.
+    if (afterUnknown && /^delete(RM|FG)Transaction$/.test(action) && /Entry not found/.test(err.message || '')) {
+      return { txnId: params.txnId, alreadyDone: true };
     }
-    if (err.name === 'AbortError') {
-      const timedOut = new Error('Request timed out — check your connection and try again.');
-      timedOut.indeterminate = true;
-      throw timedOut;
+
+    if (safeToRepeat && err.oddReply && attempt < ODD_REPLY_BACKOFF_MS.length) {
+      await new Promise(function (r) { setTimeout(r, ODD_REPLY_BACKOFF_MS[attempt]); });
+      return _apiRequest(action, params, attempt + 1, true);
+    }
+    if (safeToRepeat && transport && attempt < 1) {
+      await new Promise(function (r) { setTimeout(r, 700); });
+      return _apiRequest(action, params, attempt + 1, true);
+    }
+
+    if (err.sessionRejected && state.session && action !== 'login' && action !== 'logout') {
+      endSessionHere(err.message);
+    }
+    if (timedOut) {
+      const t = new Error('Request timed out — check your connection and try again.');
+      t.indeterminate = true;
+      throw t;
+    }
+    if (err.oddReply) {
+      const odd = new Error(isWrite
+        ? 'Google sent back an unexpected reply, so it isn\u2019t certain this went through. Check before trying again.'
+        : 'Google sent back an unexpected reply, even after a few tries. It usually clears within a minute \u2014 try again shortly.');
+      odd.indeterminate = true;
+      odd.oddReply = true;
+      throw odd;
     }
     throw err;
   } finally {
@@ -2424,6 +2511,7 @@ async function init() {
   }
 
   setLoaderProgress(38, 'Restoring session…');
+  let startupMessage = '', startupRetry = false;
   const session = loadSession();
   if (session) {
     state.session = session;
@@ -2436,11 +2524,37 @@ async function init() {
       state.permissions = who.permissions || {};
       await boot();
       return;
-    } catch (err) { clearSession(); }
+    } catch (err) {
+      // Only a session the backend actually refused is thrown away. A reply
+      // that didn't come back, or came back garbled, says nothing about the
+      // session — signing someone out for Google's hiccup is what made
+      // "sign out, reload, sign in" feel like the cure.
+      if (err.sessionRejected) {
+        clearSession();
+        startupMessage = /another device/i.test(err.message)
+          ? 'You were signed out here because this account signed in on another device.'
+          : '';
+      } else {
+        startupMessage = 'Couldn\u2019t reach the server just now, so the app didn\u2019t open. You\u2019re still signed in.';
+        startupRetry = true;
+      }
+    }
   }
   setLoaderProgress(100, 'Ready');
   await hideInitialLoader();
+  document.getElementById('appShell').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
+  const errEl = document.getElementById('loginError');
+  if (startupMessage) errEl.textContent = startupMessage;
+  if (startupRetry) {
+    const again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'btn-ghost';
+    again.style.cssText = 'display:block;margin-top:10px;';
+    again.textContent = 'Try again';
+    again.addEventListener('click', function () { location.reload(); });
+    errEl.appendChild(again);
+  }
 }
 
 async function boot() {
@@ -2561,6 +2675,25 @@ async function handleLogin(e) {
     await boot();
   } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, 'Sign in'); }
 }
+// Called when the backend refuses this page's session mid-use — most often
+// now because the account signed in on another device. Rather than leaving
+// every button to fail, the page goes to sign-in and says why.
+let sessionEnding = false;
+function endSessionHere(message) {
+  if (sessionEnding) return;
+  sessionEnding = true;
+  try { stopFreshnessInterval(); } catch (err) {}
+  clearSession();
+  document.querySelectorAll('.modal-backdrop').forEach(function (m) { m.classList.add('hidden'); });
+  document.getElementById('appShell').classList.add('hidden');
+  hideAllAuthScreens();
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginError').textContent = /another device/i.test(message || '')
+    ? 'You were signed out here because this account signed in on another device.'
+    : 'Your session has ended \u2014 please sign in again.';
+  setTimeout(function () { sessionEnding = false; }, 1000);
+}
+
 async function handleLogout() {
   const loader = document.getElementById('initialLoader');
   if (loader) { loader.classList.remove('hidden', 'loader-exit'); loader.setAttribute('aria-busy', 'true'); }
@@ -4115,7 +4248,9 @@ async function deleteFix() {
     const action = entry.key === 'fg' ? 'deleteFGTransaction' : 'deleteRMTransaction';
     const result = await api(action, { txnId: entry.txnId });
     closeFixModal();
-    toast('Deleted · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
+    toast(result.alreadyDone
+      ? 'Deleted · ' + entry.code + ' — the first reply was lost, but the entry is gone'
+      : 'Deleted · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
     await afterLedgerFix(entry.key);
   } catch (err) {
     errEl.textContent = err.message;
