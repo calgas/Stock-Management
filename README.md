@@ -20,6 +20,28 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 
 ---
 
+## What changed in 3.14.0
+
+**Production Tracker's paperwork arrives on its entries.** When a raw-material or finished-goods handover is received in Production Tracker, its files — Purchase's invoice, a delivery note, a photo — are recorded on the Stock Management entry the receipt posts. They show in history like any other file, with **from HO-…** under the name, and open the same way. They're the same Drive files, not copies. Removing one here follows the usual rule (*Correct entries*, with a reason).
+
+The Attachments tab gains a **Source** column saying where such a file came from; an existing tab gains it on its own.
+
+**Deploying:** deploy Code.gs as a new version before Production Tracker 3.1, then push index.html and sw.js.
+
+## What changed in 3.13.0
+
+**Files on entries.** Any entry — raw material or finished goods, any type — can carry photos and PDFs: an invoice, a delivery note, a challan. Never required, up to 10 per entry.
+
+- **On the entry form**, *Add photos or PDFs* offers the camera, photos or files on a phone. A photo is shrunk on the phone before it's sent — about 2000 px on its long side, usually a few hundred KB — so invoices stay readable and upload quickly on mobile data. PDFs go as they are, up to 10 MB each. Anything that isn't a photo or a PDF is refused on the spot.
+- **The entry saves first**, exactly as before; then the files go one at a time. If one fails on a weak signal, the entry is still saved, and **Retry files** sends just the missing ones. Each file carries its own duplicate-safe ID, so a retry can never store it twice.
+- **In history and on the Ledger page**, an entry with files shows **📎** and how many. Tap it to see them: photos open full screen (tap to zoom); PDFs open in a new tab on a computer or iPhone, and on an Android phone are saved under their real name for the phone's PDF viewer to open.
+- **Adding later.** Invoices often arrive after the goods. Whoever could post for the entry's department can add files to it afterwards — rows show a faint **📎+** where you can.
+- **Removing** a file needs *Correct entries* and asks for a reason. It's taken off the entry and recorded in the audit log, but kept in Drive — like a deleted entry, it stays on record.
+
+**Where the files are.** In Google Drive, in a folder called **CALGAS Stock Attachments** in the account that owns this script, with a folder per month; each file is named after its entry. The folder's ID is kept in Settings (*ATTACHMENTS_FOLDER_ID*), so it can be renamed or moved in Drive. Files are never shared by link: the app fetches them through its own sign-in, so floor staff need no Google account, and an invoice can't leak through a forwarded URL. The new **Attachments** tab records which file belongs to which entry; the ledger tabs themselves are unchanged.
+
+**Deploying:** deploy Code.gs as a new version, then push index.html and sw.js. The Attachments tab and the Drive folder are created by the first upload. The script already uses Drive for exports, so no new Google permission should be asked for; if Apps Script does ask when you deploy, approve it — it's for storing these files.
+
 ## What changed in 3.12.0
 
 **ELE Tracker joins Team & Access.** The switch now has three apps. ELE's two features:
