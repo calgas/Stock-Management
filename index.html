@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.12.0">
+<meta name="app-version" content="3.14.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -770,6 +770,51 @@
     .txn-stock-value { font-size: 17px; }
     .txn-stock-after { margin-top: 0; }
   }
+  /* Files on entries. The viewer opens from history, so it stacks above it. */
+  #attachModal { z-index: 110; }
+  .attach-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btn-attach { padding: 8px 12px; font-size: 13px; }
+  .attach-note { font-size: 12px; color: var(--ink-soft); }
+  .attach-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .attach-list:empty { display: none; }
+  .attach-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .attach-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex: none; background: var(--line);
+                  display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: var(--ink-soft); }
+  .attach-meta { flex: 1; min-width: 0; }
+  .attach-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attach-sub { font-size: 11.5px; color: var(--ink-soft); }
+  .attach-sub.is-bad { color: #c0392b; }
+  .attach-sub.is-ok { color: #2e7d32; }
+  .attach-x { border: 0; background: transparent; color: var(--ink-soft); font-size: 16px; cursor: pointer; padding: 4px 8px; }
+  .attach-status { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; }
+  .attach-status:empty { display: none; }
+  .attach-chip { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+                 border: 1px solid var(--line); background: transparent; font: inherit; font-size: 11.5px; font-weight: 700;
+                 color: var(--ink); cursor: pointer; vertical-align: middle; line-height: 1.6; }
+  .attach-chip.is-empty { color: var(--ink-soft); font-weight: 600; opacity: .7; }
+  .attach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 6px 0 12px; }
+  .attach-tile { position: relative; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  .attach-open { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+  .attach-tile-img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: var(--line); }
+  .attach-tile-pdf { width: 100%; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+                     font-weight: 800; font-size: 18px; letter-spacing: .06em; color: #fff; background: #b3261e; }
+  .attach-tile-cap { padding: 6px 8px; }
+  .attach-tile-cap .attach-name { font-size: 12px; }
+  .attach-remove { position: absolute; top: 5px; right: 5px; border: 0; border-radius: 999px; width: 28px; height: 28px;
+                   background: rgba(0, 0, 0, .6); color: #fff; cursor: pointer; font-size: 13px; }
+  .attach-empty { grid-column: 1 / -1; color: var(--ink-soft); font-size: 13px; padding: 8px 0; }
+  .image-viewer { position: fixed; inset: 0; z-index: 5000; background: rgba(10, 10, 12, .95); display: flex; flex-direction: column; }
+  .image-viewer.hidden { display: none; }
+  .iv-bar { display: flex; align-items: center; gap: 8px; padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; color: #fff; }
+  .iv-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+  .iv-btn { border: 1px solid rgba(255, 255, 255, .35); background: transparent; color: #fff; border-radius: 8px; padding: 7px 11px;
+            font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+  .iv-scroll { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+               padding-bottom: env(safe-area-inset-bottom, 0px); touch-action: pan-x pan-y pinch-zoom; }
+  .iv-scroll img { max-width: 100%; max-height: 100%; cursor: zoom-in; }
+  .iv-scroll.is-zoomed { align-items: flex-start; justify-content: flex-start; }
+  .iv-scroll.is-zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+
   /* Which app's switches are showing. */
   .app-switch { display: inline-flex; gap: 4px; padding: 3px; margin: 6px 0 10px; border: 1px solid var(--line);
                 border-radius: var(--radius-sm); background: var(--surface-2, transparent); }
@@ -1412,11 +1457,52 @@
 
         <div class="field"><label for="txnReference">Reference (optional)</label><input type="text" id="txnReference" placeholder="PO / work order / invoice #"></div>
         <div class="field"><label for="txnRemarks">Remarks (optional)</label><input type="text" id="txnRemarks"></div>
+        <div class="field span-2 attach-field">
+          <label>Files (optional)</label>
+          <div class="attach-bar">
+            <button type="button" class="btn-ghost btn-attach" id="txnAttachBtn">📎 Add photos or PDFs</button>
+            <span class="attach-note">Invoice, delivery note… up to 10 files</span>
+          </div>
+          <input type="file" id="txnAttachInput" accept="image/*,application/pdf" multiple hidden>
+          <div class="attach-list" id="txnAttachList"></div>
+          <div class="attach-status" id="txnAttachStatus" aria-live="polite"></div>
+        </div>
       </div>
       <div class="modal-error" id="txnError"></div>
       <div class="modal-actions"><button type="button" class="btn-ghost" id="txnCancelBtn">Cancel</button><button type="submit" class="btn-primary" id="txnSubmit">Post transaction</button></div>
     </form>
   </div>
+</div>
+
+<div id="attachModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-drag-handle" aria-hidden="true"></div>
+    <div class="modal-head">
+      <div><div class="modal-eyebrow" id="attachEyebrow">Files</div><h3 id="attachTitle">Files</h3><div class="mono muted" id="attachSub"></div></div>
+      <button class="icon-btn" id="attachCloseBtn" aria-label="Close">✕</button>
+    </div>
+    <div class="attach-grid" id="attachGrid"></div>
+    <div class="attach-status" id="attachStatus" aria-live="polite"></div>
+    <div id="attachAddWrap" class="hidden">
+      <div class="attach-bar">
+        <button type="button" class="btn-ghost btn-attach" id="attachAddBtn">📎 Add photos or PDFs</button>
+        <button type="button" class="btn-ghost btn-attach hidden" id="attachRetryBtn">Retry</button>
+      </div>
+      <input type="file" id="attachAddInput" accept="image/*,application/pdf" multiple hidden>
+      <div class="attach-list" id="attachAddList"></div>
+      <div class="attach-status" id="attachAddStatus" aria-live="polite"></div>
+    </div>
+    <div class="modal-error" id="attachError"></div>
+  </div>
+</div>
+
+<div id="imageViewer" class="image-viewer hidden" role="dialog" aria-label="Photo">
+  <div class="iv-bar">
+    <span class="iv-name" id="ivName"></span>
+    <a class="iv-btn" id="ivDownload" download>Download</a>
+    <button type="button" class="iv-btn" id="ivClose" aria-label="Close">✕</button>
+  </div>
+  <div class="iv-scroll" id="ivScroll"><img id="ivImg" alt=""></div>
 </div>
 
 <div id="itemModal" class="modal-backdrop hidden">
@@ -1657,13 +1743,15 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.12.0';
+const APP_VERSION = '3.14.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
 const COMPANY_LOGO_FULL_URL = './logo/CALGAS%20CAPACITORS-logo-768x240.jpg';
 const PAGE_SIZE = 50;
 const API_TIMEOUT_MS = 30000;
+// A file is far bigger than an entry, and a phone may be on a weak signal.
+const ACTION_TIMEOUT_MS = { uploadAttachment: 180000, getAttachmentFile: 120000 };
 const REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const _scriptCache = {};
@@ -1902,7 +1990,8 @@ const MUTATING_ACTIONS = {
   // until 3.10.1 — so they were treated as reads, and a delete that timed out
   // was quietly re-sent and then reported "Entry not found" as a failure.
   updateRMTransaction: true, updateFGTransaction: true, deleteRMTransaction: true, deleteFGTransaction: true,
-  setUserAccess: true, setAccessTemplate: true, login: true, logout: true
+  setUserAccess: true, setAccessTemplate: true, login: true, logout: true,
+  uploadAttachment: true, removeAttachment: true
 };
 
 // Writes that are safe to send again when a reply is lost, because a second
@@ -1913,7 +2002,10 @@ const MUTATING_ACTIONS = {
 // first, since an account has one sign-in at a time.
 const REPEATABLE_WRITES = {
   updateRMTransaction: true, updateFGTransaction: true, deleteRMTransaction: true, deleteFGTransaction: true,
-  updateUser: true, setUserAccess: true, setAccessTemplate: true, login: true, logout: true
+  updateUser: true, setUserAccess: true, setAccessTemplate: true, login: true, logout: true,
+  // A second copy finds the file already removed and says so. (An upload
+  // carries its own duplicate-safe ID, which already makes it safe.)
+  removeAttachment: true
 };
 
 // Waits before each retry when Google's reply isn't ours. Its hiccups tend
@@ -1977,7 +2069,7 @@ async function _apiRequest(action, params, attempt, afterUnknown) {
   }
   const isWrite = !!MUTATING_ACTIONS[action];
   const controller = new AbortController();
-  const timer = setTimeout(function () { controller.abort(); }, API_TIMEOUT_MS);
+  const timer = setTimeout(function () { controller.abort(); }, ACTION_TIMEOUT_MS[action] || API_TIMEOUT_MS);
   try {
     const res = await fetch(GOOGLE_API_URL, {
       method: 'POST',
@@ -2118,7 +2210,8 @@ async function resolvePendingTxn(options) {
       }
       // If the form for this entry is still open, its work is done — close it
       // so nobody is left looking at an entry that has already been recorded.
-      if (activeTxnClientId === p.clientTxnId) closeTxnModal();
+      lastResolvedTxn = { clientTxnId: p.clientTxnId, txnId: answer.txnId || '' };
+      if (activeTxnClientId === p.clientTxnId && !pendingTxnFiles().length) closeTxnModal();
       if (!options.silent) toast('Recovered: ' + describePendingTxn(p) + ' was saved. No second entry was made.');
       return 'saved';
     }
@@ -3207,6 +3300,7 @@ function renderCharts(rmRows, fgRows) {
    TRANSACTION MODAL
    ========================================================================= */
 function openTxnModal(key, code) {
+  resetTxnAttachments();
   activeTxnConfig = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
   // One ID per entry. It survives failed attempts so a resend is recognised
   // as the same movement; a fresh one is only minted when a new entry starts.
@@ -3590,10 +3684,16 @@ function guardQtyInput(inputEl, typeEl) {
   return applyMin;
 }
 
-function closeTxnModal() { document.getElementById('txnModal').classList.add('hidden'); activeTxnConfig = null; activeTxnClientId = null; }
+function closeTxnModal() {
+  document.getElementById('txnModal').classList.add('hidden'); activeTxnConfig = null; activeTxnClientId = null;
+  resetTxnAttachments();
+}
 
 async function handleTxnSubmit(e) {
-  e.preventDefault(); const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
+  e.preventDefault();
+  // The entry is already saved; what's left is its files.
+  if (txnUploadStage) { await runTxnUploads(); return; }
+  const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
   errEl.textContent = ''; setBtnLoading(btn, 'Posting…');
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
@@ -3620,13 +3720,21 @@ async function handleTxnSubmit(e) {
         date: new Date().toISOString(), supplier: payload.supplier || '', invoiceNo: payload.invoiceNo || '' };
     }
     state[config.key + 'LastUpdated'] = new Date(); updateFreshnessLabel(config.key);
-    closeTxnModal();
-    toast(result.duplicate
+    const postedMsg = result.duplicate
       ? 'Already recorded · ' + code + ' · balance ' + qtyWithUnit(result.newBalance, unit) + ' (no second entry made)'
-      : 'Posted ' + txnType + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit));
+      : 'Posted ' + txnType + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit);
     if (result.warning) toast(result.warning, true);
     if (config.key === 'rm') renderRMPage(); else renderFGPage();
     renderHome();
+    // The entry is safely recorded before any file is sent, so a file that
+    // fails on a weak signal never costs the entry.
+    if (pendingTxnFiles().length && result.txnId) {
+      txnUploadStage = { ledger: config.key, txnId: result.txnId, message: postedMsg };
+      await runTxnUploads();
+    } else {
+      closeTxnModal();
+      toast(postedMsg);
+    }
   } catch (err) {
     if (!err.indeterminate) {
       // The server answered and said no — nothing was written.
@@ -3639,8 +3747,15 @@ async function handleTxnSubmit(e) {
     errEl.textContent = 'Connection lost. Checking whether this entry was saved…';
     const outcome = await resolvePendingTxn({ silent: true });
     if (outcome === 'saved') {
-      closeTxnModal();
-      toast('Saved · ' + txnType + ' · ' + code + ' · ' + qtyWithUnit(payload.qty, unit) + ' — it had gone through, so no second entry was made.');
+      const savedMsg = 'Saved · ' + txnType + ' · ' + code + ' · ' + qtyWithUnit(payload.qty, unit) + ' — it had gone through, so no second entry was made.';
+      const found = lastResolvedTxn && lastResolvedTxn.clientTxnId === payload.clientTxnId ? lastResolvedTxn : null;
+      if (pendingTxnFiles().length && found && found.txnId) {
+        txnUploadStage = { ledger: config.key, txnId: found.txnId, message: savedMsg };
+        await runTxnUploads();
+      } else {
+        closeTxnModal();
+        toast(savedMsg);
+      }
       await refreshStockData(config.key);
       if (config.key === 'rm') renderRMPage(); else renderFGPage();
       renderHome();
@@ -3649,7 +3764,7 @@ async function handleTxnSubmit(e) {
     } else {
       errEl.textContent = 'Still offline. This entry is held on this device and will be checked automatically when the connection returns — do not retype it.';
     }
-  } finally { clearBtnLoading(btn, 'Post transaction'); }
+  } finally { clearBtnLoading(btn, txnUploadStage ? 'Retry files' : 'Post transaction'); }
 }
 function applyLocalStockUpdate(config, code, newBalance) {
   const list = state[config.stockKey]; const idx = list.findIndex(function (s) { return s[config.codeField] === code; });
@@ -3658,6 +3773,489 @@ function applyLocalStockUpdate(config, code, newBalance) {
   if (idx > -1) { list[idx].CurrentBalance = newBalance; list[idx].StockStatus = status; list[idx].LastUpdated = new Date().toISOString(); } 
   else { const row = { CurrentBalance: newBalance, StockStatus: status, LastUpdated: new Date().toISOString() }; row[config.codeField] = code; list.push(row); }
   invalidateMergeCache();
+}
+
+/* =========================================================================
+   FILES ON ENTRIES
+
+   Photos and PDFs on any entry, never required. A photo is shrunk on the
+   phone before it's sent — invoices stay readable at 2000 px on the long
+   side, at a fraction of the size — and a small preview is made alongside
+   it, so a list of files shows at once without fetching each one. PDFs go
+   as they are.
+
+   Files are sent one at a time, each with its own duplicate-safe ID, after
+   the entry itself is saved: a failed file costs only that file, and a
+   retry can never store it twice.
+   ========================================================================= */
+
+const ATTACH_MAX_FILES = 10;
+const ATTACH_MAX_BYTES = 10 * 1024 * 1024;
+const ATTACH_IMAGE_EDGE = 2000;
+const ATTACH_THUMB_EDGE = 240;
+
+let txnFiles = [];          // chosen on the entry form
+let txnUploadStage = null;  // { ledger, txnId, message } once the entry is saved
+let lastResolvedTxn = null; // what a lost-reply check found
+let attachView = null;      // the file viewer's entry and its files
+const attachFileCache = {}; // opened files, by ID, so a second look is instant
+
+function formatBytes(n) {
+  n = Number(n) || 0;
+  return n >= 1048576 ? (Math.round(n / 104857.6) / 10) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+}
+
+function readAsBase64(blob) {
+  return new Promise(function (resolve, reject) {
+    const r = new FileReader();
+    r.onload = function () { resolve(String(r.result).split(',')[1] || ''); };
+    r.onerror = function () { reject(new Error('The file couldn\u2019t be read.')); };
+    r.readAsDataURL(blob);
+  });
+}
+
+function loadImageFrom(file) {
+  return new Promise(function (resolve, reject) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function () { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('unreadable')); };
+    img.src = url;
+  });
+}
+
+// Never enlarges. A white background first, so a screenshot with
+// transparent areas doesn't turn black as a JPEG.
+function drawScaled(img, edge, quality) {
+  const scale = Math.min(1, edge / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const g = canvas.getContext('2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  g.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return new Promise(function (resolve, reject) {
+    canvas.toBlob(function (b) { b ? resolve(b) : reject(new Error('The photo couldn\u2019t be prepared.')); }, 'image/jpeg', quality);
+  });
+}
+
+function isPdfFile(file) {
+  return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+}
+
+async function prepareAttachment(file) {
+  if (isPdfFile(file)) {
+    if (file.size > ATTACH_MAX_BYTES) throw new Error('Larger than 10 MB \u2014 too big to attach.');
+    return { fileName: file.name, mimeType: 'application/pdf', data: await readAsBase64(file), thumb: '', size: file.size };
+  }
+  let img;
+  try {
+    img = await loadImageFrom(file);
+  } catch (err) {
+    throw new Error(/^image\//.test(file.type) || /\.(heic|heif)$/i.test(file.name || '')
+      ? 'This photo\u2019s format can\u2019t be read here. Take it with the camera option, or save it as JPEG.'
+      : 'Only photos and PDFs can be attached.');
+  }
+  const full = await drawScaled(img, ATTACH_IMAGE_EDGE, 0.85);
+  const thumb = await drawScaled(img, ATTACH_THUMB_EDGE, 0.7);
+  if (full.size > ATTACH_MAX_BYTES) throw new Error('Larger than 10 MB even after shrinking.');
+  return {
+    fileName: String(file.name || 'photo').replace(/\.[A-Za-z0-9]{1,5}$/, '') + '.jpg', mimeType: 'image/jpeg',
+    data: await readAsBase64(full), thumb: await readAsBase64(thumb), size: full.size
+  };
+}
+
+// A file chosen but not yet sent. Getting it ready starts at once, so a
+// photo is shrunk while the rest of the form is being filled in.
+function makeAttachItem(file) {
+  const item = {
+    id: newClientTxnId(), clientTxnId: newClientTxnId(), name: file.name || 'file', size: file.size,
+    isPdf: isPdfFile(file), status: 'preparing', error: '', preview: '', prepared: null
+  };
+  if (!item.isPdf && /^image\//.test(file.type)) { try { item.preview = URL.createObjectURL(file); } catch (e) {} }
+  item.ready = prepareAttachment(file).then(function (p) {
+    item.prepared = p; item.size = p.size;
+    if (item.status === 'preparing') item.status = 'ready';
+  }).catch(function (err) { item.status = 'invalid'; item.error = err.message; });
+  return item;
+}
+
+function releaseAttachItems(list) {
+  (list || []).forEach(function (i) { if (i.preview) { URL.revokeObjectURL(i.preview); i.preview = ''; } });
+}
+
+function addPickedFiles(list, fileList, alreadyOnEntry) {
+  const room = ATTACH_MAX_FILES - (alreadyOnEntry || 0) - list.filter(function (i) { return i.status !== 'invalid'; }).length;
+  const files = Array.from(fileList || []);
+  if (files.length > room) {
+    toast('Up to ' + ATTACH_MAX_FILES + ' files per entry \u2014 ' + (room > 0 ? 'only the first ' + room + ' were added.' : 'no more can be added.'), true);
+  }
+  const added = files.slice(0, Math.max(0, room)).map(makeAttachItem);
+  added.forEach(function (i) { list.push(i); });
+  return added;
+}
+
+function attachItemHtml(item, removable) {
+  const face = item.preview
+    ? '<img class="attach-thumb" src="' + item.preview + '" alt="">'
+    : '<span class="attach-thumb">' + (item.isPdf ? 'PDF' : 'FILE') + '</span>';
+  const words = {
+    preparing: 'Getting ready\u2026', ready: formatBytes(item.size), uploading: 'Uploading\u2026',
+    done: 'Attached \u2713', failed: 'Didn\u2019t upload: ' + item.error, invalid: item.error
+  }[item.status];
+  const tone = item.status === 'failed' || item.status === 'invalid' ? ' is-bad' : item.status === 'done' ? ' is-ok' : '';
+  return '<div class="attach-item">' + face +
+    '<div class="attach-meta"><div class="attach-name">' + escapeHtml(item.name) + '</div>' +
+    '<div class="attach-sub' + tone + '">' + escapeHtml(words) + '</div></div>' +
+    (removable && item.status !== 'done' && item.status !== 'uploading'
+      ? '<button type="button" class="attach-x" data-attach-drop="' + item.id + '" aria-label="Remove ' + escapeHtml(item.name) + '">\u2715</button>' : '') +
+    '</div>';
+}
+
+async function uploadAttachItem(ledger, txnId, item) {
+  item.status = 'uploading'; item.error = '';
+  try {
+    await item.ready;
+    if (item.status === 'invalid') return;
+    const p = item.prepared;
+    await api('uploadAttachment', {
+      ledger: String(ledger).toUpperCase(), txnId: txnId, fileName: p.fileName, mimeType: p.mimeType,
+      data: p.data, thumb: p.thumb, clientTxnId: item.clientTxnId
+    });
+    item.status = 'done';
+    item.prepared = null;
+  } catch (err) {
+    item.status = 'failed'; item.error = err.message;
+  }
+}
+
+function myDepartment() { return (state.session && state.session.department) || ''; }
+
+// What the buttons offer. The backend checks again for itself.
+function canAttachTo(ledger, department) {
+  return can(ledger === 'fg' ? 'stock.fg.post' : 'stock.rm.post') &&
+         (can('stock.post.any') || String(department || '') === myDepartment());
+}
+function canRemoveFrom(department) {
+  return can('stock.ledger.edit') && (can('stock.post.any') || String(department || '') === myDepartment());
+}
+
+// The paperclip on a history or ledger row: how many files, or — for
+// someone who could add one — a faint way to add the first.
+function attachChip(ledger, txnId, count, department) {
+  if (!txnId || !ledger) return '';
+  const data = ' data-attach-ledger="' + escapeHtml(ledger) + '" data-attach-txn="' + escapeHtml(txnId) +
+               '" data-attach-dept="' + escapeHtml(department || '') + '"';
+  if (count > 0) return '<button type="button" class="attach-chip"' + data + ' title="' + count + (count === 1 ? ' file' : ' files') + '">📎 ' + count + '</button>';
+  if (canAttachTo(ledger, department)) return '<button type="button" class="attach-chip is-empty"' + data + ' title="Add files">📎+</button>';
+  return '';
+}
+
+// After files are added or removed, every row showing that entry is told.
+function noteAttachCount(ledger, txnId, count) {
+  (state.ledgerModalRows || []).forEach(function (r) { if (r.TxnID === txnId) r.AttachmentCount = count; });
+  if (state.ledgerKind === ledger) (state.ledgerRows || []).forEach(function (r) { if (r.txnId === txnId) r.attachCount = count; });
+  document.querySelectorAll('[data-attach-txn]').forEach(function (b) {
+    if (b.dataset.attachTxn === txnId && b.dataset.attachLedger === ledger) b.outerHTML = attachChip(ledger, txnId, count, b.dataset.attachDept);
+  });
+}
+
+/* ---------- on the entry form ---------- */
+
+function pendingTxnFiles() {
+  return txnFiles.filter(function (i) { return i.status !== 'invalid' && i.status !== 'done'; });
+}
+
+function renderTxnAttachList() {
+  document.getElementById('txnAttachList').innerHTML = txnFiles.map(function (i) { return attachItemHtml(i, !txnUploadStage); }).join('');
+}
+
+// Once the entry is saved its fields can't change; only its files are
+// still on their way.
+function setTxnFormSaved(saved) {
+  document.querySelectorAll('#txnForm input, #txnForm select, #txnForm textarea').forEach(function (el) {
+    if (el.type === 'hidden' || el.type === 'file') return;
+    if (saved && !el.disabled) { el.disabled = true; el.dataset.attachLocked = '1'; }
+    if (!saved && el.dataset.attachLocked) { el.disabled = false; delete el.dataset.attachLocked; }
+  });
+  document.getElementById('txnAttachBtn').disabled = saved;
+  document.getElementById('txnCancelBtn').textContent = saved ? 'Close' : 'Cancel';
+}
+
+function resetTxnAttachments() {
+  releaseAttachItems(txnFiles);
+  txnFiles = [];
+  txnUploadStage = null;
+  setTxnFormSaved(false);
+  renderTxnAttachList();
+  document.getElementById('txnAttachStatus').textContent = '';
+}
+
+async function runTxnUploads() {
+  const stage = txnUploadStage;
+  const errEl = document.getElementById('txnError');
+  const btn = document.getElementById('txnSubmit');
+  const status = document.getElementById('txnAttachStatus');
+  setTxnFormSaved(true);
+  errEl.textContent = '';
+  setBtnLoading(btn, 'Uploading…');
+  const todo = pendingTxnFiles();
+  for (let n = 0; n < todo.length; n++) {
+    status.textContent = 'Entry saved. Uploading file ' + (n + 1) + ' of ' + todo.length + '…';
+    todo[n].status = 'uploading';
+    renderTxnAttachList();
+    await uploadAttachItem(stage.ledger, stage.txnId, todo[n]);
+    renderTxnAttachList();
+    if (txnUploadStage !== stage) return;  // the form was closed meanwhile
+  }
+  const done = txnFiles.filter(function (i) { return i.status === 'done'; }).length;
+  const failed = txnFiles.filter(function (i) { return i.status === 'failed'; }).length;
+  noteAttachCount(stage.ledger, stage.txnId, done);
+  status.textContent = '';
+  if (!failed) {
+    clearBtnLoading(btn, 'Post transaction');
+    closeTxnModal();
+    toast(stage.message + (done ? ' · ' + done + (done === 1 ? ' file' : ' files') + ' attached' : ''));
+    return;
+  }
+  clearBtnLoading(btn, 'Retry files');
+  errEl.textContent = 'The entry is saved. ' + failed + (failed === 1 ? ' file' : ' files') + ' didn\u2019t upload \u2014 press Retry files, ' +
+    'or close and add ' + (failed === 1 ? 'it' : 'them') + ' later from the entry\u2019s 📎 in its history.';
+}
+
+/* ---------- the file viewer ---------- */
+
+async function openAttachModal(ledger, txnId, department) {
+  if (attachView) releaseAttachItems(attachView.pending);
+  attachView = { ledger: ledger, txnId: txnId, department: department || '', items: [], pending: [], busy: false };
+  document.getElementById('attachEyebrow').textContent = (ledger === 'fg' ? 'FINISHED GOODS' : 'RAW MATERIAL') + ' \u00b7 ENTRY FILES';
+  document.getElementById('attachTitle').textContent = 'Files';
+  document.getElementById('attachSub').textContent = txnId + (department ? ' · ' + department : '');
+  document.getElementById('attachError').textContent = '';
+  document.getElementById('attachStatus').textContent = '';
+  document.getElementById('attachAddStatus').textContent = '';
+  document.getElementById('attachRetryBtn').classList.add('hidden');
+  document.getElementById('attachAddWrap').classList.toggle('hidden', !canAttachTo(ledger, department));
+  document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">Loading…</div>';
+  renderAttachPending();
+  document.getElementById('attachModal').classList.remove('hidden');
+  await loadAttachView();
+}
+
+function closeAttachModal() {
+  document.getElementById('attachModal').classList.add('hidden');
+  if (attachView && !attachView.busy) releaseAttachItems(attachView.pending);
+}
+
+async function loadAttachView() {
+  const v = attachView;
+  try {
+    const items = await api('getAttachments', { ledger: v.ledger.toUpperCase(), txnId: v.txnId }) || [];
+    if (attachView !== v) return;
+    v.items = items;
+    renderAttachGrid();
+    noteAttachCount(v.ledger, v.txnId, items.length);
+  } catch (err) {
+    if (attachView === v) document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+function renderAttachGrid() {
+  const v = attachView;
+  const removable = canRemoveFrom(v.department);
+  const grid = document.getElementById('attachGrid');
+  if (!v.items.length) { grid.innerHTML = '<div class="attach-empty">No files on this entry yet.</div>'; return; }
+  grid.innerHTML = v.items.map(function (a) {
+    const face = a.mimeType === 'application/pdf'
+      ? '<span class="attach-tile-pdf">PDF</span>'
+      : (a.thumb ? '<img class="attach-tile-img" src="data:image/jpeg;base64,' + a.thumb + '" alt="">'
+                 : '<span class="attach-tile-pdf" style="background:var(--ink-soft)">IMG</span>');
+    return '<div class="attach-tile">' +
+      '<button type="button" class="attach-open" data-attach-open="' + escapeHtml(a.attachmentId) + '" aria-label="Open ' + escapeHtml(a.fileName) + '">' + face +
+      '<div class="attach-tile-cap"><div class="attach-name">' + escapeHtml(a.fileName) + '</div>' +
+      '<div class="attach-sub">' + escapeHtml(formatBytes(a.size) + (a.uploadedBy ? ' · ' + a.uploadedBy : '')) + '</div>' +
+      (a.source ? '<div class="attach-sub">from ' + escapeHtml(String(a.source).replace(/^Production Tracker /, '')) + '</div>' : '') +
+      '</div></button>' +
+      (removable ? '<button type="button" class="attach-remove" data-attach-remove="' + escapeHtml(a.attachmentId) + '" aria-label="Remove ' + escapeHtml(a.fileName) + '" title="Remove">\u2715</button>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function renderAttachPending() {
+  const v = attachView;
+  document.getElementById('attachAddList').innerHTML = v ? v.pending.map(function (i) { return attachItemHtml(i, !v.busy); }).join('') : '';
+  const failed = v && v.pending.some(function (i) { return i.status === 'failed'; });
+  document.getElementById('attachRetryBtn').classList.toggle('hidden', !failed || (v && v.busy));
+}
+
+async function runViewUploads() {
+  const v = attachView;
+  if (!v || v.busy) return;
+  v.busy = true;
+  const status = document.getElementById('attachAddStatus');
+  const todo = v.pending.filter(function (i) { return i.status !== 'invalid' && i.status !== 'done'; });
+  for (let n = 0; n < todo.length; n++) {
+    status.textContent = 'Uploading ' + (n + 1) + ' of ' + todo.length + '…';
+    todo[n].status = 'uploading';
+    renderAttachPending();
+    await uploadAttachItem(v.ledger, v.txnId, todo[n]);
+    renderAttachPending();
+  }
+  v.busy = false;
+  const done = v.pending.filter(function (i) { return i.status === 'done'; });
+  releaseAttachItems(done);
+  v.pending = v.pending.filter(function (i) { return i.status !== 'done'; });
+  const failed = v.pending.filter(function (i) { return i.status === 'failed'; }).length;
+  status.textContent = failed ? failed + (failed === 1 ? ' file' : ' files') + ' didn\u2019t upload \u2014 tap Retry.' : '';
+  renderAttachPending();
+  if (done.length && attachView === v) {
+    toast(done.length + (done.length === 1 ? ' file' : ' files') + ' added to ' + v.txnId);
+    await loadAttachView();
+  }
+}
+
+// Where the browser can show a PDF itself — a computer, an iPhone — it
+// opens in a new tab. That tab is opened in the tap itself (one opened
+// later, once the file has arrived, would be blocked as a pop-up) and
+// pointed at the file when it's here. Where it can't — most Android phones
+// — the file is saved under its real name, and the phone offers to open it
+// in its own PDF viewer.
+function saveBlob(f) {
+  const link = document.createElement('a');
+  link.href = f.url; link.download = f.fileName;
+  document.body.appendChild(link); link.click(); link.remove();
+}
+
+async function openAttachment(id) {
+  const a = attachView && attachView.items.filter(function (x) { return x.attachmentId === id; })[0];
+  if (!a) return;
+  const isPdf = a.mimeType === 'application/pdf';
+  const inlinePdf = navigator.pdfViewerEnabled === true;
+  const status = document.getElementById('attachStatus');
+  let win = null;
+  if (isPdf && inlinePdf && !attachFileCache[id]) {
+    try {
+      win = window.open('', '_blank');
+      if (win) win.document.write('<p style="font-family:sans-serif;padding:24px">Opening ' + escapeHtml(a.fileName) + '…</p>');
+    } catch (e) { win = null; }
+  }
+  let f = attachFileCache[id];
+  if (!f) {
+    status.textContent = 'Opening ' + a.fileName + '…';
+    try {
+      const got = await api('getAttachmentFile', { attachmentId: id });
+      const bin = atob(got.data);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      f = attachFileCache[id] = { url: URL.createObjectURL(new Blob([bytes], { type: got.mimeType })), fileName: got.fileName, mimeType: got.mimeType };
+      status.textContent = '';
+    } catch (err) {
+      if (win) win.close();
+      status.textContent = '';
+      document.getElementById('attachError').textContent = err.message;
+      return;
+    }
+  }
+  if (!isPdf) { showImage(f); return; }
+  if (!inlinePdf) { saveBlob(f); status.textContent = 'Saved ' + f.fileName + ' \u2014 open it from your downloads.'; return; }
+  if (win && !win.closed) { win.location.href = f.url; return; }
+  if (!window.open(f.url, '_blank')) saveBlob(f);
+}
+
+function showImage(f) {
+  document.getElementById('ivImg').src = f.url;
+  document.getElementById('ivName').textContent = f.fileName;
+  const dl = document.getElementById('ivDownload');
+  dl.href = f.url; dl.setAttribute('download', f.fileName);
+  document.getElementById('ivScroll').classList.remove('is-zoomed');
+  document.getElementById('imageViewer').classList.remove('hidden');
+}
+
+function closeImage() {
+  document.getElementById('imageViewer').classList.add('hidden');
+  document.getElementById('ivImg').removeAttribute('src');
+}
+
+async function removeAttachmentUi(id) {
+  const a = attachView && attachView.items.filter(function (x) { return x.attachmentId === id; })[0];
+  if (!a) return;
+  if (!confirm('Remove ' + a.fileName + ' from this entry?\n\nIt stays on record and in Drive, but is no longer shown here.')) return;
+  const why = prompt('Why is it being removed? (optional)', '');
+  if (why === null) return;
+  try {
+    await api('removeAttachment', { attachmentId: id, reason: why });
+    toast('Removed ' + a.fileName);
+    await loadAttachView();
+  } catch (err) {
+    document.getElementById('attachError').textContent = err.message;
+  }
+}
+
+function wireAttachments() {
+  // ---- the entry form ----
+  document.getElementById('txnAttachBtn').addEventListener('click', function () { document.getElementById('txnAttachInput').click(); });
+  document.getElementById('txnAttachInput').addEventListener('change', function (e) {
+    const added = addPickedFiles(txnFiles, e.target.files, 0);
+    e.target.value = '';
+    renderTxnAttachList();
+    added.forEach(function (i) { i.ready.then(renderTxnAttachList); });
+  });
+  document.getElementById('txnAttachList').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-attach-drop]');
+    if (!b) return;
+    const idx = txnFiles.findIndex(function (i) { return i.id === b.dataset.attachDrop; });
+    if (idx > -1) { releaseAttachItems([txnFiles[idx]]); txnFiles.splice(idx, 1); renderTxnAttachList(); }
+  });
+
+  // ---- a paperclip anywhere opens that entry's files. Caught on the way
+  // down, so a row's own click handler doesn't also fire. ----
+  document.addEventListener('click', function (e) {
+    const chip = e.target.closest && e.target.closest('[data-attach-txn]');
+    if (!chip) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openAttachModal(chip.dataset.attachLedger, chip.dataset.attachTxn, chip.dataset.attachDept);
+  }, true);
+
+  // ---- the file viewer ----
+  document.getElementById('attachCloseBtn').addEventListener('click', closeAttachModal);
+  document.getElementById('attachModal').addEventListener('click', function (e) { if (e.target.id === 'attachModal') closeAttachModal(); });
+  document.getElementById('attachGrid').addEventListener('click', function (e) {
+    const rm = e.target.closest('[data-attach-remove]');
+    if (rm) { removeAttachmentUi(rm.dataset.attachRemove); return; }
+    const open = e.target.closest('[data-attach-open]');
+    if (open) openAttachment(open.dataset.attachOpen);
+  });
+  document.getElementById('attachAddBtn').addEventListener('click', function () { document.getElementById('attachAddInput').click(); });
+  document.getElementById('attachAddInput').addEventListener('change', function (e) {
+    const v = attachView;
+    if (!v) return;
+    addPickedFiles(v.pending, e.target.files, v.items.length);
+    e.target.value = '';
+    renderAttachPending();
+    runViewUploads();
+  });
+  document.getElementById('attachRetryBtn').addEventListener('click', function () {
+    (attachView ? attachView.pending : []).forEach(function (i) { if (i.status === 'failed') i.status = 'ready'; });
+    runViewUploads();
+  });
+  document.getElementById('attachAddList').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-attach-drop]');
+    const v = attachView;
+    if (!b || !v || v.busy) return;
+    const idx = v.pending.findIndex(function (i) { return i.id === b.dataset.attachDrop; });
+    if (idx > -1) { releaseAttachItems([v.pending[idx]]); v.pending.splice(idx, 1); renderAttachPending(); }
+  });
+
+  // ---- the photo viewer: tap to zoom, ✕ or Escape to close ----
+  document.getElementById('ivClose').addEventListener('click', closeImage);
+  document.getElementById('ivImg').addEventListener('click', function () { document.getElementById('ivScroll').classList.toggle('is-zoomed'); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!document.getElementById('imageViewer').classList.contains('hidden')) { closeImage(); e.stopPropagation(); }
+    else if (!document.getElementById('attachModal').classList.contains('hidden')) closeAttachModal();
+  }, true);
 }
 
 /* =========================================================================
@@ -3676,7 +4274,7 @@ function renderLedgerRow(r) {
      refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
   }
 
-  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span></td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
+  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span>' + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
     ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key) + '</tr>';
 }
 
@@ -4406,7 +5004,7 @@ async function loadLedgerPage() {
         code: r[config.codeField] || '',
         name: nameByCode[r[config.codeField]] || '',
         category: catByCode[r[config.codeField]] || '',
-        txnId: r.TxnID || '',
+        txnId: r.TxnID || '', attachCount: Number(r.AttachmentCount) || 0,
         type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
         department: asText(r.Department), reference: asText(r.Reference),
         supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
@@ -4471,7 +5069,7 @@ function renderLedgerPage() {
       '<td class="mono" data-label="Date">' + escapeHtml(r.dateText) + '</td>' +
       '<td class="mono" data-label="Code">' + escapeHtml(r.code) + '</td>' +
       '<td data-label="Name">' + escapeHtml(r.name || '—') + '</td>' +
-      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span></td>' +
+      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span>' + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
       '<td class="mono num" data-label="Qty">' + qtyWithUnit(r.qty, r.unit) + '</td>' +
       '<td data-label="Department">' + escapeHtml(r.department || '—') + '</td>' +
       '<td data-label="Reference">' + escapeHtml(r.reference || '—') + '</td>' +
@@ -5220,6 +5818,7 @@ function wireStaticEvents() {
   wireStockPageEvents('rm'); wireStockPageEvents('fg');
 
   document.getElementById('alertsList').addEventListener('click', function (e) { const card = e.target.closest('.alert-card'); if (card) openTxnModal(card.dataset.key, card.dataset.code); });
+  wireAttachments();
   document.getElementById('txnForm').addEventListener('submit', handleTxnSubmit); document.getElementById('txnType').addEventListener('change', updateTxnFormVisibility);
   // Guard first, so the box is corrected before anything reads it.
   txnQtyMinSync = guardQtyInput(document.getElementById('txnQty'), document.getElementById('txnType'));
