@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.10.1">
+<meta name="app-version" content="3.12.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -770,6 +770,12 @@
     .txn-stock-value { font-size: 17px; }
     .txn-stock-after { margin-top: 0; }
   }
+  /* Which app's switches are showing. */
+  .app-switch { display: inline-flex; gap: 4px; padding: 3px; margin: 6px 0 10px; border: 1px solid var(--line);
+                border-radius: var(--radius-sm); background: var(--surface-2, transparent); }
+  .app-switch button { border: 0; background: transparent; color: var(--ink-soft); font: inherit; font-size: 12.5px;
+                       font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .app-switch button.is-active { background: var(--accent, #b4652f); color: #fff; }
   .perm-grid { display: grid; gap: 4px; margin-top: 6px; }
   .perm-group-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin: 10px 0 2px; }
   .perm-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
@@ -1456,6 +1462,7 @@
         <div class="field"><label for="userPhone">Phone (optional)</label><input type="text" id="userPhone"></div>
         <div class="field span-2" id="userAccessSection">
           <label>Access</label>
+          <div class="app-switch" id="userAppSwitch"></div>
           <div class="access-tier" id="userTierLine"></div>
           <div id="userPermGrid" class="perm-grid"></div>
           <div class="hint">Ticked is what this person can do. Anything that differs from their tier is marked — Follow tier puts it back.</div>
@@ -1550,6 +1557,7 @@
     <div class="modal-body">
       <div class="field"><label for="tierCategory">Tier</label><select id="tierCategory"></select></div>
       <div class="hint" id="tierWhoLine"></div>
+      <div class="app-switch" id="tierAppSwitch"></div>
       <div id="tierPermGrid" class="perm-grid"></div>
       <div class="modal-error hidden" id="tierError"></div>
     </div>
@@ -1649,7 +1657,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.10.1';
+const APP_VERSION = '3.12.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1914,7 +1922,7 @@ const ODD_REPLY_BACKOFF_MS = [1500, 3000, 6000];
 
 // The backend's words for a session it won't accept.
 function isSessionRejection(message) {
-  return /Invalid session|Session expired|Missing session token|signed in on another device/i.test(message || '');
+  return /Invalid session|Session expired|Missing session token|on another device/i.test(message || '');
 }
 
 // crypto.randomUUID is unavailable on http:// origins and older WebViews,
@@ -1945,10 +1953,11 @@ function recordOddReply(action, res, text, kind) {
   if (window.console && console.warn) console.warn('[CALGAS] Unexpected reply from Google', entry);
 }
 
-// Another tab or app on this browser — ELE Tracker shares this sign-in — may
-// have signed in since this page loaded. Its token is the live one now, so
-// it's used rather than the one this page started with, which the backend
-// will have closed.
+// Another Stock Management tab on this browser may have signed in since this
+// page loaded. Its token is the live one now, so it's used rather than the
+// one this page started with, which the backend will have closed. ELE
+// Tracker and Production Tracker keep sessions of their own, under their
+// own keys, so nothing they do reaches this.
 function adoptLatestToken() {
   if (!state.session) return;
   try {
@@ -2532,7 +2541,7 @@ async function init() {
       if (err.sessionRejected) {
         clearSession();
         startupMessage = /another device/i.test(err.message)
-          ? 'You were signed out here because this account signed in on another device.'
+          ? 'You were signed out here because this account signed in to Stock Management on another device.'
           : '';
       } else {
         startupMessage = 'Couldn\u2019t reach the server just now, so the app didn\u2019t open. You\u2019re still signed in.';
@@ -2667,7 +2676,7 @@ async function handleLogin(e) {
   errEl.textContent = ''; setBtnLoading(btn, 'Signing in…');
   const loader = document.getElementById('initialLoader');
   try {
-    const data = await api('login', { username: document.getElementById('loginUsername').value.trim(), password: document.getElementById('loginPassword').value });
+    const data = await api('login', { app: 'stock', username: document.getElementById('loginUsername').value.trim(), password: document.getElementById('loginPassword').value });
     saveSession(data);
     state.permissions = data.permissions || {};
     if (loader) { loader.classList.remove('hidden', 'loader-exit'); loader.setAttribute('aria-busy', 'true'); }
@@ -2689,7 +2698,7 @@ function endSessionHere(message) {
   hideAllAuthScreens();
   document.getElementById('loginScreen').classList.remove('hidden');
   document.getElementById('loginError').textContent = /another device/i.test(message || '')
-    ? 'You were signed out here because this account signed in on another device.'
+    ? 'You were signed out here because this account signed in to Stock Management on another device.'
     : 'Your session has ended \u2014 please sign in again.';
   setTimeout(function () { sessionEnding = false; }, 1000);
 }
@@ -4764,27 +4773,41 @@ function refreshAccessPreview() {
   const role = chosenRole();
   const line = document.getElementById('userTierLine');
   const grid = document.getElementById('userPermGrid');
+  section.classList.remove('hidden');
+  renderAppSwitch('userAppSwitch', function (app) {
+    captureDraft(accessDraft.user, 'userPermGrid');
+    accessApp = app;
+    refreshAccessPreview();
+  });
 
   if (role === 'Admin') {
-    section.classList.remove('hidden');
-    // Keeps whatever mail they already had when their role is switched here.
-    renderAdminAccess(String(record.role) === 'Admin' ? record.effective : (record.effective || {}));
+    renderAdminAccess(String(record.role) === 'Admin' ? record.effective : {});
     return;
   }
 
+  // Moving someone to another department changes the tier their access is
+  // measured against, so what's shown is the new tier, then this person's
+  // own differences, then whatever has been changed here and not saved.
   const deptName = document.getElementById('userDept').value;
   const dept = (state.departments || []).filter(function (d) { return d.name === deptName; })[0];
   const tier = (dept && dept.category) || 'Default';
   const baseline = accessTemplates()[tier] || accessTemplates()['Default'] || {};
-  const values = Object.assign({}, baseline, record.overrides || {});
+  const values = Object.assign({}, baseline, record.overrides || {}, accessDraft.user);
+  const only = appKeys(accessApp);
+  const redraw = function (v) {
+    renderPermGrid(grid, v, baseline, { only: only, onChange: function () {
+      captureDraft(accessDraft.user, 'userPermGrid');
+      renderPermChips(grid, baseline);
+    } });
+  };
 
-  section.classList.remove('hidden');
   line.innerHTML = 'Tier <span class="tier-badge">' + escapeHtml(tier) + '</span> from department ' +
     escapeHtml(deptName || 'none set') +
     ' · <button type="button" class="perm-revert" id="userFollowAll">Follow tier for everything</button>';
-  renderPermGrid(grid, values, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
+  redraw(values);
   document.getElementById('userFollowAll').addEventListener('click', function () {
-    renderPermGrid(grid, baseline, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
+    redraw(baseline);
+    captureDraft(accessDraft.user, 'userPermGrid');
   });
 }
 
@@ -4838,15 +4861,53 @@ function readPermGrid(container) {
 // these are the only switches shown.
 const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg'];
 
+// Team & Access shows one app's switches at a time. Anything ticked or
+// unticked is remembered here until saved, across both views, and exactly
+// that is what gets sent — so switching app never loses a change, and
+// saving never touches a switch nobody moved.
+const ACCESS_APPS = [{ id: 'stock', label: 'Stock Management' }, { id: 'pt', label: 'Production Tracker' },
+                     { id: 'ele', label: 'ELE Tracker' }];
+let accessApp = 'stock';
+const accessDraft = { user: {}, tier: {} };
+
+function appKeys(app) {
+  return accessCatalog().filter(function (p) { return (p.app || 'stock') === app; }).map(function (p) { return p.key; });
+}
+
+function renderAppSwitch(containerId, onSwitch) {
+  const box = document.getElementById(containerId);
+  if (!box) return;
+  box.innerHTML = ACCESS_APPS.map(function (a) {
+    return '<button type="button" data-app="' + a.id + '" class="' + (a.id === accessApp ? 'is-active' : '') + '">' + escapeHtml(a.label) + '</button>';
+  }).join('');
+  box.querySelectorAll('button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.app === accessApp) return;
+      onSwitch(b.dataset.app);
+    });
+  });
+}
+
+function captureDraft(target, gridId) {
+  Object.assign(target, readPermGrid(document.getElementById(gridId)));
+}
+
 function renderAdminAccess(values) {
   const line = document.getElementById('userTierLine');
   const grid = document.getElementById('userPermGrid');
+  if (accessApp !== 'stock') {
+    line.textContent = 'Admin — holds every feature in this app, which can\u2019t be narrowed.';
+    grid.innerHTML = '';
+    return;
+  }
+  values = Object.assign({}, values || {}, accessDraft.user);
   line.textContent = 'Admin — holds every feature, which can\u2019t be narrowed. Only the daily mails are a choice:';
   const off = {};
   SUBSCRIPTION_KEYS.forEach(function (k) { off[k] = false; });
   const shown = {};
   SUBSCRIPTION_KEYS.forEach(function (k) { shown[k] = !!(values && values[k]); });
-  renderPermGrid(grid, shown, null, { only: SUBSCRIPTION_KEYS });
+  renderPermGrid(grid, shown, null, { only: SUBSCRIPTION_KEYS,
+    onChange: function () { captureDraft(accessDraft.user, 'userPermGrid'); } });
 }
 
 function renderUserAccess(username) {
@@ -4862,24 +4923,10 @@ function renderUserAccess(username) {
     return;
   }
   section.classList.remove('hidden');
-
-  if (String(record.role) === 'Admin') {
-    renderAdminAccess(record.effective);
-    return;
-  }
-
-  const tier = record.category || 'Default';
-  const baseline = accessTemplates()[tier] || {};
-  line.innerHTML = 'Tier <span class="tier-badge">' + escapeHtml(tier) + '</span> ' +
-    'from department ' + escapeHtml(record.department || 'none set') +
-    ' · <button type="button" class="perm-revert" id="userFollowAll">Follow tier for everything</button>';
-
-  renderPermGrid(grid, record.effective, baseline, {
-    onChange: function () { renderPermChips(grid, baseline); }
-  });
-  document.getElementById('userFollowAll').addEventListener('click', function () {
-    renderPermGrid(grid, baseline, baseline, { onChange: function () { renderPermChips(grid, baseline); } });
-  });
+  // A freshly opened form starts on Stock Management with nothing pending.
+  accessApp = 'stock';
+  accessDraft.user = {};
+  refreshAccessPreview();
 }
 
 // Re-marks the rows after a tick without rebuilding the grid, so focus and
@@ -4910,16 +4957,20 @@ function renderPermChips(grid, baseline) {
 async function saveUserAccess(username, newRole) {
   const record = accessUser(username);
   if (!record) return;
-  // For an Admin the grid holds only the mail switches, and that is all the
-  // backend accepts for one; everything else about an Admin is fixed.
-  const wanted = readPermGrid(document.getElementById('userPermGrid'));
+  // Only the switches actually moved, in either app. The backend changes
+  // those and leaves every other override as it was.
+  captureDraft(accessDraft.user, 'userPermGrid');
+  const wanted = Object.assign({}, accessDraft.user);
   if (!Object.keys(wanted).length) return;
   await api('setUserAccess', { username: username, permissions: wanted });
+  accessDraft.user = {};
 }
 
 /* ---- tier defaults ---- */
 
 function openTierModal() {
+  accessApp = 'stock';
+  accessDraft.tier = {};
   const select = document.getElementById('tierCategory');
   const tiers = Object.keys(accessTemplates());
   select.innerHTML = tiers.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
@@ -4930,7 +4981,16 @@ function openTierModal() {
 
 function showTier(category) {
   const grid = document.getElementById('tierPermGrid');
-  renderPermGrid(grid, accessTemplates()[category] || {}, null, {});
+  const pending = accessDraft.tier[category] || (accessDraft.tier[category] = {});
+  renderAppSwitch('tierAppSwitch', function (app) {
+    captureDraft(pending, 'tierPermGrid');
+    accessApp = app;
+    showTier(category);
+  });
+  renderPermGrid(grid, Object.assign({}, accessTemplates()[category] || {}, pending), null, {
+    only: appKeys(accessApp),
+    onChange: function () { captureDraft(pending, 'tierPermGrid'); }
+  });
   const on = ((state.access && state.access.users) || []).filter(function (u) {
     return String(u.role) !== 'Admin' && (u.category || 'Default') === category;
   });
@@ -4947,7 +5007,10 @@ async function saveTier() {
   errEl.classList.add('hidden');
   setBtnLoading(btn, 'Saving…');
   try {
-    await api('setAccessTemplate', { category: category, permissions: readPermGrid(document.getElementById('tierPermGrid')) });
+    const pending = accessDraft.tier[category] || (accessDraft.tier[category] = {});
+    captureDraft(pending, 'tierPermGrid');
+    await api('setAccessTemplate', { category: category, permissions: Object.assign({}, pending) });
+    accessDraft.tier[category] = {};
     await loadAccessControl();
     showTier(category);
     toast('Tier defaults saved for ' + category);
