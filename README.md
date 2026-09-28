@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.10.1
+**Current version:** 3.10.2
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -17,6 +17,48 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Role-based access (Admin / Manager / Supervisor) with per-department scoping for Supervisors.
 - Installs as a PWA on desktop or mobile, with a branded splash screen and offline-friendly app shell.
 - Detects and reports balance drift nightly, without silently correcting it.
+
+---
+
+## What changed in 3.12.0
+
+**ELE Tracker joins Team & Access.** The switch now has three apps. ELE's two features:
+
+- **Record your department's stages** — every tier except Management, by default
+- **Record any stage** — Managers, by default
+
+Admin holds both. Which stages count as a department's own is set in ELE's **Stage_Access** tab.
+
+As with Production Tracker, the first sign-in after deploying fills the new tier columns from each tier's defaults. Run **ADMIN_migrateAccess()** once so sessions already open pick up their ELE grants.
+
+## What changed in 3.11.0
+
+**Production Tracker's access is managed here.** Its six features are in the same catalog as Stock Management's: send and return from own department, receive into own department, act for any department, record work in progress, see every department, and place orders. Tiers, per-person overrides and the Admin rule all work exactly as they do for Stock Management. The grants travel on the session, so Production Tracker reads them without a lookup, and a change reaches people already signed in straight away.
+
+Tier defaults for Production Tracker are as follows. Management sees every department and enters nothing. A Manager acts for any department and places orders. HOD, Production and Default tiers work their own department's handovers and work in progress. Admin holds everything.
+
+**Team & Access shows one app at a time.** A **Stock Management | Production Tracker** switch sits above the switches, in both a person's form and the tier defaults. Changes made in either view are kept while you switch, and saved together.
+
+**Saving one app no longer touches the other.** Before, saving a person's access rebuilt their whole override list from the switches on screen. With one app shown at a time, that would have wiped the other app's overrides, and for an Admin, their mail choices. Now only the switches actually moved are changed; every other override stays as it was.
+
+**A feature added later reaches every tier.** When the catalog gains a feature, its column in Access_Templates is now filled for every existing tier from that tier's defaults. Before, it stayed blank, which reads as "no", so nobody below Admin got the feature until each tier was ticked by hand. The first sign-in after deploying fills Production Tracker's six columns this way. Stock Management's own columns are left exactly as they are.
+
+After deploying, run **ADMIN_migrateAccess()** once, so sessions already open pick up their Production Tracker grants.
+
+## What changed in 3.10.2
+
+### A separate sign-in for each app
+
+Stock Management, ELE Tracker and Production Tracker all live on calgas.github.io, so they share one browser storage — and all three kept their sign-in under the same key, `stock_session`. Signing in or out of any of them did it to all of them, and with one sign-in per account (3.10.1), apps signing in separately would close each other.
+
+Each app now has its own sign-in:
+
+- **In the browser**, each keeps its session under its own key — `stock_session`, `ele_session`, `pt_session` — and Production Tracker has its own theme key (`pt_theme`) rather than sharing Stock Management's. Their offline caches were already separate (`calgas-shell-`, `ele-tracker-shell-`, `production-tracker-shell-`).
+- **On the server**, every session records its app in a new `App` column of the Sessions tab. The rule is now **one sign-in per account, per app**: signing in to ELE Tracker on another device closes the account's other ELE Tracker session and nothing else, and the device it was taken from is told which app. Sessions from before this change have no app and count as Stock Management's; a client that doesn't say which app it is, is Stock Management.
+
+Every app still signs in through this backend, and every app's session is accepted here — Production Tracker needs that when it posts stock movements for someone. ELE Tracker's and Production Tracker's backends find tokens in the Sessions tab exactly as before.
+
+After updating, ELE Tracker and Production Tracker ask everyone to sign in once, since they no longer borrow Stock Management's sign-in.
 
 ---
 
@@ -598,7 +640,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.10.1` / `3.10.1` / `calgas-shell-v29`.
+Currently `3.10.2` / `3.10.2` / `calgas-shell-v30`.
 
 ---
 
