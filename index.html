@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.14.0">
+<meta name="app-version" content="3.15.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -250,6 +250,10 @@
   .link-btn { background: none; color: var(--copper); font-size: 13.5px; font-weight: 600; padding: 0; transition: color 0.2s; }
   .link-btn:hover { color: var(--copper-deep); text-decoration: underline; }
   .link-btn:disabled { color: var(--ink-faint); cursor: not-allowed; text-decoration: none; }
+  /* "Refreshing…", "Still waiting for Google… Retry": what a load is doing, when it's worth saying. */
+  .load-note { font-size: 12.5px; color: var(--ink-soft); margin: 6px 0; }
+  .load-note:empty { display: none; }
+  .load-note .link-btn { font-size: 12.5px; margin-left: 4px; }
   .auth-foot { display: flex; justify-content: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
   .auth-foot-split { justify-content: space-between; gap: 16px; }
 
@@ -1194,9 +1198,13 @@
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><line x1="3" y1="8" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="6.5" y1="3.5" x2="6.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="3.5" x2="9.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.6"/></svg>
       <span class="label">FG Stock</span>
     </a>
-    <a href="#" class="nav-link" data-page="ledger">
+    <a href="#" class="nav-link" data-page="ledger" data-kind="rm">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.2" stroke="currentColor" stroke-width="1.6"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span class="label">Ledger</span>
+      <span class="label">RM Ledger</span>
+    </a>
+    <a href="#" class="nav-link" data-page="ledger" data-kind="fg">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.2" stroke="currentColor" stroke-width="1.6"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="label">FG Ledger</span>
     </a>
     <a href="#" class="nav-link hidden" id="navUsers" data-page="users">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M1.5 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.3c1.8.2 3 1.4 3 3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1362,10 +1370,10 @@
     </section>
 
     <section class="page page-grid hidden" id="page-ledger">
-      <div class="page-head"><h2>Stock Ledger</h2><p>Every transaction across raw materials and finished goods.</p></div>
+      <div class="page-head"><h2 id="ldgHeading">RM Ledger</h2><p id="ldgSub">Every raw-material transaction, newest first.</p></div>
       <div class="filter-bar">
         <div class="toolbar">
-          <select id="ldgKind">
+          <select id="ldgKind" class="hidden" aria-hidden="true" tabindex="-1">
             <option value="rm">Raw Material</option>
             <option value="fg">Finished Goods</option>
           </select>
@@ -1383,7 +1391,8 @@
           <span class="freshness-label" id="ldgCount"></span>
           <button class="btn-ghost add-btn-spacer" id="ldgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
         </div>
-        <p class="toolbar-hint">Date range, type and department filter on the server; category and search filter the loaded rows.</p>
+        <p class="toolbar-hint">Newest entries first; older ones load as you page. Date range, type and department filter on the server; search and category look through every entry.</p>
+        <div class="load-note" id="ldgStatus" aria-live="polite"></div>
       </div>
       <div class="grid-panel">
         <div class="table-scroll">
@@ -1589,6 +1598,7 @@
       <button class="btn-ghost" id="ledgerClearFiltersBtn">Clear</button>
       <button class="btn-ghost" id="ledgerExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
     </div>
+    <div class="load-note" id="ledgerRefreshNote" aria-live="polite"></div>
     <div class="ledger-table-wrap">
       <table>
         <thead><tr><th>Date</th><th>Type</th><th style="text-align:center">Qty</th><th>Dept</th><th>Ref / Supp</th><th>User</th><th class="ledger-actions-col hidden" style="text-align:center">Fix</th></tr></thead>
@@ -1743,7 +1753,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.14.0';
+const APP_VERSION = '3.15.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbyxTvERmZY63TC9Pz4tMXb9x3mbT9hOe0YDuq2dNr5D5tkku2kYffFtmEzILuP1G9DrKA/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2247,7 +2257,12 @@ function loadSession() {
     return session;
   } catch (err) { return null; }
 }
-function clearSession() { state.session = null; localStorage.removeItem('stock_session'); }
+function clearSession() {
+  state.session = null; localStorage.removeItem('stock_session');
+  // The entries kept for instant opening go too — a shared device shouldn't
+  // show the last person's ledger.
+  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_hist_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+}
 
 function toggleAlertsPanel() {
   const btn = document.getElementById('alertsPanelToggle'); const body = document.getElementById('alertsPanelBody');
@@ -2719,6 +2734,7 @@ async function refreshAllData() {
   if (data.users) state.users = data.users;
   state.rmLastUpdated = new Date(); state.fgLastUpdated = new Date();
   invalidateMergeCache();
+  warmLedgers();
 }
 
 // Runs every time someone actually looks at the RM/FG page (see navigateTo)
@@ -2884,9 +2900,14 @@ function syncTopbarTitle(pageEl) {
   wrap.classList.toggle('hidden', !pageEl.classList.contains('page-grid'));
 }
 
-function navigateTo(page) {
+function navigateTo(page, kind) {
   if (page === 'users' && state.session.role !== 'Admin') page = 'home';
-  document.querySelectorAll('.nav-link').forEach(function (el) { el.classList.toggle('active', el.dataset.page === page); });
+  // RM Ledger and FG Ledger share one screen. Which ledger it shows is
+  // settled first, so the heading the top bar copies is the right one.
+  if (page === 'ledger') switchLedgerKind(kind || state.ledgerKind);
+  document.querySelectorAll('.nav-link').forEach(function (el) {
+    el.classList.toggle('active', el.dataset.page === page && (!el.dataset.kind || el.dataset.kind === state.ledgerKind));
+  });
   document.querySelectorAll('.page').forEach(function (el) { el.classList.toggle('hidden', el.id !== 'page-' + page); });
   syncTopbarTitle(document.getElementById('page-' + page));
   if (page === 'home') renderHome();
@@ -2895,7 +2916,15 @@ function navigateTo(page) {
   if (page === 'users') renderUsersPage();
   // Loads on first visit rather than at boot — the ledger can be large and
   // most sessions never open it.
-  if (page === 'ledger') { initLedgerPage(); if (!state.ledgerLoaded) loadLedgerPage(); else renderLedgerPage(); }
+  if (page === 'ledger') {
+    initLedgerPage();
+    if (!state.ledgerLoaded) loadLedgerPage();
+    else {
+      // Shown at once; brought up to date quietly if it's been a while.
+      renderLedgerPage();
+      if (Date.now() - (state.ledgerLoadedAt || 0) > LEDGER_STALE_MS) loadLedgerPage({ background: true });
+    }
+  }
   updateNavIndicator();
   updateScrollTopBtn();
 }
@@ -3767,6 +3796,7 @@ async function handleTxnSubmit(e) {
   } finally { clearBtnLoading(btn, txnUploadStage ? 'Retry files' : 'Post transaction'); }
 }
 function applyLocalStockUpdate(config, code, newBalance) {
+  markLedgersStale();
   const list = state[config.stockKey]; const idx = list.findIndex(function (s) { return s[config.codeField] === code; });
   const master = state[config.masterKey].find(function (m) { return m[config.codeField] === code; }); const reorder = master ? Number(master[config.reorderField]) || 0 : 0;
   const status = newBalance <= 0 ? 'Critical' : (reorder > 0 && newBalance <= reorder ? 'Low' : 'OK');
@@ -4127,7 +4157,7 @@ function saveBlob(f) {
   document.body.appendChild(link); link.click(); link.remove();
 }
 
-async function openAttachment(id) {
+async function openAttachment(id, retry) {
   const a = attachView && attachView.items.filter(function (x) { return x.attachmentId === id; })[0];
   if (!a) return;
   const isPdf = a.mimeType === 'application/pdf';
@@ -4143,14 +4173,17 @@ async function openAttachment(id) {
   let f = attachFileCache[id];
   if (!f) {
     status.textContent = 'Opening ' + a.fileName + '…';
+    const slow = slowNotice(function (text, again) { setNote(status, text, again); }, function () { openAttachment(id, true); });
     try {
-      const got = await api('getAttachmentFile', { attachmentId: id });
+      const got = await api('getAttachmentFile', retry ? { attachmentId: id, _try: Date.now() } : { attachmentId: id });
       const bin = atob(got.data);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       f = attachFileCache[id] = { url: URL.createObjectURL(new Blob([bytes], { type: got.mimeType })), fileName: got.fileName, mimeType: got.mimeType };
+      slow.done();
       status.textContent = '';
     } catch (err) {
+      slow.done();
       if (win) win.close();
       status.textContent = '';
       document.getElementById('attachError').textContent = err.message;
@@ -4286,22 +4319,67 @@ function currentLedgerFilters() {
   };
 }
 
-async function loadLedgerRows() {
+// An item's history, as last seen on this device — the last 40 items looked
+// at — shown at once while the fresh one is fetched. The agreement check
+// between history and balance runs only on the fresh one.
+const HIST_CACHE_KEY = 'stock_hist_cache';
+const HIST_CACHE_MAX = 40;
+let histSeq = 0;
+function readHistCache() {
+  try { return JSON.parse(localStorage.getItem(HIST_CACHE_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function writeHistCache(key, rows, stock) {
+  const c = readHistCache();
+  c[key] = { at: Date.now(), rows: rows, stock: stock };
+  const keys = Object.keys(c).sort(function (a, b) { return c[b].at - c[a].at; });
+  keys.slice(HIST_CACHE_MAX).forEach(function (k) { delete c[k]; });
+  try { localStorage.setItem(HIST_CACHE_KEY, JSON.stringify(c)); }
+  catch (e) {
+    keys.slice(HIST_CACHE_MAX / 4).forEach(function (k) { delete c[k]; });
+    try { localStorage.setItem(HIST_CACHE_KEY, JSON.stringify(c)); } catch (e2) {}
+  }
+}
+
+async function loadLedgerRows(opts) {
+  opts = opts || {};
   const config = activeLedgerConfig; const code = activeLedgerCode; if (!config || !code) return;
   const tbody = document.getElementById('ledgerTableBody');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
+  const note = document.getElementById('ledgerRefreshNote');
   // Cleared before anything else, so no path through here — an empty or
   // failed load included — can leave a warning about a previous list.
   document.getElementById('ledgerDriftWarn').classList.add('hidden');
   const filters = currentLedgerFilters();
+  const plain = !(filters.dateFrom || filters.dateTo || filters.enteredBy);
+  const key = config.key + ':' + code;
+  const seq = ++histSeq;
+  let showingOld = false;
+  if (plain && !opts.retry) {
+    const hit = readHistCache()[key];
+    if (hit && hit.rows && hit.rows.length) {
+      state.ledgerModalRows = hit.rows;
+      tbody.innerHTML = hit.rows.map(renderLedgerRow).join('');
+      syncLedgerActionColumns();
+      renderLedgerStock();
+      showingOld = true;
+    }
+  }
+  if (!showingOld && !opts.retry) tbody.innerHTML = '<tr><td colspan="7" class="empty">Loading\u2026</td></tr>';
+  setNote(note, showingOld ? 'Refreshing\u2026' : '');
+  const retry = function () { loadLedgerRows({ retry: true }); };
+  const slow = slowNotice(function (text, again) { if (seq === histSeq) setNote(note, text, again); }, retry);
   try {
-    const reply = await api(config.ledgerAction, Object.assign({ code: code, limit: 100, withStock: true }, filters));
+    const params = Object.assign({ code: code, limit: 100, withStock: true }, filters);
+    if (opts.retry) params._try = Date.now();
+    const reply = await api(config.ledgerAction, params);
+    if (seq !== histSeq || activeLedgerCode !== code) return;
+    setNote(note, '');
     // A backend from before this change answers with the bare list and no
     // balance; the agreement check is then skipped rather than run against a
     // balance loaded at some other moment.
     const rows = Array.isArray(reply) ? reply : (reply.rows || []);
     const stockNow = Array.isArray(reply) ? null : reply.stock;
     if (stockNow) syncStockFromLedger(config, code, stockNow);
+    if (plain) writeHistCache(key, rows, stockNow);
     if (rows.length === 0) {
       const hasFilters = filters.dateFrom || filters.dateTo || filters.enteredBy;
       tbody.innerHTML = '<tr><td colspan="7" class="empty">' + (hasFilters ? 'No transactions match these filters.' : 'No transactions yet for this item.') + '</td></tr>';
@@ -4312,7 +4390,13 @@ async function loadLedgerRows() {
     syncLedgerActionColumns();
     renderLedgerStock();
     await checkLedgerAgreement(rows, !!(filters.dateFrom || filters.dateTo || filters.enteredBy), 100, stockNow, filters);
-  } catch (err) { tbody.innerHTML = '<tr><td colspan="7" class="empty">' + escapeHtml(err.message) + '</td></tr>'; }
+  } catch (err) {
+    if (seq !== histSeq) return;
+    if (showingOld) setNote(note, 'Couldn\u2019t refresh \u2014 ' + err.message + ' ', retry);
+    else { tbody.innerHTML = '<tr><td colspan="7" class="empty"></td></tr>'; setNote(tbody.querySelector('td'), err.message + ' ', retry); setNote(note, ''); }
+  } finally {
+    slow.done();
+  }
 }
 
 async function openLedgerModal(key, code) {
@@ -4935,6 +5019,7 @@ function initLedgerPage() {
   // Category filters rows already loaded, so it re-renders instead of refetching.
   document.getElementById('ldgCatFilter').addEventListener('change', function (e) {
     state.ledgerCat = e.target.value; state.ledgerPage = 1; renderLedgerPage();
+    if (state.ledgerCat) ensureAllLedgerLoaded();
   });
   document.getElementById('ldgResetBtn').addEventListener('click', function () {
     state.ledgerType = ''; state.ledgerDept = ''; state.ledgerSearch = ''; state.ledgerCat = '';
@@ -4946,9 +5031,10 @@ function initLedgerPage() {
     state.ledgerSearch = e.target.value.trim().toLowerCase();
     state.ledgerPage = 1;
     renderLedgerPage();
+    if (state.ledgerSearch) ensureAllLedgerLoaded();
   }, 150));
   document.getElementById('ldgPrevBtn').addEventListener('click', function () { state.ledgerPage--; renderLedgerPage(); });
-  document.getElementById('ldgNextBtn').addEventListener('click', function () { state.ledgerPage++; renderLedgerPage(); });
+  document.getElementById('ldgNextBtn').addEventListener('click', onLedgerNext);
   document.getElementById('ldgExportBtn').addEventListener('click', exportLedgerPageToExcel);
 
   document.querySelectorAll('#page-ledger th.sortable').forEach(function (th) {
@@ -4972,52 +5058,242 @@ function currentLedgerPageFilters() {
   };
 }
 
-async function loadLedgerPage() {
-  const config = ledgerConfig_();
-  const tbody = document.getElementById('ldgTableBody');
-  renderTableSkeleton('ldgTableBody', 8, 8);
-  const btn = document.getElementById('ldgApplyBtn');
-  setBtnLoading(btn, 'Loading…', true);
-  try {
-    const rows = await api(config.ledgerAction, Object.assign({ limit: LEDGER_FETCH_LIMIT }, currentLedgerPageFilters()));
-    // Names live in the master sheet, not the ledger, so join them on here
-    // once rather than looking each one up per render.
-    const master = state[config.masterKey] || [];
-    // Must read the same field the category filter lists, or the two would
-    // never match on FG (filter lists Category, rows would carry Family).
-    const catField = config.subCategoryField || config.categoryField;
-    const nameByCode = {};
-    const catByCode = {};
-    // Older ledger rows predate the Unit column, so master fills the gap.
-    const unitByCode = {};
-    master.forEach(function (m) {
-      nameByCode[m[config.codeField]] = m[config.nameField] || '';
-      catByCode[m[config.codeField]] = m[catField] || '';
-      unitByCode[m[config.codeField]] = m[config.unitField] || '';
-    });
+/* =========================================================================
+   LOADING A LEDGER, QUICKLY
 
-    state.ledgerRows = rows.map(function (r) {
-      return {
-        ts: r.Timestamp ? new Date(r.Timestamp).getTime() : 0,
-        dateText: r.Timestamp ? formatDateTime(r.Timestamp) : '—',
-        dateISO: r.Timestamp ? new Date(r.Timestamp).toISOString().slice(0, 10) : '',
-        code: r[config.codeField] || '',
-        name: nameByCode[r[config.codeField]] || '',
-        category: catByCode[r[config.codeField]] || '',
-        txnId: r.TxnID || '', attachCount: Number(r.AttachmentCount) || 0,
-        type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
-        department: asText(r.Department), reference: asText(r.Reference),
-        supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
-        invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
-        remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy)
-      };
-    });
-    state.ledgerLoaded = true;
-    state.ledgerPage = 1;
+   The page shows the newest 100 entries, and fetches older ones only when
+   someone pages to them — or searches, which looks through all of them.
+   The last entries seen are kept on this device, so the page opens at
+   once and is brought up to date while you look; both ledgers are fetched
+   quietly just after sign-in, so even a first visit is usually instant.
+   RM and FG each keep their own entries and filters.
+   ========================================================================= */
+
+const LEDGER_FIRST = 100;       // newest entries fetched on opening
+const LEDGER_MORE = 200;        // fetched each time someone pages past them
+const LEDGER_ALL = 2000;        // what a search looks through
+const LEDGER_STALE_MS = 60000;  // older than this, a revisit refreshes quietly
+const SLOW_NOTICE_MS = 15000;
+let ledgerSeq = 0;
+const ledgerViews = { rm: null, fg: null };
+
+// Past this long, a load says so and offers to try again — rather than
+// leaving skeletons up while Google takes its time.
+function slowNotice(show, onRetry) {
+  const t = setTimeout(function () { show('Still waiting for Google\u2026', onRetry); }, SLOW_NOTICE_MS);
+  return { done: function () { clearTimeout(t); } };
+}
+
+function setNote(el, text, onRetry) {
+  el.textContent = '';
+  if (!text) return;
+  el.appendChild(document.createTextNode(text));
+  if (onRetry) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'link-btn'; b.textContent = 'Retry';
+    b.addEventListener('click', onRetry);
+    el.appendChild(b);
+  }
+}
+function setLedgerStatus(text, onRetry) { setNote(document.getElementById('ldgStatus'), text, onRetry); }
+
+function ledgerCacheKey(kind) { return 'stock_ldg_cache_' + kind; }
+function readLedgerCache(kind) {
+  try { const c = JSON.parse(localStorage.getItem(ledgerCacheKey(kind)) || 'null'); return c && Array.isArray(c.rows) ? c : null; }
+  catch (e) { return null; }
+}
+function writeLedgerCache(kind, rows, hasMore) {
+  try { localStorage.setItem(ledgerCacheKey(kind), JSON.stringify({ at: Date.now(), rows: rows, hasMore: hasMore })); } catch (e) {}
+}
+
+// Only the filters actually set, so a plain first page asks exactly what
+// the sign-in warm-up asked — and joins it if it's still on its way.
+function ledgerParams(filters, extra) {
+  const out = {};
+  Object.keys(filters).forEach(function (k) { if (filters[k]) out[k] = filters[k]; });
+  return Object.assign(out, extra || {});
+}
+function ledgerFiltersAreDefault(f) { return !f.dateFrom && !f.dateTo && !f.enteredBy && !f.txnType && !f.department; }
+
+function mapLedgerRows(config, rows) {
+  // Names live in the master sheet, not the ledger, so they're joined on here.
+  const master = state[config.masterKey] || [];
+  // Must read the same field the category filter lists.
+  const catField = config.subCategoryField || config.categoryField;
+  const nameByCode = {}, catByCode = {}, unitByCode = {};
+  master.forEach(function (m) {
+    nameByCode[m[config.codeField]] = m[config.nameField] || '';
+    catByCode[m[config.codeField]] = m[catField] || '';
+    unitByCode[m[config.codeField]] = m[config.unitField] || '';
+  });
+  return (rows || []).map(function (r) {
+    return {
+      ts: r.Timestamp ? new Date(r.Timestamp).getTime() : 0,
+      dateText: r.Timestamp ? formatDateTime(r.Timestamp) : '\u2014',
+      dateISO: r.Timestamp ? new Date(r.Timestamp).toISOString().slice(0, 10) : '',
+      code: r[config.codeField] || '',
+      name: nameByCode[r[config.codeField]] || '',
+      category: catByCode[r[config.codeField]] || '',
+      txnId: r.TxnID || '', attachCount: Number(r.AttachmentCount) || 0,
+      type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
+      department: asText(r.Department), reference: asText(r.Reference),
+      supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
+      invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
+      remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy)
+    };
+  });
+}
+
+// ---- RM and FG, each with its own entries and filters ----
+function saveLedgerView() {
+  ledgerViews[state.ledgerKind] = {
+    rows: state.ledgerRows, loaded: state.ledgerLoaded, hasMore: state.ledgerHasMore, loadedAt: state.ledgerLoadedAt,
+    page: state.ledgerPage, type: state.ledgerType, dept: state.ledgerDept, cat: state.ledgerCat, search: state.ledgerSearch,
+    sort: Object.assign({}, state.ledgerSort),
+    dateFrom: document.getElementById('ldgDateFrom').value, dateTo: document.getElementById('ldgDateTo').value,
+    user: document.getElementById('ldgUserFilter').value, searchText: document.getElementById('ldgSearch').value
+  };
+}
+
+function restoreLedgerView(kind) {
+  const v = ledgerViews[kind] || {};
+  state.ledgerRows = v.rows || []; state.ledgerLoaded = !!v.loaded; state.ledgerHasMore = !!v.hasMore; state.ledgerLoadedAt = v.loadedAt || 0;
+  state.ledgerPage = v.page || 1; state.ledgerType = v.type || ''; state.ledgerDept = v.dept || ''; state.ledgerCat = v.cat || '';
+  state.ledgerSearch = v.search || ''; state.ledgerSort = v.sort || { col: 'ts', dir: 'desc' };
+  document.getElementById('ldgDateFrom').value = v.dateFrom || ''; document.getElementById('ldgDateTo').value = v.dateTo || '';
+  document.getElementById('ldgUserFilter').value = v.user || ''; document.getElementById('ldgSearch').value = v.searchText || '';
+  document.querySelectorAll('#page-ledger th.sortable').forEach(function (th) {
+    th.classList.remove('asc', 'desc');
+    if (th.dataset.col === state.ledgerSort.col) th.classList.add(state.ledgerSort.dir);
+  });
+  setLedgerStatus('');
+  if (ledgerPageInited) populateLedgerFilters();
+}
+
+function switchLedgerKind(kind) {
+  kind = kind === 'fg' ? 'fg' : 'rm';
+  if (kind !== state.ledgerKind) {
+    saveLedgerView();
+    state.ledgerKind = kind;
+    ledgerSeq++;  // anything still loading belongs to the other ledger
+    restoreLedgerView(kind);
+  }
+  document.getElementById('ldgKind').value = kind;
+  document.getElementById('ldgHeading').textContent = kind === 'fg' ? 'FG Ledger' : 'RM Ledger';
+  document.getElementById('ldgSub').textContent = kind === 'fg' ? 'Every finished-goods transaction, newest first.' : 'Every raw-material transaction, newest first.';
+}
+
+// After an entry is posted, both ledgers are due a refresh on the next look.
+function markLedgersStale() {
+  state.ledgerLoadedAt = 0;
+  ['rm', 'fg'].forEach(function (k) { if (ledgerViews[k]) ledgerViews[k].loadedAt = 0; });
+}
+
+async function loadLedgerPage(opts) {
+  opts = opts || {};
+  const config = ledgerConfig_(); const kind = state.ledgerKind;
+  const filters = currentLedgerPageFilters();
+  const plain = ledgerFiltersAreDefault(filters);
+  const seq = ++ledgerSeq;
+  const btn = document.getElementById('ldgApplyBtn');
+  const tbody = document.getElementById('ldgTableBody');
+
+  // The last entries seen, straight away, while fresh ones are fetched.
+  let showingOld = !!opts.background && state.ledgerRows.length > 0;
+  if (!opts.background && !opts.retry && plain) {
+    const cached = readLedgerCache(kind);
+    if (cached && cached.rows.length) {
+      state.ledgerRows = mapLedgerRows(config, cached.rows);
+      state.ledgerHasMore = !!cached.hasMore; state.ledgerLoaded = true; state.ledgerPage = 1;
+      renderLedgerPage();
+      showingOld = true;
+    }
+  }
+  if (!showingOld && !opts.retry) renderTableSkeleton('ldgTableBody', 8, 8);
+  setLedgerStatus(showingOld ? 'Refreshing\u2026' : '');
+  if (!opts.background) setBtnLoading(btn, 'Loading\u2026', true);
+  state.ledgerRefreshing = true;
+  const retry = function () { loadLedgerPage({ retry: true, background: showingOld }); };
+  const slow = slowNotice(function (text, again) { if (seq === ledgerSeq) setLedgerStatus(text, again); }, retry);
+  // A quiet refresh keeps however many entries are already on screen.
+  const limit = opts.background ? Math.min(LEDGER_ALL, Math.max(LEDGER_FIRST, state.ledgerRows.length)) : LEDGER_FIRST;
+  try {
+    const rows = await api(config.ledgerAction, ledgerParams(filters, Object.assign({ limit: limit }, opts.retry ? { _try: Date.now() } : {})));
+    if (seq !== ledgerSeq || kind !== state.ledgerKind) return;
+    state.ledgerRows = mapLedgerRows(config, rows);
+    state.ledgerHasMore = rows.length >= limit;
+    state.ledgerLoaded = true; state.ledgerLoadedAt = Date.now();
+    if (!opts.background) state.ledgerPage = 1;
+    if (plain) writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length >= LEDGER_FIRST);
+    setLedgerStatus('');
     renderLedgerPage();
+    if ((state.ledgerSearch || state.ledgerCat) && state.ledgerHasMore) ensureAllLedgerLoaded();
   } catch (err) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">' + escapeHtml(err.message) + '</td></tr>';
-  } finally { clearBtnLoading(btn, 'Apply'); }
+    if (seq !== ledgerSeq) return;
+    if (showingOld) {
+      setLedgerStatus('Couldn\u2019t refresh \u2014 ' + err.message + ' ', retry);
+    } else {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty"></td></tr>';
+      setNote(tbody.querySelector('td'), err.message + ' ', retry);
+      setLedgerStatus('');
+    }
+  } finally {
+    slow.done();
+    if (seq === ledgerSeq) state.ledgerRefreshing = false;
+    if (!opts.background) clearBtnLoading(btn, 'Apply');
+  }
+}
+
+// Older entries, after the ones already loaded.
+async function loadMoreLedger(count) {
+  if (state.ledgerLoadingMore || !state.ledgerHasMore || state.ledgerRefreshing) return false;
+  const config = ledgerConfig_(); const kind = state.ledgerKind; const seq = ledgerSeq;
+  state.ledgerLoadingMore = true;
+  setLedgerStatus(count >= LEDGER_ALL ? 'Looking through every entry\u2026' : 'Loading older entries\u2026');
+  try {
+    const rows = await api(config.ledgerAction, ledgerParams(currentLedgerPageFilters(), { limit: count, skip: state.ledgerRows.length }));
+    if (seq !== ledgerSeq || kind !== state.ledgerKind) return false;
+    // Entries posted meanwhile shift the window a little; nothing is shown twice.
+    const seen = {};
+    state.ledgerRows.forEach(function (r) { seen[r.txnId] = true; });
+    state.ledgerRows = state.ledgerRows.concat(mapLedgerRows(config, rows).filter(function (r) { return !seen[r.txnId]; }));
+    state.ledgerHasMore = rows.length >= count;
+    setLedgerStatus('');
+    return true;
+  } catch (err) {
+    if (seq === ledgerSeq) setLedgerStatus('Couldn\u2019t load older entries \u2014 ' + err.message + ' ', function () { loadMoreLedger(count).then(renderLedgerPage); });
+    return false;
+  } finally {
+    state.ledgerLoadingMore = false;
+  }
+}
+
+async function ensureAllLedgerLoaded() {
+  if (!state.ledgerHasMore) return;
+  if (await loadMoreLedger(LEDGER_ALL)) renderLedgerPage();
+}
+
+async function onLedgerNext() {
+  const lastPage = Math.max(1, Math.ceil(filteredLedgerRows().length / LEDGER_PAGE_SIZE));
+  if (state.ledgerPage < lastPage) { state.ledgerPage++; renderLedgerPage(); return; }
+  if (state.ledgerHasMore && await loadMoreLedger(LEDGER_MORE)) { state.ledgerPage++; renderLedgerPage(); }
+}
+
+// Just after sign-in, both ledgers' newest entries are fetched quietly, so
+// opening either is usually instant.
+let ledgerWarmTimer = null;
+function warmLedgers() {
+  clearTimeout(ledgerWarmTimer);
+  ledgerWarmTimer = setTimeout(function () {
+    ['rm', 'fg'].forEach(function (kind) {
+      const c = readLedgerCache(kind);
+      if (c && Date.now() - c.at < 5 * 60000) return;
+      const config = kind === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
+      api(config.ledgerAction, { limit: LEDGER_FIRST })
+        .then(function (rows) { writeLedgerCache(kind, rows, rows.length >= LEDGER_FIRST); })
+        .catch(function () {});
+    });
+  }, 4000);
 }
 
 function filteredLedgerRows() {
@@ -5079,14 +5355,12 @@ function renderLedgerPage() {
   }).join('');
 
   syncLedgerActionColumns();
-  document.getElementById('ldgPageInfo').textContent = 'Showing ' + (start + 1) + '–' + Math.min(start + LEDGER_PAGE_SIZE, total) + ' of ' + total;
-  // Flags when the server cap was hit, so a truncated view is never mistaken
-  // for the complete history.
-  document.getElementById('ldgCount').textContent = state.ledgerRows.length >= LEDGER_FETCH_LIMIT
-    ? 'Showing the most recent ' + LEDGER_FETCH_LIMIT + ' — narrow the date range for older records'
-    : '';
+  document.getElementById('ldgPageInfo').textContent = 'Showing ' + (start + 1) + '–' + Math.min(start + LEDGER_PAGE_SIZE, total) + ' of ' + total + (state.ledgerHasMore ? '+' : '');
+  // Older entries aren't loaded until someone pages to them, so the count
+  // says "100+" rather than claiming the loaded rows are all there is.
+  document.getElementById('ldgCount').textContent = '';
   document.getElementById('ldgPrevBtn').disabled = state.ledgerPage <= 1;
-  document.getElementById('ldgNextBtn').disabled = state.ledgerPage >= totalPages;
+  document.getElementById('ldgNextBtn').disabled = state.ledgerPage >= totalPages && !state.ledgerHasMore;
 }
 
 async function exportLedgerPageToExcel() {
@@ -5809,7 +6083,7 @@ function wireStaticEvents() {
   document.getElementById('resetForm').addEventListener('submit', handleResetSubmit);
   document.getElementById('resendOtpBtn').addEventListener('click', handleResendOtp);
 
-  document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page); }); });
+  document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page, el.dataset.kind); }); });
 
   [['cardRmTotal', 'rm', null], ['cardFgTotal', 'fg', null], ['cardRmAlerts', 'rm', 'NeedsAttention'], ['cardFgAlerts', 'fg', 'NeedsAttention']].forEach(function (c) {
     const el = document.getElementById(c[0]); el.addEventListener('click', function () { goToStockTab(c[1], c[2]); }); el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToStockTab(c[1], c[2]); } });
