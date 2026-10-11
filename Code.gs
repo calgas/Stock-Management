@@ -18,6 +18,8 @@ var OTP_RESEND_COOLDOWN_SECONDS = 60;
 var OTP_MAX_ATTEMPTS = 5;
 var LOGIN_MAX_ATTEMPTS = 5;
 var LOGIN_LOCKOUT_MINUTES = 15;
+// Applies to new passwords only; existing ones keep working until changed.
+var MIN_PASSWORD_LENGTH = 8;
 var COMPANY_NAME = 'CALGAS CAPACITORS';
 var COMPANY_LOGO_URL = 'https://calgas.github.io/Stock-Management/logo/CALGAS%20CAPACITORS-logo-768x240.jpg';
 
@@ -69,7 +71,7 @@ function sendMail_(opts) {
 /* =========================================================================
    WEB APP ROUTER
    ========================================================================= */
-var PUBLIC_ACTIONS = ['login', 'requestPasswordReset', 'resetPasswordWithOtp'];
+var PUBLIC_ACTIONS = ['ping', 'login', 'requestPasswordReset', 'resetPasswordWithOtp'];
 
 function doPost(e) { return handleRequest_(e); }
 // GET is intentionally not routed to handleRequest_ — routing it would let
@@ -109,6 +111,10 @@ function handleRequest_(e) {
 
 function routeAction_(action, params, session) {
   switch (action) {
+    // No session: proves the deployment itself is reachable. Production
+    // Tracker's ADMIN_checkStockLink calls it.
+    case 'ping':
+      return { ok: true, time: new Date() };
     case 'login':
       return login_(params);
     case 'logout':
@@ -352,15 +358,10 @@ function login_(params) {
   // to the other apps are left alone, so opening ELE Tracker never closes
   // Stock Management. Locked, so two sign-ins at the same moment can't both
   // survive.
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
+  withSessionsLock_(function () {
     endOtherSessions_(sessionsSheet, user.Username, app);
     appendRowByHeader_(sessionsSheet, sessionRow);
-    SpreadsheetApp.flush();
-  } finally {
-    lock.releaseLock();
-  }
+  });
   cacheSession_(sessionRow);
 
   updateLastLogin_(usersSheet, username, now);
@@ -405,10 +406,63 @@ function clearLoginThrottle_(usersSheet, username) {
 
 function logout_(session) {
   var sheet = getOrCreateSessionsSheet_();
-  var rowIdx = findRowIndexByValue_(sheet, 'Token', session.Token);
-  if (rowIdx > -1) sheet.deleteRow(rowIdx);
+  // Found and deleted under the lock: a sign-in elsewhere deletes rows too,
+  // and a row number read outside it could point at someone else's session
+  // by the time it's used.
+  withSessionsLock_(function () {
+    var rowIdx = findRowIndexByValue_(sheet, 'Token', session.Token);
+    if (rowIdx > -1) sheet.deleteRow(rowIdx);
+  });
   dropCachedSession_(session.Token);
   return { loggedOut: true };
+}
+
+// Every change to the Sessions tab that goes by row number — deleting a row,
+// rewriting one — runs under this. Sign-in deletes rows, so a row number
+// found outside the lock can shift onto another person's session before
+// it's used: the wrong person signed out, or one person's role and access
+// written onto someone else's row.
+//
+// Not re-entrant. Callers that already hold the script lock (none do today)
+// must not call into it.
+function withSessionsLock_(fn) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    return fn();
+  } finally {
+    try { SpreadsheetApp.flush(); } catch (err) {}
+    lock.releaseLock();
+  }
+}
+
+// Ends every session an account holds, in every app — on deactivation, and
+// after a password reset or change, so whoever had the old password is out.
+// keepToken spares the session making the change (a self-service change
+// shouldn't sign the person out of the screen they're on).
+function endAllSessionsFor_(username, reason, keepToken) {
+  var sheet = getOrCreateSessionsSheet_();
+  return withSessionsLock_(function () {
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    var meta = sheetMeta_(sheet);
+    var uCol = meta.map['Username'], tCol = meta.map['Token'];
+    if (uCol === undefined || tCol === undefined) return 0;
+    var values = sheet.getRange(2, 1, lastRow - 1, meta.lastCol).getValues();
+    var cache = CacheService.getScriptCache();
+    var ended = 0;
+    // Bottom-up, so deleting a row doesn't shift the ones still to check.
+    for (var i = values.length - 1; i >= 0; i--) {
+      if (String(values[i][uCol]) !== String(username)) continue;
+      var token = String(values[i][tCol]);
+      if (keepToken && token === String(keepToken)) continue;
+      sheet.deleteRow(i + 2);
+      dropCachedSession_(token);
+      try { cache.put(REVOKED_PREFIX + token, reason, 21600); } catch (err) {}
+      ended++;
+    }
+    return ended;
+  });
 }
 
 // Session lookup is on the hot path — every authenticated request pays for it.
@@ -455,6 +509,19 @@ function signedInElsewhere_(app) {
          ' on another device, so this session was closed — please log in again';
 }
 
+// Why a session was closed, for the device it was taken from. An app key
+// means "signed in elsewhere"; the other reasons are spelled out here.
+// Each starts "Invalid session" so every app's frontend recognises it as a
+// sign-out and returns to the login screen.
+var REVOKE_REASONS = {
+  deactivated: 'Invalid session — this account was deactivated. Ask an Admin if that’s a mistake.',
+  password: 'Invalid session — this account’s password was changed, so please log in again.'
+};
+
+function revokedMessage_(why) {
+  return REVOKE_REASONS[why] || signedInElsewhere_(why);
+}
+
 function endOtherSessions_(sheet, username, app) {
   app = sessionApp_(app);
   var lastRow = sheet.getLastRow();
@@ -494,14 +561,17 @@ function validateSession_(token) {
     if (!session) {
       var why = null;
       try { why = CacheService.getScriptCache().get(REVOKED_PREFIX + token); } catch (err) {}
-      throw new Error(why ? signedInElsewhere_(why) : 'Invalid session — please log in again');
+      throw new Error(why ? revokedMessage_(why) : 'Invalid session — please log in again');
     }
     cacheSession_(session);
   }
 
   // Checked against the stored expiry either way, so a cached entry can never
-  // extend a session past the lifetime the sheet recorded for it.
-  if (new Date(session.ExpiresAt).getTime() < Date.now()) {
+  // extend a session past the lifetime the sheet recorded for it. A blank or
+  // unreadable expiry counts as expired; read as a date it would be NaN, and
+  // NaN < now is false, so the session would never end.
+  var expiresMs = new Date(session.ExpiresAt).getTime();
+  if (isNaN(expiresMs) || expiresMs < Date.now()) {
     dropCachedSession_(token);
     throw new Error('Session expired — please log in again');
   }
@@ -606,6 +676,10 @@ function amendTransaction_(session, params) {
     var found = findLedgerRow_(config, params.txnId);
     var entry = found.entry;
     var code = entry[config.codeField];
+    // The entry as it stands must be one this person could have posted —
+    // checking only the department it's being moved to would let someone
+    // pull another department's entry into their own.
+    if (entry.Department) enforceDepartmentScope_(session, entry.Department);
 
     var txnType = params.txnType === undefined ? entry.TxnType : String(params.txnType).trim();
     var validTypes = config.inTypes.concat(config.outTypes, config.adjustTypes);
@@ -672,6 +746,7 @@ function deleteTransaction_(session, params) {
     var found = findLedgerRow_(config, params.txnId);
     var entry = found.entry;
     var code = entry[config.codeField];
+    if (entry.Department) enforceDepartmentScope_(session, entry.Department);
 
     var before = txnDelta_(config, entry.TxnType, Number(entry.Qty) || 0);
     if (!ALLOW_NEGATIVE_STOCK) {
@@ -841,7 +916,13 @@ function getOrCreateAccessTemplates_() {
   return sheet;
 }
 
+// Read once per execution: resolving access for every account (Team &
+// Access, the daily mail, a template save) used to re-read the tab, and
+// re-run its create-and-migrate check, once per account. Anything that
+// writes the tab clears this.
+var _accessTemplatesCache_ = null;
 function readAccessTemplates_() {
+  if (_accessTemplatesCache_) return _accessTemplatesCache_;
   var out = {};
   readSheetAsObjects_(getOrCreateAccessTemplates_()).forEach(function (r) {
     if (!r.Category) return;
@@ -849,6 +930,7 @@ function readAccessTemplates_() {
     permissionKeys_().forEach(function (k) { set[k] = isTruthyFlag_(r[k]); });
     out[r.Category] = set;
   });
+  _accessTemplatesCache_ = out;
   return out;
 }
 
@@ -1130,6 +1212,7 @@ function setAccessTemplate_(session, params) {
     permissionKeys_().forEach(function (k) { if (k in wanted) fields[k] = !!wanted[k]; });
     writeRowCells_(sheet, row.rowIdx, stageCells_(row.map, fields));
   }
+  _accessTemplatesCache_ = null; // the tab just changed
   // Everyone following this tier is affected, so their live sessions are
   // brought up to date rather than left on yesterday's rules.
   var templates = readAccessTemplates_();
@@ -1154,23 +1237,28 @@ function setAccessTemplate_(session, params) {
 function refreshSessionsFor_(username, granted, identity) {
   var sheet = getOrCreateSessionsSheet_();
   ensureColumns_(sheet, ['Perms']);
-  var meta = sheetMeta_(sheet);
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return 0;
-  var values = sheet.getRange(2, 1, lastRow - 1, meta.lastCol).getValues();
   var fields = { Perms: grantedKeys_(granted).join(',') };
   if (identity) {
     if (identity.Role !== undefined) fields.Role = identity.Role;
     if (identity.Department !== undefined) fields.Department = identity.Department;
   }
-  var touched = 0;
-  for (var i = 0; i < values.length; i++) {
-    if (String(values[i][meta.map['Username']]) !== String(username)) continue;
-    writeRowCells_(sheet, i + 2, stageCells_(meta.map, fields));
-    dropCachedSession_(String(values[i][meta.map['Token']]));
-    touched++;
-  }
-  return touched;
+  // Read and written under the lock, so a sign-in deleting rows at the same
+  // moment can't shift these rows and land this account's role and access
+  // on someone else's session.
+  return withSessionsLock_(function () {
+    var meta = sheetMeta_(sheet);
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return 0;
+    var values = sheet.getRange(2, 1, lastRow - 1, meta.lastCol).getValues();
+    var touched = 0;
+    for (var i = 0; i < values.length; i++) {
+      if (String(values[i][meta.map['Username']]) !== String(username)) continue;
+      writeRowCells_(sheet, i + 2, stageCells_(meta.map, fields));
+      dropCachedSession_(String(values[i][meta.map['Token']]));
+      touched++;
+    }
+    return touched;
+  });
 }
 
 /* =========================================================================
@@ -1186,7 +1274,16 @@ function refreshSessionsFor_(username, granted, identity) {
    every department dropdown in the app.
    ========================================================================= */
 
+// Read once per execution. deptCategoryFor_ runs once per account whenever
+// access is resolved for a list of people, and each call used to re-read
+// this tab. Nothing in this file writes it.
+var _departmentsCache_ = null;
 function getDepartments_() {
+  if (!_departmentsCache_) _departmentsCache_ = readDepartments_();
+  return _departmentsCache_;
+}
+
+function readDepartments_() {
   var sheet = getSpreadsheet_().getSheetByName('Departments');
   if (!sheet) return [];
   return readSheetAsObjects_(sheet).map(function (r) {
@@ -1264,10 +1361,19 @@ function generateSalt_() {
   return Utilities.getUuid();
 }
 
+// The secret lives in Script Properties, which only people who can edit this
+// script can see. In the Settings tab, anyone who could view the spreadsheet
+// could read it, and with the PasswordHash column try passwords offline.
+// The tab is still read as a fallback, so nothing breaks before
+// ADMIN_moveAppSecretToProperties() has been run.
+var APP_SECRET_MOVED = 'MOVED_TO_SCRIPT_PROPERTIES';
+
 function getAppSecret_() {
+  var stored = PropertiesService.getScriptProperties().getProperty('APP_SECRET');
+  if (stored) return stored;
   var settings = readSheetAsObjects_(getSpreadsheet_().getSheetByName('Settings'));
   var row = settings.filter(function (s) { return s.Key === 'APP_SECRET'; })[0];
-  if (!row || !row.Value || row.Value === 'SET_IN_PHASE_2') {
+  if (!row || !row.Value || row.Value === 'SET_IN_PHASE_2' || row.Value === APP_SECRET_MOVED) {
     throw new Error('APP_SECRET not set. Run ADMIN_generateAppSecret() from the Apps Script editor first.');
   }
   return row.Value;
@@ -1285,10 +1391,37 @@ function setSettingValue_(sheet, key, value) {
 
 // ---------- Manual admin tools (run from the Apps Script editor) ----------
 
+// Fresh install only: a new secret invalidates every password already set.
 function ADMIN_generateAppSecret() {
   var secret = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
-  setSettingValue_(getSpreadsheet_().getSheetByName('Settings'), 'APP_SECRET', secret);
-  Logger.log('APP_SECRET generated and saved. Next: set the admin password.');
+  PropertiesService.getScriptProperties().setProperty('APP_SECRET', secret);
+  setSettingValue_(getSpreadsheet_().getSheetByName('Settings'), 'APP_SECRET', APP_SECRET_MOVED);
+  Logger.log('APP_SECRET generated and saved in Script Properties. Next: set the admin password.');
+}
+
+// Run once from the editor. Copies the existing secret from the Settings tab
+// into Script Properties, checks the copy, and only then blanks the tab's
+// copy. The value is unchanged, so every password keeps working.
+// Before running it, keep a copy of the secret somewhere safe (a password
+// manager): it's the one thing that can't be recovered if lost.
+function ADMIN_moveAppSecretToProperties() {
+  var props = PropertiesService.getScriptProperties();
+  var settingsSheet = getSpreadsheet_().getSheetByName('Settings');
+  var row = readSheetAsObjects_(settingsSheet).filter(function (s) { return s.Key === 'APP_SECRET'; })[0];
+  var inSheet = row ? String(row.Value || '') : '';
+  var already = props.getProperty('APP_SECRET');
+
+  if (!inSheet || inSheet === APP_SECRET_MOVED) {
+    Logger.log(already ? 'Already moved — the secret is in Script Properties.' : 'No secret found in the Settings tab or Script Properties.');
+    return;
+  }
+  if (already && already !== inSheet) {
+    throw new Error('Script Properties already holds a different APP_SECRET. Nothing was changed — check which one the live passwords use.');
+  }
+  props.setProperty('APP_SECRET', inSheet);
+  if (props.getProperty('APP_SECRET') !== inSheet) throw new Error('Copy did not verify. Nothing was blanked.');
+  setSettingValue_(settingsSheet, 'APP_SECRET', APP_SECRET_MOVED);
+  Logger.log('APP_SECRET moved to Script Properties; the Settings tab copy is blanked.');
 }
 
 // Break-glass fallback — set a user's password directly from the Apps
@@ -1326,16 +1459,22 @@ function ADMIN_migrateSchema() {
 
 function ADMIN_cleanupExpiredSessions() {
   var sheet = getOrCreateSessionsSheet_();
-  var data = sheet.getDataRange().getValues();
-  var expIdx = data[0].indexOf('ExpiresAt');
-  var now = Date.now();
-  var removed = 0;
-  for (var i = data.length - 1; i >= 1; i--) {
-    if (new Date(data[i][expIdx]).getTime() < now) {
-      sheet.deleteRow(i + 1);
-      removed++;
+  // Read and deleted under the lock — a sign-in at 2am deletes rows too.
+  var removed = withSessionsLock_(function () {
+    var data = sheet.getDataRange().getValues();
+    var expIdx = data[0].indexOf('ExpiresAt');
+    var now = Date.now();
+    var count = 0;
+    for (var i = data.length - 1; i >= 1; i--) {
+      var exp = new Date(data[i][expIdx]).getTime();
+      // A blank expiry is treated as expired here too (see validateSession_).
+      if (isNaN(exp) || exp < now) {
+        sheet.deleteRow(i + 1);
+        count++;
+      }
     }
-  }
+    return count;
+  });
   Logger.log('Removed ' + removed + ' expired session(s).');
 }
 
@@ -1488,14 +1627,14 @@ function nightlyDriftCheck_() {
       html += '<h3>' + section.label + '</h3><table border="1" cellpadding="6" cellspacing="0">' +
         '<tr><th>Code</th><th>Stored</th><th>Ledger implies</th><th>Difference</th></tr>';
       section.rows.forEach(function (d) {
-        html += '<tr><td>' + d.code + '</td><td>' + d.stored + '</td><td>' + d.expected +
+        html += '<tr><td>' + escapeHtml_(d.code) + '</td><td>' + d.stored + '</td><td>' + d.expected +
           '</td><td>' + (d.diff > 0 ? '+' : '') + d.diff + '</td></tr>';
       });
       html += '</table>';
     });
 
     var admins = readSheetAsObjects_(getSpreadsheet_().getSheetByName('Users'))
-      .filter(function (u) { return u.Role === 'Admin' && u.Active !== false && u.Email; });
+      .filter(function (u) { return u.Role === 'Admin' && isActiveValue_(u.Active) && u.Email; });
 
     admins.forEach(function (admin) {
       sendMail_({
@@ -1667,9 +1806,14 @@ function setUserActive_(session, params, active) {
   }
 
   sheet.getRange(rowIdx, map['Active'] + 1).setValue(active);
+  // Deactivating used to leave every open session working for up to
+  // SESSION_DURATION_HOURS, in all three apps. Ending them here signs the
+  // person out on their next action; ELE and Production Tracker read the
+  // same Sessions tab, so it reaches them too.
+  var signedOut = active ? 0 : endAllSessionsFor_(username, 'deactivated');
   logAudit_(session.Username, active ? 'REACTIVATE_USER' : 'DEACTIVATE_USER', 'Users', username,
             active ? 'inactive' : 'active', active ? 'active' : 'inactive');
-  return { username: username, active: active };
+  return { username: username, active: active, sessionsEnded: signedOut };
 }
 
 function isActiveValue_(val) {
@@ -1707,8 +1851,11 @@ function getOrCreatePasswordResetsSheet_() {
   return sheet;
 }
 
+// From a UUID rather than Math.random(): Utilities.getUuid() is drawn from a
+// secure random source, Math.random() is not.
 function generateOtp_() {
-  return String(Math.floor(100000 + Math.random() * 900000)); // 100000-999999
+  var n = parseInt(Utilities.getUuid().replace(/-/g, '').slice(0, 12), 16);
+  return String(100000 + (n % 900000)); // 100000-999999
 }
 
 // adminSession present => an Admin explicitly triggered this from the
@@ -1765,7 +1912,7 @@ function resetPasswordWithOtp_(params) {
   var otp = String(params.otp || '').trim();
   var newPassword = String(params.newPassword || '');
   if (!identifier || !otp) throw new Error('Username and code are required');
-  if (newPassword.length < 6) throw new Error('New password must be at least 6 characters');
+  if (newPassword.length < MIN_PASSWORD_LENGTH) throw new Error('New password must be at least ' + MIN_PASSWORD_LENGTH + ' characters');
 
   var usersSheet = getSpreadsheet_().getSheetByName('Users');
   var idLower = identifier.toLowerCase();
@@ -1821,6 +1968,8 @@ function resetPasswordWithOtp_(params) {
   usersSheet.getRange(userRowIdx, userMap['Active'] + 1).setValue(true);
 
   sheet.deleteRow(rowIdx);
+  // Whoever had the old password is signed out everywhere.
+  endAllSessionsFor_(username, 'password');
   logAudit_(username, 'PASSWORD_RESET', 'Users', username, '', '');
   return { reset: true };
 }
@@ -1834,7 +1983,7 @@ function changeOwnPassword_(session, params) {
   var currentPassword = String(params.currentPassword || '');
   var newPassword = String(params.newPassword || '');
   if (!currentPassword) throw new Error('Enter your current password');
-  if (newPassword.length < 6) throw new Error('New password must be at least 6 characters');
+  if (newPassword.length < MIN_PASSWORD_LENGTH) throw new Error('New password must be at least ' + MIN_PASSWORD_LENGTH + ' characters');
   if (newPassword === currentPassword) throw new Error('New password must be different from the current one');
 
   var lock = LockService.getScriptLock();
@@ -1865,20 +2014,26 @@ function changeOwnPassword_(session, params) {
     usersSheet.getRange(rowIdx, map['Salt'] + 1).setValue(newSalt);
 
     logAudit_(session.Username, 'PASSWORD_CHANGED', 'Users', session.Username, '', '');
-    return { changed: true };
   } finally {
     lock.releaseLock();
   }
+  // Other sessions end; this one stays, so the person isn't thrown out of
+  // the screen they just used. Outside the lock above, which
+  // endAllSessionsFor_ takes for itself.
+  var signedOut = endAllSessionsFor_(session.Username, 'password', session.Token);
+  return { changed: true, otherSessionsEnded: signedOut };
 }
 
 function cleanupExpiredPasswordResets_() {
   var sheet = getOrCreatePasswordResetsSheet_();
-  var data = sheet.getDataRange().getValues();
-  var expIdx = data[0].indexOf('ExpiresAt');
-  var now = Date.now();
-  for (var i = data.length - 1; i >= 1; i--) {
-    if (new Date(data[i][expIdx]).getTime() < now) sheet.deleteRow(i + 1);
-  }
+  withSessionsLock_(function () {
+    var data = sheet.getDataRange().getValues();
+    var expIdx = data[0].indexOf('ExpiresAt');
+    var now = Date.now();
+    for (var i = data.length - 1; i >= 1; i--) {
+      if (new Date(data[i][expIdx]).getTime() < now) sheet.deleteRow(i + 1);
+    }
+  });
 }
 
 function sendOtpEmail_(email, name, otp) {
@@ -1886,7 +2041,7 @@ function sendOtpEmail_(email, name, otp) {
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:420px;margin:0 auto">' +
     '<img src="' + COMPANY_LOGO_URL + '" alt="' + COMPANY_NAME + '" style="height:40px;margin-bottom:16px">' +
-    '<p>Hi ' + name + ',</p>' +
+    '<p>Hi ' + escapeHtml_(name) + ',</p>' +
     '<p>Your verification code for ' + COMPANY_NAME + ' Stock Management is:</p>' +
     '<p style="font-size:28px;font-weight:bold;letter-spacing:4px;margin:16px 0">' + otp + '</p>' +
     '<p style="color:#5B615F;font-size:13px">This code expires in ' + OTP_VALIDITY_MINUTES + ' minutes. ' +
@@ -2137,7 +2292,7 @@ function sendStockReportToUser_(user, rmRows, fgRows, blob) {
   var html =
     '<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto">' +
     '<img src="' + COMPANY_LOGO_URL + '" alt="' + COMPANY_NAME + '" style="height:40px;margin-bottom:16px">' +
-    '<p>Hi ' + (user.Name || user.Username) + ',</p>' +
+    '<p>Hi ' + escapeHtml_(user.Name || user.Username) + ',</p>' +
     '<p>Here\u2019s the daily stock report for ' + dateLabel + '. Full detail is in the attached workbook' + (both ? ' (RM and FG on separate tabs).' : '.') + '</p>' +
     '<p style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 16px;font-size:13.5px;color:#334155">' + alerts.join(' &nbsp;&middot;&nbsp; ') + '</p>' +
     '<p style="color:#5B615F;font-size:12.5px;margin-top:24px">This is an automated report. Manage your subscription under Team &amp; Access in the app.</p>' +
@@ -2429,10 +2584,14 @@ function quantityFormats_(values, idx) {
   });
 }
 
+var LEDGER_MAX_LIMIT = 5000;
+
 function getLedger_(config, params) {
   var sheet = getSpreadsheet_().getSheetByName(config.ledgerSheet);
   var code = params.code ? String(params.code).trim() : '';
-  var limit = Number(params.limit) || 200;
+  // Capped: an uncapped limit let one request read the whole ledger and run
+  // into Apps Script's time limit. 5,000 is the item-history export's size.
+  var limit = Math.min(Number(params.limit) || 200, LEDGER_MAX_LIMIT);
   var dateFrom = params.dateFrom ? new Date(params.dateFrom + 'T00:00:00') : null;
   var dateTo = params.dateTo ? new Date(params.dateTo + 'T23:59:59') : null;
   var userFilter = params.enteredBy ? String(params.enteredBy).trim().toLowerCase() : '';
@@ -3055,13 +3214,10 @@ function computeStockStatus_(balance, reorderLevel) {
   return 'OK';
 }
 
-// Full rebuild of the current-stock tab straight from Master + Ledger.
+// Full rebuild of the current-stock totals straight from Master + Ledger.
 // Safe to run any time — it's a repair tool, not part of the normal flow.
-//
-// Only emits a row for codes that actually appear in the ledger. An item
-// with zero transactions ever gets no Current_Stock row at all, same as
-// the incremental path (applyStockDelta_) already does — the frontend
-// renders "no row" as "No Activity", not a false Critical alarm.
+// Every master item gets a row; rows stay where they are; columns other
+// than the stock figures are left alone.
 function recalcCurrentStock_(config) {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -3071,14 +3227,29 @@ function recalcCurrentStock_(config) {
     var ledgerRows = readSheetAsObjects_(ss.getSheetByName(config.ledgerSheet));
     var stockSheet = ss.getSheetByName(config.stockSheet);
 
-    // This rebuilds Received/Issued/Balance from the ledger — it is not a
-    // reset of opening balances, which get entered independently of any
-    // transaction. Capture whatever's on the sheet now so it survives.
-    var openingByCode = {};
-    readSheetAsObjects_(stockSheet).forEach(function (r) {
-      var code = r[config.codeField];
-      if (code) openingByCode[code] = Number(r.OpeningStock) || 0;
-    });
+    // The columns this rebuild owns. Any other column on the tab — a note,
+    // a formula someone added — is kept, row for row, and so is the column
+    // order. The previous version cleared the whole tab and wrote these
+    // eleven back, which deleted anything else.
+    var headers = [config.codeField, config.nameField, config.categoryField, config.unitField,
+      'OpeningStock', config.receivedField, config.issuedField, 'CurrentBalance',
+      config.reorderField, 'StockStatus', 'LastUpdated'];
+    var hadHeader = stockSheet.getLastRow() > 0;
+    ensureColumns_(stockSheet, headers);
+    if (!hadHeader) styleHeader_(stockSheet, headers.length);
+    var meta = sheetMeta_(stockSheet);
+    var lastCol = meta.lastCol;
+
+    // The tab as it stands, formulas included. Every row stays where it is
+    // and only the columns above are rewritten, so a formula in another
+    // column still points at the row it was written for. Plain text is
+    // re-escaped on the way back: a cell reading "=x" as text would
+    // otherwise come back as a formula.
+    var oldCount = Math.max(0, stockSheet.getLastRow() - 1);
+    var oldRange = oldCount ? stockSheet.getRange(2, 1, oldCount, lastCol) : null;
+    var oldValues = oldRange ? oldRange.getValues() : [];
+    var oldFormulas = oldRange ? oldRange.getFormulas() : [];
+    var codeIdx = meta.map[config.codeField];
 
     var totals = {};
     ledgerRows.forEach(function (t) {
@@ -3095,55 +3266,98 @@ function recalcCurrentStock_(config) {
       }
     });
 
-    // Driven from Master, not from the ledger totals — every master item
-    // (active or not, matching how the ledger side already didn't care
-    // about active status) gets exactly one output row, whether or not it
-    // has ever had a transaction. The previous version only emitted a row
-    // for codes it found in the ledger, so a brand-new item with opening
-    // stock but no transactions yet would silently disappear from Current
-    // Stock the moment someone ran a recalc.
+    var masterByCode = {};
+    var masterOrder = [];
+    masterRows.forEach(function (m) {
+      var code = m[config.codeField];
+      if (code === '' || code === null || code === undefined || masterByCode[code]) return;
+      masterByCode[code] = m;
+      masterOrder.push(code);
+    });
+
     var now = new Date();
     var itemsWithActivity = 0;
-    var outRows = masterRows.map(function (m) {
-      var code = m[config.codeField];
+    var notInMaster = 0;
+    var duplicates = [];
+    var onTab = {};
+
+    // The owned cells of one row, rebuilt from the ledger. `item` gives the
+    // name, category, unit and reorder level: the master row, or for a code
+    // no longer in Master, the tab's own row, so its opening stock and
+    // history aren't dropped.
+    var rebuild = function (cells, code, item, opening) {
       var t = totals[code];
       if (t) itemsWithActivity++;
       t = t || { inQty: 0, outQty: 0 };
-      var reorder = Number(m[config.reorderField]) || 0;
-      var opening = openingByCode[code] || 0;
+      var reorder = Number(item[config.reorderField]) || 0;
       var balance = opening + t.inQty - t.outQty;
-      var row = {
+      var owned = {
         OpeningStock: opening,
         CurrentBalance: balance,
         StockStatus: computeStockStatus_(balance, reorder),
         LastUpdated: now
       };
-      row[config.codeField] = code;
-      row[config.nameField] = m[config.nameField];
-      row[config.categoryField] = m[config.categoryField];
-      row[config.unitField] = m[config.unitField];
-      row[config.reorderField] = reorder;
-      row[config.receivedField] = t.inQty;
-      row[config.issuedField] = t.outQty;
-      return row;
+      owned[config.codeField] = code;
+      owned[config.nameField] = item[config.nameField];
+      owned[config.categoryField] = item[config.categoryField];
+      owned[config.unitField] = item[config.unitField];
+      owned[config.reorderField] = reorder;
+      owned[config.receivedField] = t.inQty;
+      owned[config.issuedField] = t.outQty;
+      headers.forEach(function (h) {
+        var v = owned[h];
+        cells[meta.map[h]] = sheetSafe_(v === undefined || v === null ? '' : v);
+      });
+      return cells;
+    };
+
+    // Rows already on the tab, in place. Opening balances are not reset:
+    // they're entered independently of any transaction, so the tab's own
+    // figure is kept.
+    var values = oldValues.map(function (row, i) {
+      var cells = row.map(function (v, c) { return oldFormulas[i][c] || sheetSafe_(v); });
+      var code = row[codeIdx];
+      if (code === '' || code === null || code === undefined) return cells; // a note row, left as is
+      if (onTab[code]) duplicates.push(String(code));
+      onTab[code] = true;
+      var item = masterByCode[code];
+      if (!item) {
+        notInMaster++;
+        item = {};
+        meta.headers.forEach(function (h, c) { if (h) item[h] = row[c]; });
+      }
+      return rebuild(cells, code, item, Number(row[meta.map['OpeningStock']]) || 0);
     });
 
-    var headers = [config.codeField, config.nameField, config.categoryField, config.unitField,
-      'OpeningStock', config.receivedField, config.issuedField, 'CurrentBalance',
-      config.reorderField, 'StockStatus', 'LastUpdated'];
-
-    var values = outRows.map(function (row) {
-      return headers.map(function (h) { return row[h] !== undefined ? row[h] : ''; });
+    // Every master item gets a row, whether or not it has ever had a
+    // transaction — a new item with no movements yet must not vanish from
+    // Current Stock on a recalc. Those not on the tab yet go at the end.
+    var added = 0;
+    masterOrder.forEach(function (code) {
+      if (onTab[code]) return;
+      values.push(rebuild(new Array(lastCol).fill(''), code, masterByCode[code], 0));
+      added++;
+    });
+    var outRows = values.filter(function (cells) {
+      var code = cells[codeIdx];
+      return code !== '' && code !== null && code !== undefined;
     });
 
-    stockSheet.clearContents();
-    stockSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-    styleHeader_(stockSheet, headers.length);
+    // One write over the rows in place. The previous version cleared the
+    // whole tab first, which left it empty whenever the run stopped between
+    // the clear and the write, and deleted every column it didn't own.
     if (values.length > 0) {
-      stockSheet.getRange(2, 1, values.length, headers.length).setValues(values);
+      stockSheet.getRange(2, 1, values.length, lastCol).setValues(values);
     }
 
     var result = { itemsRecalculated: outRows.length, itemsWithNoActivity: outRows.length - itemsWithActivity };
+    if (added) result.itemsAdded = added;
+    if (notInMaster) result.itemsNotInMaster = notInMaster;
+    if (duplicates.length) {
+      result.warning = (result.warning ? result.warning + ' ' : '') + 'These codes appear on more than one row of ' +
+        config.stockSheet + ', and each copy now shows the same figures: ' + duplicates.join(', ') +
+        '. Delete the extra rows by hand.';
+    }
     // Not a hard limit — this is a rare, manual, Admin-only repair tool
     // and it should still attempt the work. But Apps Script executions
     // have a hard 6-minute ceiling, and a huge ledger with no explanation
@@ -3151,7 +3365,8 @@ function recalcCurrentStock_(config) {
     // past anything this ever needs to touch at normal usage, so it's a
     // reasonable "you're in unusual territory" line, not a real limit.
     if (ledgerRows.length > 20000) {
-      result.warning = 'The ' + config.ledgerSheet + ' ledger has grown to ' + ledgerRows.length + ' rows — this recalculation may take a while, and a very large ledger risks Apps Script\u2019s execution time limit.';
+      result.warning = 'The ' + config.ledgerSheet + ' ledger has grown to ' + ledgerRows.length + ' rows — this recalculation may take a while, and a very large ledger risks Apps Script\u2019s execution time limit.' +
+        (result.warning ? ' ' + result.warning : '');
     }
     return result;
   } finally {
@@ -3365,9 +3580,12 @@ function updateMasterItem_(config, session, params) {
     var before = sheet.getRange(rowIdx, 1, 1, sheet.getLastColumn()).getValues()[0];
 
     var rowObj = buildMasterRowFromParams_(params);
-    Object.keys(rowObj).forEach(function (key) {
-      if (key in map) sheet.getRange(rowIdx, map[key] + 1).setValue(rowObj[key]);
-    });
+    // The code is how the row was found; it isn't rewritten.
+    delete rowObj[config.codeField];
+    // One merged write through writeRowCells_, which also escapes text that
+    // starts with = + - or @. The per-field setValue this replaces skipped
+    // that, so a name typed as "=..." became a live formula.
+    writeRowCells_(sheet, rowIdx, stageCells_(map, rowObj));
 
     logAudit_(session.Username, 'UPDATE_ITEM', config.masterSheet, code, JSON.stringify(before), JSON.stringify(rowObj));
 
@@ -3668,6 +3886,14 @@ function logAudit_(user, action, module, recordId, oldValue, newValue) {
     // Never let an audit-log failure break the actual operation.
     Logger.log('Audit log failed: ' + err.message);
   }
+}
+
+// For names and codes placed in email HTML. They come from the sheet, so a
+// name containing < or & would otherwise break the layout or inject markup.
+function escapeHtml_(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function jsonResponse_(obj) {

@@ -1166,7 +1166,7 @@
     <form id="resetForm">
       <div class="field"><label for="resetUsername">Username or email</label><input type="text" id="resetUsername" autocomplete="username" required></div>
       <div class="field"><label for="resetOtp">Verification code</label><input type="text" id="resetOtp" class="otp-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>
-      <div class="field"><label for="resetNewPassword">New password</label><input type="password" id="resetNewPassword" autocomplete="new-password" minlength="6" required><div class="hint">At least 6 characters.</div></div>
+      <div class="field"><label for="resetNewPassword">New password</label><input type="password" id="resetNewPassword" autocomplete="new-password" minlength="8" required><div class="hint">At least 8 characters.</div></div>
       <div class="form-error" id="resetError"></div>
       <button type="submit" class="btn-primary" id="resetSubmit">Set new password</button>
     </form>
@@ -1725,7 +1725,7 @@
     <form id="passwordForm" autocomplete="off">
       <div class="form-error" id="pwdError"></div>
       <div class="field"><label for="pwdCurrent">Current password</label><input type="password" id="pwdCurrent" autocomplete="current-password" required></div>
-      <div class="field"><label for="pwdNew">New password</label><input type="password" id="pwdNew" autocomplete="new-password" required><div class="hint">At least 6 characters.</div></div>
+      <div class="field"><label for="pwdNew">New password</label><input type="password" id="pwdNew" autocomplete="new-password" minlength="8" required><div class="hint">At least 8 characters.</div></div>
       <div class="field"><label for="pwdConfirm">Confirm new password</label><input type="password" id="pwdConfirm" autocomplete="new-password" required></div>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" id="pwdCancelBtn">Cancel</button>
@@ -1753,7 +1753,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.15.0';
+const APP_VERSION = '3.16.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -5423,7 +5423,7 @@ async function handleChangePassword(e) {
   // Checked here as well as on the server: the confirm field exists only in
   // the UI, so there's nothing for the backend to compare against.
   if (newPassword !== confirm) { errEl.textContent = 'New passwords do not match'; return; }
-  if (newPassword.length < 6) { errEl.textContent = 'New password must be at least 6 characters'; return; }
+  if (newPassword.length < 8) { errEl.textContent = 'New password must be at least 8 characters'; return; }
 
   setBtnLoading(btn, 'Updating…');
   try {

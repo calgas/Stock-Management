@@ -20,6 +20,18 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 
 ---
 
+## What changed in 3.16.0
+
+**Deactivating someone signs them out everywhere.** Their open sessions in Stock Management, Production Tracker and ELE Tracker end straight away, instead of lasting until they expired. A password reset signs out every session the account had; changing your own password signs out your other devices and keeps the one you're on.
+
+**Recalculate stock no longer clears the tab first.** It rewrites the stock figures row by row, in place, so a run that stops partway can't leave the tab empty, columns it doesn't own are kept, and a code no longer in the master keeps its opening stock.
+
+**The app secret can move out of the sheet.** Run `ADMIN_moveAppSecretToProperties()` once from the editor; it copies APP_SECRET into Script Properties, checks the copy, then blanks the Settings tab's copy. Keep a copy of the secret somewhere safe first.
+
+Also: correcting or deleting an entry checks the entry's own department; item edits are escaped against formulas; new passwords need 8 characters; Sessions-tab changes run under the lock; ledger requests are capped at 5,000 rows; a `ping` action for Production Tracker's link check.
+
+**Deploying:** deploy Code.gs as a new version, then push index.html and sw.js.
+
 ## What changed in 3.14.0
 
 **Production Tracker's paperwork arrives on its entries.** When a raw-material or finished-goods handover is received in Production Tracker, its files — Purchase's invoice, a delivery note, a photo — are recorded on the Stock Management entry the receipt posts. They show in history like any other file, with **from HO-…** under the name, and open the same way. They're the same Drive files, not copies. Removing one here follows the usual rule (*Correct entries*, with a reason).
