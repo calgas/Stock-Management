@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.15.0">
+<meta name="app-version" content="3.15.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1753,7 +1753,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.15.0';
+const APP_VERSION = '3.15.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -5738,7 +5738,7 @@ const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg'];
 // that is what gets sent — so switching app never loses a change, and
 // saving never touches a switch nobody moved.
 const ACCESS_APPS = [{ id: 'stock', label: 'Stock Management' }, { id: 'pt', label: 'Production Tracker' },
-                     { id: 'ele', label: 'ELE Tracker' }];
+                     { id: 'ele', label: 'ELE Tracker' }, { id: 'bct', label: 'Batch Card Tracker' }];
 let accessApp = 'stock';
 const accessDraft = { user: {}, tier: {} };
 
