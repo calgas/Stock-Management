@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'self' blob:; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.15.1">
+<meta name="app-version" content="3.19.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1166,7 +1167,7 @@
     <form id="resetForm">
       <div class="field"><label for="resetUsername">Username or email</label><input type="text" id="resetUsername" autocomplete="username" required></div>
       <div class="field"><label for="resetOtp">Verification code</label><input type="text" id="resetOtp" class="otp-input" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>
-      <div class="field"><label for="resetNewPassword">New password</label><input type="password" id="resetNewPassword" autocomplete="new-password" minlength="6" required><div class="hint">At least 6 characters.</div></div>
+      <div class="field"><label for="resetNewPassword">New password</label><input type="password" id="resetNewPassword" autocomplete="new-password" minlength="8" required><div class="hint">At least 8 characters.</div></div>
       <div class="form-error" id="resetError"></div>
       <button type="submit" class="btn-primary" id="resetSubmit">Set new password</button>
     </form>
@@ -1725,7 +1726,7 @@
     <form id="passwordForm" autocomplete="off">
       <div class="form-error" id="pwdError"></div>
       <div class="field"><label for="pwdCurrent">Current password</label><input type="password" id="pwdCurrent" autocomplete="current-password" required></div>
-      <div class="field"><label for="pwdNew">New password</label><input type="password" id="pwdNew" autocomplete="new-password" required><div class="hint">At least 6 characters.</div></div>
+      <div class="field"><label for="pwdNew">New password</label><input type="password" id="pwdNew" autocomplete="new-password" minlength="8" required><div class="hint">At least 8 characters.</div></div>
       <div class="field"><label for="pwdConfirm">Confirm new password</label><input type="password" id="pwdConfirm" autocomplete="new-password" required></div>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" id="pwdCancelBtn">Cancel</button>
@@ -1753,12 +1754,14 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.15.1';
+const APP_VERSION = '3.19.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
 const COMPANY_LOGO_FULL_URL = './logo/CALGAS%20CAPACITORS-logo-768x240.jpg';
 const PAGE_SIZE = 50;
+// Overview shows at most this many low/critical cards, most urgent first.
+const ALERT_CARD_LIMIT = 30;
 const API_TIMEOUT_MS = 30000;
 // A file is far bigger than an entry, and a phone may be on a weak signal.
 const ACTION_TIMEOUT_MS = { uploadAttachment: 180000, getAttachmentFile: 120000 };
@@ -2119,7 +2122,10 @@ async function _apiRequest(action, params, attempt, afterUnknown) {
     return json.data;
   } catch (err) {
     const timedOut = err.name === 'AbortError';
-    const transport = timedOut || (err.message && err.message.indexOf('fetch') > -1);
+    // A dropped connection reads differently in each browser: "Failed to fetch"
+    // (Chrome), "NetworkError when attempting to fetch" (Firefox), "Load failed"
+    // (Safari and every iPhone browser). All of them are a TypeError from fetch.
+    const transport = timedOut || err instanceof TypeError || (err.message && err.message.indexOf('fetch') > -1);
     if (transport) err.indeterminate = true;
     const safeToRepeat = !isWrite || body.clientTxnId || REPEATABLE_WRITES[action];
 
@@ -3263,7 +3269,7 @@ function renderHome() {
     listEl.className = ''; listEl.innerHTML = '<div class="empty-state"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 12.5l2.2 2.2L15.5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>No low-stock alerts right now.</div>';
   } else {
     listEl.className = 'alerts-grid';
-    listEl.innerHTML = all.map(function (r) {
+    listEl.innerHTML = all.slice(0, ALERT_CARD_LIMIT).map(function (r) {
       const pctRaw = r.reorder > 0 ? (r.balance / r.reorder) * 100 : 0;
       const pct = Math.round(pctRaw); const barWidth = Math.min(Math.max(pct, 2), 100);
       const cardClass = r.status === 'Critical' ? 'alert-card-critical' : 'alert-card-low';
@@ -3274,7 +3280,10 @@ function renderHome() {
         '<div class="alert-card-metrics"><div><span class="alert-card-val">' + formatQty(r.balance) + '</span> <span class="alert-card-unit">' + escapeHtml(r.unit) + '</span></div><div class="alert-card-pct">' + pct + '% of Min</div></div>' +
         '<div class="alert-card-bar-bg"><div class="alert-card-bar-fill" style="width: ' + barWidth + '%;"></div></div>' +
       '</div>';
-    }).join('');
+    }).join('') + (all.length > ALERT_CARD_LIMIT
+      ? '<div class="muted" style="grid-column:1/-1;padding:8px 2px">Showing the ' + ALERT_CARD_LIMIT + ' most urgent of ' + all.length +
+        '. Filter RM Stock or FG Stock by status to see the rest.</div>'
+      : '');
   }
 }
 
@@ -3628,6 +3637,11 @@ function renderTxnPrice(lastPrice) {
   const std = standardCost();
   const paid = lastPrice && lastPrice.rate ? lastPrice : null;
   const isReceipt = activeTxnConfig && (activeTxnConfig.inTypes || []).indexOf(document.getElementById('txnType').value) > -1;
+  if (!canSeeCosts()) {
+    head.textContent = ''; head.classList.add('hidden');
+    hint.textContent = isReceipt ? 'Type the invoice rate if you have it.' : '';
+    return;
+  }
 
   let rate = null;
   if (std !== null) {
@@ -3657,6 +3671,7 @@ function renderTxnPrice(lastPrice) {
 }
 
 async function loadTxnPrice(key, code) {
+  if (!canSeeCosts()) { renderTxnPrice(null); return; }
   const cacheKey = key + ':' + code;
   // The Standard cost is on screen at once; the last-paid lookup only adds to it.
   renderTxnPrice(priceCache[cacheKey]);
@@ -4099,7 +4114,7 @@ function renderAttachGrid() {
   grid.innerHTML = v.items.map(function (a) {
     const face = a.mimeType === 'application/pdf'
       ? '<span class="attach-tile-pdf">PDF</span>'
-      : (a.thumb ? '<img class="attach-tile-img" src="data:image/jpeg;base64,' + a.thumb + '" alt="">'
+      : (/^[A-Za-z0-9+\/=]+$/.test(a.thumb || '') ? '<img class="attach-tile-img" src="data:image/jpeg;base64,' + a.thumb + '" alt="">'
                  : '<span class="attach-tile-pdf" style="background:var(--ink-soft)">IMG</span>');
     return '<div class="attach-tile">' +
       '<button type="button" class="attach-open" data-attach-open="' + escapeHtml(a.attachmentId) + '" aria-label="Open ' + escapeHtml(a.fileName) + '">' + face +
@@ -4626,7 +4641,7 @@ function openItemModal(key, code) {
   document.getElementById('itemCode').value = isEdit ? code : ''; document.getElementById('itemCode').disabled = isEdit;
 
   let mainHtml = '', moreHtml = '';
-  config.itemFields.forEach(function (f) { const val = item && item[f.key] !== undefined && item[f.key] !== null ? item[f.key] : ''; const html = renderField_(f, val); if (f.section === 'more') moreHtml += html; else mainHtml += html; });
+  config.itemFields.filter(visibleItemField).forEach(function (f) { const val = item && item[f.key] !== undefined && item[f.key] !== null ? item[f.key] : ''; const html = renderField_(f, val); if (f.section === 'more') moreHtml += html; else mainHtml += html; });
   document.getElementById('itemFieldsMain').innerHTML = mainHtml; document.getElementById('itemFieldsMore').innerHTML = moreHtml; document.getElementById('itemFieldsMoreWrap').classList.toggle('hidden', !moreHtml);
 
   const deleteBtn = document.getElementById('itemDeleteBtn');
@@ -4683,7 +4698,7 @@ function openImportModal(key) {
 function closeImportModal() { document.getElementById('importModal').classList.add('hidden'); activeImportConfig = null; importPreviewRows = []; }
 
 function importTemplateHeaders(config) {
-  return [config.codeField].concat(config.itemFields.map(function (f) { return f.key; })).concat(['OpeningStock']);
+  return [config.codeField].concat(config.itemFields.filter(visibleItemField).map(function (f) { return f.key; })).concat(['OpeningStock']);
 }
 
 async function downloadImportTemplate() {
@@ -5134,7 +5149,7 @@ function mapLedgerRows(config, rows) {
       code: r[config.codeField] || '',
       name: nameByCode[r[config.codeField]] || '',
       category: catByCode[r[config.codeField]] || '',
-      txnId: r.TxnID || '', attachCount: Number(r.AttachmentCount) || 0,
+      txnId: r.TxnID || '', attachCount: Number(r.AttachmentCount) || 0, row: Number(r._row) || 0,
       type: r.TxnType || '', qty: Number(r.Qty) || 0, unit: r.Unit || unitByCode[r[config.codeField]] || '',
       department: asText(r.Department), reference: asText(r.Reference),
       supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
@@ -5251,7 +5266,11 @@ async function loadMoreLedger(count) {
   state.ledgerLoadingMore = true;
   setLedgerStatus(count >= LEDGER_ALL ? 'Looking through every entry\u2026' : 'Loading older entries\u2026');
   try {
-    const rows = await api(config.ledgerAction, ledgerParams(currentLedgerPageFilters(), { limit: count, skip: state.ledgerRows.length }));
+    // From the row of the oldest entry already loaded, so the backend doesn't
+    // rescan everything newer; skip is the fallback for rows that carry no row.
+    const oldest = state.ledgerRows.reduce(function (m, r) { return r.row && (!m || r.row < m) ? r.row : m; }, 0);
+    const page = oldest ? { limit: count, beforeRow: oldest } : { limit: count, skip: state.ledgerRows.length };
+    const rows = await api(config.ledgerAction, ledgerParams(currentLedgerPageFilters(), page));
     if (seq !== ledgerSeq || kind !== state.ledgerKind) return false;
     // Entries posted meanwhile shift the window a little; nothing is shown twice.
     const seen = {};
@@ -5423,7 +5442,7 @@ async function handleChangePassword(e) {
   // Checked here as well as on the server: the confirm field exists only in
   // the UI, so there's nothing for the backend to compare against.
   if (newPassword !== confirm) { errEl.textContent = 'New passwords do not match'; return; }
-  if (newPassword.length < 6) { errEl.textContent = 'New password must be at least 6 characters'; return; }
+  if (newPassword.length < 8) { errEl.textContent = 'New password must be at least 8 characters'; return; }
 
   setBtnLoading(btn, 'Updating…');
   try {
@@ -5603,6 +5622,11 @@ const KNOWN_ROLES = ['Admin', 'Management', 'Manager', 'HOD', 'Supervisor'];
 function can(key) {
   return !!(state.permissions && state.permissions[key]);
 }
+
+// Standard cost, rates and the last price paid are shown only to people with
+// "See costs and rates"; the backend leaves them out for everyone else.
+function canSeeCosts() { return can('stock.cost.view'); }
+function visibleItemField(f) { return f.key !== 'StandardCost' || canSeeCosts(); }
 
 function accessCatalog() { return (state.access && state.access.permissions) || []; }
 function accessTemplates() { return (state.access && state.access.templates) || {}; }
