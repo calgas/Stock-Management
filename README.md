@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.10.2
+**Current version:** 3.19.0
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -19,6 +19,45 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Detects and reports balance drift nightly, without silently correcting it.
 
 ---
+
+## What changed in 3.17.0 – 3.19.0
+
+Changes from the October code review, in three backend releases. The app (index.html 3.19.0) needs the backend at 3.19.0, so deploy Code.gs first.
+
+### 3.19.0 — AppSheet correctness and speed
+
+- **One rule for transaction types.** "receipt " and "Receipt" are the same type everywhere. A type that isn't one of the ledger's own now moves nothing (it used to count as an Adjustment and add stock); AppSheet entries with such a type are flagged for review.
+- **Drift is reported, not hidden.** When an AppSheet entry is synced and the item's stored balance was already off before it, the entry is marked *Review* with the before and after figures and Admins get the review mail. Several AppSheet entries landing at once are allowed for, so they don't raise false alarms.
+- **Missed AppSheet syncs are caught up nightly.** Entries whose bot call never arrived (blank SyncStatus) are synced by the nightly job, up to 50 per ledger, without mails; anything found shows as *Review* on the entry.
+- **Faster:** status colours in exported workbooks are set in one call per column; access templates are read once per request; attachment counts read three columns instead of the whole Attachments tab, and single-file lookups search instead of reading it; "Older entries" on the Ledger page continue from the row of the oldest entry shown instead of rescanning from the newest.
+
+### 3.18.0 — Security and cost visibility
+
+- **See costs and rates** is a new feature in Team & Access (Item master group). Only Admins and people given it see Standard cost on items, Rate and Value on entries, and the last price paid. Everyone else gets those fields left out by the backend; the item form and the import template leave Standard cost out, and a correction by someone without it keeps the entry's rate.
+- **Secrets move to Script Properties.** After deploying, run `ADMIN_moveSecretsToProperties()` once from the editor: it copies APP_SECRET and APPSHEET_SECRET into Script Properties, checks the copies, and replaces the Settings tab values with `MOVED_TO_SCRIPT_PROPERTIES`. Passwords and the AppSheet bridge keep working; nothing changes for anyone signing in.
+- **Stronger password hashes.** Passwords are stored with 1,000 rounds of HMAC-SHA256 (`v2$1000$…`). Existing hashes still work and are upgraded the next time each person signs in.
+- **New passwords need at least 8 characters.**
+- **Sign-in messages:** only someone who gives the right password learns that the account is switched off.
+- **Reset codes** come from a secure random source, and at most 30 reset mails go out in any hour.
+- **Exports** pass every cell through the formula guard.
+- **App:** a Content-Security-Policy limits scripts, styles, fonts, images and network calls to this site, Google Fonts and the Apps Script backend; attachment thumbnails are checked before they're shown; the Overview shows the 30 most urgent low/critical cards; the service worker caches the bare site address and adds shell files one by one.
+
+### 3.17.0 — Bug fixes
+
+- **Switching someone off signs them out.** Deactivating an account in Team & Access, or removing it in AppSheet, ends its sessions in Stock Management, Production Tracker and ELE Tracker at once. An account switched off by editing Users directly is refused at its next request and signed out by the nightly job. A password reset signs out every device; a password change signs out every device but the one that made it.
+- **Locks commit before they're released.** Every write that holds the script lock now flushes first, so the next request can't read figures that were written but not yet committed. Session-tab deletes and rewrites (sign-out, access refresh, nightly cleanup) now happen under the lock too.
+- **Corrections respect departments.** Deleting an entry checks its department; correcting one checks both the department it's booked to and the one it moves to.
+- **Recalculate works in place.** It rewrites its eleven columns row by row instead of clearing the tab: other columns and formulas stay, codes no longer in the master keep their row and are listed, and LastUpdated shows each item's last movement.
+- **Posting refuses** retired items and departments that aren't in the Departments tab (Production Tracker's posts are let through), and dates that aren't yyyy-mm-dd.
+- **Item edits** go through the formula guard and copy name, category and unit to the Current Stock row. **Bulk import** keeps every master column in the file (HSN, GST, costs, FG prices and labels).
+- **Accounts:** one per email address, one per username whatever its case, and a department must exist.
+- **Removing a person in AppSheet deactivates them** rather than deleting the row.
+- **Send test mail is Admin-only** and no longer a grantable feature.
+- **Errors are visible.** Every failed request is written to a new ErrorLog tab (time, action, user, app, message, duration). The nightly job runs each step on its own.
+- Smaller: blank session expiry counts as expired; the ledger read is capped at 5,000 rows; a repeated AppSheet delete is reported done only if the audit log shows it; `ADMIN_generateAppSecret()` refuses to replace an existing secret unless called with `true`; the drift mail escapes codes and rounds figures; a public `version` action reports the backend version.
+- **iPhone:** a dropped connection ("Load failed" in Safari) is now recognised as one, so an entry whose outcome is unknown is checked rather than reported as refused.
+
+**Deploying:** Code.gs as a new version of the existing deployment (Deploy → Manage deployments → Edit → New version), run `ADMIN_moveSecretsToProperties()` once, then push index.html and sw.js.
 
 ## What changed in 3.14.0
 
@@ -662,7 +701,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.10.2` / `3.10.2` / `calgas-shell-v30`.
+Currently `3.19.0` / `3.19.0` / `calgas-shell-v40`.
 
 ---
 
