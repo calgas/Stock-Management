@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.19.0">
+<meta name="app-version" content="3.19.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -1754,7 +1754,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.19.0';
+const APP_VERSION = '3.19.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2268,6 +2268,9 @@ function clearSession() {
   // The entries kept for instant opening go too — a shared device shouldn't
   // show the last person's ledger.
   ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_hist_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  ledgerComplete.rm = ledgerComplete.fg = null;
+  ledgerViews.rm = ledgerViews.fg = null;
+  ledgerSeq++;  // a load still on its way belongs to the last person
 }
 
 function toggleAlertsPanel() {
@@ -2929,6 +2932,7 @@ function navigateTo(page, kind) {
       // Shown at once; brought up to date quietly if it's been a while.
       renderLedgerPage();
       if (Date.now() - (state.ledgerLoadedAt || 0) > LEDGER_STALE_MS) loadLedgerPage({ background: true });
+      else if (state.ledgerHasMore) loadRestOfLedger();  // left before it had loaded everything
     }
   }
   updateNavIndicator();
@@ -4969,9 +4973,13 @@ async function deleteFix() {
 // A correction changes both the ledger and the balances, so both views are
 // reloaded rather than patched locally.
 async function afterLedgerFix(key) {
+  markLedgersStale();
+  const hadRows = state.ledgerRows.length > 0;
   state.ledgerLoaded = false;
   await refreshAllData();
-  if (!document.getElementById('page-ledger').classList.contains('hidden')) await loadLedgerPage();
+  // The table stays as it is, at the same page, until every corrected entry
+  // has been fetched and swapped in.
+  if (!document.getElementById('page-ledger').classList.contains('hidden')) await loadLedgerPage(hadRows ? { background: true } : {});
   // Corrected from an item's history, that history is still open behind the
   // form and must show the change — the deleted row gone, the new figure in.
   if (!document.getElementById('ledgerModal').classList.contains('hidden')) await loadLedgerRows();
@@ -5074,28 +5082,33 @@ function currentLedgerPageFilters() {
 }
 
 /* =========================================================================
-   LOADING A LEDGER, QUICKLY
+   LOADING A LEDGER — QUICKLY, AND ALL OF IT
 
-   The page shows the newest 100 entries, and fetches older ones only when
-   someone pages to them — or searches, which looks through all of them.
-   The last entries seen are kept on this device, so the page opens at
-   once and is brought up to date while you look; both ledgers are fetched
-   quietly just after sign-in, so even a first visit is usually instant.
-   RM and FG each keep their own entries and filters.
+   The newest 100 entries show first; the rest follow on their own, 1,000 at
+   a time, until every entry is loaded, so the count, paging, search and
+   export cover the whole ledger. Apply and Reset work the same way.
+   Just after sign-in both ledgers are loaded in full in the background and
+   kept in memory, so opening either, or pressing Reset, shows every entry
+   at once. The newest entries are also kept on this device, so a fresh
+   start opens at once too. RM and FG each keep their own entries and filters.
    ========================================================================= */
 
-const LEDGER_FIRST = 100;       // newest entries fetched on opening
-const LEDGER_MORE = 200;        // fetched each time someone pages past them
-const LEDGER_ALL = 2000;        // what a search looks through
+const LEDGER_FIRST = 100;       // newest entries shown first
+const LEDGER_CHUNK = 1000;      // fetched per request while the rest loads
 const LEDGER_STALE_MS = 60000;  // older than this, a revisit refreshes quietly
 const SLOW_NOTICE_MS = 15000;
 let ledgerSeq = 0;
 const ledgerViews = { rm: null, fg: null };
+// Every entry of each ledger, no filters, mapped for the table. at = when it
+// was loaded; 0 = shown as it is but due a quiet refresh.
+const ledgerComplete = { rm: null, fg: null };
+// The sign-in load of each ledger while it's on its way.
+const ledgerWarming = { rm: null, fg: null };
 
 // Past this long, a load says so and offers to try again — rather than
 // leaving skeletons up while Google takes its time.
 function slowNotice(show, onRetry) {
-  const t = setTimeout(function () { show('Still waiting for Google\u2026', onRetry); }, SLOW_NOTICE_MS);
+  const t = setTimeout(function () { show('Still waiting for Google…', onRetry); }, SLOW_NOTICE_MS);
   return { done: function () { clearTimeout(t); } };
 }
 
@@ -5144,7 +5157,7 @@ function mapLedgerRows(config, rows) {
   return (rows || []).map(function (r) {
     return {
       ts: r.Timestamp ? new Date(r.Timestamp).getTime() : 0,
-      dateText: r.Timestamp ? formatDateTime(r.Timestamp) : '\u2014',
+      dateText: r.Timestamp ? formatDateTime(r.Timestamp) : '—',
       dateISO: r.Timestamp ? new Date(r.Timestamp).toISOString().slice(0, 10) : '',
       code: r[config.codeField] || '',
       name: nameByCode[r[config.codeField]] || '',
@@ -5157,6 +5170,29 @@ function mapLedgerRows(config, rows) {
       remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy)
     };
   });
+}
+
+// Everything older than the raw rows given, LEDGER_CHUNK at a time from the
+// row of the oldest one held, until the ledger runs out. Null when
+// stillWanted() says the answer is no longer needed.
+async function fetchRestOfLedger(config, filters, rows, stillWanted) {
+  const all = rows.slice();
+  const keyOf = function (r) { return r.TxnID || ('row' + r._row); };
+  const seen = {};
+  all.forEach(function (r) { seen[keyOf(r)] = true; });
+  for (;;) {
+    const oldest = all.reduce(function (m, r) { const n = Number(r._row) || 0; return n && (!m || n < m) ? n : m; }, 0);
+    if (!oldest) return all;  // a backend that doesn't number rows: what there is
+    const next = await api(config.ledgerAction, ledgerParams(filters, { limit: LEDGER_CHUNK, beforeRow: oldest }));
+    if (!stillWanted()) return null;
+    // A row deleted meanwhile shifts the rest up one; nothing is kept twice.
+    next.forEach(function (r) { const k = keyOf(r); if (!seen[k]) { seen[k] = true; all.push(r); } });
+    if (next.length < LEDGER_CHUNK) return all;
+  }
+}
+
+function rememberCompleteLedger(kind, rows) {
+  ledgerComplete[kind] = { rows: rows, at: Date.now() };
 }
 
 // ---- RM and FG, each with its own entries and filters ----
@@ -5198,10 +5234,22 @@ function switchLedgerKind(kind) {
   document.getElementById('ldgSub').textContent = kind === 'fg' ? 'Every finished-goods transaction, newest first.' : 'Every raw-material transaction, newest first.';
 }
 
-// After an entry is posted, both ledgers are due a refresh on the next look.
+// After an entry is posted or corrected, both ledgers are due a refresh on the
+// next look. What's in memory still shows at once meanwhile.
 function markLedgersStale() {
   state.ledgerLoadedAt = 0;
-  ['rm', 'fg'].forEach(function (k) { if (ledgerViews[k]) ledgerViews[k].loadedAt = 0; });
+  ['rm', 'fg'].forEach(function (k) {
+    if (ledgerViews[k]) ledgerViews[k].loadedAt = 0;
+    if (ledgerComplete[k]) ledgerComplete[k].at = 0;
+  });
+}
+
+// The whole ledger, no filters, straight from memory.
+function showCompleteLedger(kind, full) {
+  state.ledgerRows = full.rows; state.ledgerHasMore = false; state.ledgerLoaded = true;
+  state.ledgerLoadedAt = full.at; state.ledgerPage = 1;
+  setLedgerStatus('');
+  renderLedgerPage();
 }
 
 async function loadLedgerPage(opts) {
@@ -5210,8 +5258,18 @@ async function loadLedgerPage(opts) {
   const filters = currentLedgerPageFilters();
   const plain = ledgerFiltersAreDefault(filters);
   const seq = ++ledgerSeq;
+  const current = function () { return seq === ledgerSeq && kind === state.ledgerKind; };
   const btn = document.getElementById('ldgApplyBtn');
   const tbody = document.getElementById('ldgTableBody');
+  state.ledgerRefreshing = false;  // whatever was loading before has been superseded
+
+  // No filters, and every entry already in memory: shown at once, refreshed
+  // quietly if it's been a while.
+  if (plain && !opts.background && !opts.retry && ledgerComplete[kind]) {
+    showCompleteLedger(kind, ledgerComplete[kind]);
+    if (Date.now() - ledgerComplete[kind].at > LEDGER_STALE_MS) loadLedgerPage({ background: true });
+    return;
+  }
 
   // The last entries seen, straight away, while fresh ones are fetched.
   let showingOld = !!opts.background && state.ledgerRows.length > 0;
@@ -5224,29 +5282,49 @@ async function loadLedgerPage(opts) {
       showingOld = true;
     }
   }
+
+  // The sign-in load of this ledger is on its way: wait for it rather than
+  // asking Google for the same entries twice.
+  if (plain && !opts.background && !opts.retry && ledgerWarming[kind]) {
+    if (!showingOld) renderTableSkeleton('ldgTableBody', 8, 8);
+    setLedgerStatus('Loading every entry…');
+    await ledgerWarming[kind];
+    if (!current()) return;
+    if (ledgerComplete[kind]) { showCompleteLedger(kind, ledgerComplete[kind]); return; }
+  }
+
   if (!showingOld && !opts.retry) renderTableSkeleton('ldgTableBody', 8, 8);
-  setLedgerStatus(showingOld ? 'Refreshing\u2026' : '');
-  if (!opts.background) setBtnLoading(btn, 'Loading\u2026', true);
+  setLedgerStatus(showingOld ? 'Refreshing…' : '');
+  if (!opts.background) setBtnLoading(btn, 'Loading…', true);
   state.ledgerRefreshing = true;
   const retry = function () { loadLedgerPage({ retry: true, background: showingOld }); };
-  const slow = slowNotice(function (text, again) { if (seq === ledgerSeq) setLedgerStatus(text, again); }, retry);
-  // A quiet refresh keeps however many entries are already on screen.
-  const limit = opts.background ? Math.min(LEDGER_ALL, Math.max(LEDGER_FIRST, state.ledgerRows.length)) : LEDGER_FIRST;
+  const slow = slowNotice(function (text, again) { if (current()) setLedgerStatus(text, again); }, retry);
+  // On screen first: the newest 100. A quiet refresh fetches everything
+  // before swapping it in, so the table never shrinks back to one page.
+  const limit = opts.background ? LEDGER_CHUNK : LEDGER_FIRST;
+  let shown = false;
   try {
-    const rows = await api(config.ledgerAction, ledgerParams(filters, Object.assign({ limit: limit }, opts.retry ? { _try: Date.now() } : {})));
-    if (seq !== ledgerSeq || kind !== state.ledgerKind) return;
+    let rows = await api(config.ledgerAction, ledgerParams(filters, Object.assign({ limit: limit }, opts.retry ? { _try: Date.now() } : {})));
+    if (!current()) return;
+    let hasMore = rows.length >= limit;
+    if (opts.background && hasMore) {
+      rows = await fetchRestOfLedger(config, filters, rows, current);
+      if (!rows) return;
+      hasMore = false;
+    }
     state.ledgerRows = mapLedgerRows(config, rows);
-    state.ledgerHasMore = rows.length >= limit;
+    state.ledgerHasMore = hasMore;
     state.ledgerLoaded = true; state.ledgerLoadedAt = Date.now();
     if (!opts.background) state.ledgerPage = 1;
-    if (plain) writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length >= LEDGER_FIRST);
+    if (plain) writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length > LEDGER_FIRST || hasMore);
+    if (plain && !hasMore) rememberCompleteLedger(kind, state.ledgerRows);
     setLedgerStatus('');
     renderLedgerPage();
-    if ((state.ledgerSearch || state.ledgerCat) && state.ledgerHasMore) ensureAllLedgerLoaded();
+    shown = true;
   } catch (err) {
-    if (seq !== ledgerSeq) return;
+    if (!current()) return;
     if (showingOld) {
-      setLedgerStatus('Couldn\u2019t refresh \u2014 ' + err.message + ' ', retry);
+      setLedgerStatus('Couldn’t refresh — ' + err.message + ' ', retry);
     } else {
       tbody.innerHTML = '<tr><td colspan="8" class="empty"></td></tr>';
       setNote(tbody.querySelector('td'), err.message + ' ', retry);
@@ -5257,60 +5335,106 @@ async function loadLedgerPage(opts) {
     if (seq === ledgerSeq) state.ledgerRefreshing = false;
     if (!opts.background) clearBtnLoading(btn, 'Apply');
   }
+  // The first page is up; the rest of the ledger follows on its own.
+  if (shown && state.ledgerHasMore && current()) loadRestOfLedger();
 }
 
-// Older entries, after the ones already loaded.
-async function loadMoreLedger(count) {
-  if (state.ledgerLoadingMore || !state.ledgerHasMore || state.ledgerRefreshing) return false;
-  const config = ledgerConfig_(); const kind = state.ledgerKind; const seq = ledgerSeq;
-  state.ledgerLoadingMore = true;
-  setLedgerStatus(count >= LEDGER_ALL ? 'Looking through every entry\u2026' : 'Loading older entries\u2026');
-  try {
-    // From the row of the oldest entry already loaded, so the backend doesn't
-    // rescan everything newer; skip is the fallback for rows that carry no row.
-    const oldest = state.ledgerRows.reduce(function (m, r) { return r.row && (!m || r.row < m) ? r.row : m; }, 0);
-    const page = oldest ? { limit: count, beforeRow: oldest } : { limit: count, skip: state.ledgerRows.length };
-    const rows = await api(config.ledgerAction, ledgerParams(currentLedgerPageFilters(), page));
-    if (seq !== ledgerSeq || kind !== state.ledgerKind) return false;
-    // Entries posted meanwhile shift the window a little; nothing is shown twice.
-    const seen = {};
-    state.ledgerRows.forEach(function (r) { seen[r.txnId] = true; });
-    state.ledgerRows = state.ledgerRows.concat(mapLedgerRows(config, rows).filter(function (r) { return !seen[r.txnId]; }));
-    state.ledgerHasMore = rows.length >= count;
-    setLedgerStatus('');
-    return true;
-  } catch (err) {
-    if (seq === ledgerSeq) setLedgerStatus('Couldn\u2019t load older entries \u2014 ' + err.message + ' ', function () { loadMoreLedger(count).then(renderLedgerPage); });
-    return false;
-  } finally {
-    state.ledgerLoadingMore = false;
-  }
+// The next LEDGER_CHUNK older entries, after the ones already loaded. A batch
+// already on its way for this view is shared rather than asked for again.
+let ledgerMoreInFlight = null;  // { seq, kind, p }
+function loadMoreLedger(count) {
+  const seq = ledgerSeq, kind = state.ledgerKind;
+  if (ledgerMoreInFlight && ledgerMoreInFlight.seq === seq && ledgerMoreInFlight.kind === kind) return ledgerMoreInFlight.p;
+  if (!state.ledgerHasMore || state.ledgerRefreshing) return Promise.resolve(false);
+  const config = ledgerConfig_();
+  const p = (async function () {
+    try {
+      // From the row of the oldest entry already loaded, so the backend doesn't
+      // rescan everything newer; skip is the fallback for rows that carry no row.
+      const oldest = state.ledgerRows.reduce(function (m, r) { return r.row && (!m || r.row < m) ? r.row : m; }, 0);
+      const page = oldest ? { limit: count, beforeRow: oldest } : { limit: count, skip: state.ledgerRows.length };
+      const rows = await api(config.ledgerAction, ledgerParams(currentLedgerPageFilters(), page));
+      if (seq !== ledgerSeq || kind !== state.ledgerKind) return false;
+      // Entries posted or deleted meanwhile shift the window a little; nothing is shown twice.
+      const seen = {};
+      state.ledgerRows.forEach(function (r) { seen[r.txnId] = true; });
+      state.ledgerRows = state.ledgerRows.concat(mapLedgerRows(config, rows).filter(function (r) { return !seen[r.txnId]; }));
+      state.ledgerHasMore = rows.length >= count;
+      if (!state.ledgerHasMore && ledgerFiltersAreDefault(currentLedgerPageFilters())) rememberCompleteLedger(kind, state.ledgerRows);
+      return true;
+    } catch (err) {
+      if (seq === ledgerSeq) setLedgerStatus('Couldn’t load older entries — ' + err.message + ' ', function () { loadRestOfLedger(); });
+      return false;
+    }
+  })();
+  ledgerMoreInFlight = { seq: seq, kind: kind, p: p };
+  p.then(function () { if (ledgerMoreInFlight && ledgerMoreInFlight.p === p) ledgerMoreInFlight = null; });
+  return p;
+}
+
+// Keeps fetching until every entry of this view is loaded. The page someone
+// is reading stays put; the count and the last page grow as entries arrive.
+// Started again for the same view, it returns the run already going.
+let ledgerRest = null;  // { seq, kind, p }
+function loadRestOfLedger() {
+  const seq = ledgerSeq, kind = state.ledgerKind;
+  if (ledgerRest && ledgerRest.seq === seq && ledgerRest.kind === kind) return ledgerRest.p;
+  const still = function () { return seq === ledgerSeq && kind === state.ledgerKind; };
+  const p = (async function () {
+    while (state.ledgerHasMore && still()) {
+      setLedgerStatus('Loading every entry… ' + state.ledgerRows.length + ' so far');
+      if (!(await loadMoreLedger(LEDGER_CHUNK))) return;  // failed (and says so), or the view moved on
+      if (still()) renderLedgerPage();
+    }
+    if (still()) setLedgerStatus('');
+  })();
+  ledgerRest = { seq: seq, kind: kind, p: p };
+  p.then(function () { if (ledgerRest && ledgerRest.p === p) ledgerRest = null; });
+  return p;
 }
 
 async function ensureAllLedgerLoaded() {
-  if (!state.ledgerHasMore) return;
-  if (await loadMoreLedger(LEDGER_ALL)) renderLedgerPage();
+  if (state.ledgerHasMore) await loadRestOfLedger();
 }
 
 async function onLedgerNext() {
-  const lastPage = Math.max(1, Math.ceil(filteredLedgerRows().length / LEDGER_PAGE_SIZE));
-  if (state.ledgerPage < lastPage) { state.ledgerPage++; renderLedgerPage(); return; }
-  if (state.ledgerHasMore && await loadMoreLedger(LEDGER_MORE)) { state.ledgerPage++; renderLedgerPage(); }
+  const lastPage = function () { return Math.max(1, Math.ceil(filteredLedgerRows().length / LEDGER_PAGE_SIZE)); };
+  if (state.ledgerPage < lastPage()) { state.ledgerPage++; renderLedgerPage(); return; }
+  if (!state.ledgerHasMore) return;
+  // Past what's loaded: wait for the next batch (usually already on its way)
+  // and step on to it.
+  const from = state.ledgerPage;
+  if (await loadMoreLedger(LEDGER_CHUNK)) {
+    if (state.ledgerPage === from && state.ledgerPage < lastPage()) state.ledgerPage++;
+    renderLedgerPage();
+  }
+  if (state.ledgerHasMore) loadRestOfLedger();
 }
 
-// Just after sign-in, both ledgers' newest entries are fetched quietly, so
-// opening either is usually instant.
+// Just after sign-in, and on every full refresh, both ledgers are loaded in
+// full in the background and kept in memory, so opening either shows every
+// entry at once.
 let ledgerWarmTimer = null;
 function warmLedgers() {
   clearTimeout(ledgerWarmTimer);
   ledgerWarmTimer = setTimeout(function () {
     ['rm', 'fg'].forEach(function (kind) {
-      const c = readLedgerCache(kind);
-      if (c && Date.now() - c.at < 5 * 60000) return;
+      const full = ledgerComplete[kind];
+      if (ledgerWarming[kind] || (full && Date.now() - full.at < LEDGER_STALE_MS)) return;
+      // The Ledger page is already loading this one in full.
+      if (ledgerRest && ledgerRest.kind === kind && ledgerFiltersAreDefault(currentLedgerPageFilters())) return;
       const config = kind === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
-      api(config.ledgerAction, { limit: LEDGER_FIRST })
-        .then(function (rows) { writeLedgerCache(kind, rows, rows.length >= LEDGER_FIRST); })
-        .catch(function () {});
+      const always = function () { return true; };
+      const p = api(config.ledgerAction, { limit: LEDGER_CHUNK })
+        .then(function (rows) { return rows.length >= LEDGER_CHUNK ? fetchRestOfLedger(config, {}, rows, always) : rows; })
+        .then(function (rows) {
+          writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length > LEDGER_FIRST);
+          rememberCompleteLedger(kind, mapLedgerRows(config, rows));
+          return true;
+        })
+        .catch(function () { return false; })
+        .then(function (ok) { ledgerWarming[kind] = null; return ok; });
+      ledgerWarming[kind] = p;
     });
   }, 4000);
 }
@@ -5375,14 +5499,16 @@ function renderLedgerPage() {
 
   syncLedgerActionColumns();
   document.getElementById('ldgPageInfo').textContent = 'Showing ' + (start + 1) + '–' + Math.min(start + LEDGER_PAGE_SIZE, total) + ' of ' + total + (state.ledgerHasMore ? '+' : '');
-  // Older entries aren't loaded until someone pages to them, so the count
-  // says "100+" rather than claiming the loaded rows are all there is.
+  // While older entries are still arriving the count says "1100+" rather
+  // than claiming the loaded rows are all there is.
   document.getElementById('ldgCount').textContent = '';
   document.getElementById('ldgPrevBtn').disabled = state.ledgerPage <= 1;
   document.getElementById('ldgNextBtn').disabled = state.ledgerPage >= totalPages && !state.ledgerHasMore;
 }
 
 async function exportLedgerPageToExcel() {
+  // Exports the whole ledger, so it waits for the last entries if they're still arriving.
+  if (state.ledgerHasMore) await loadRestOfLedger();
   const rows = filteredLedgerRows();
   if (rows.length === 0) { toast('Nothing to export for these filters.', true); return; }
   const config = ledgerConfig_();
