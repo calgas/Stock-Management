@@ -24,8 +24,9 @@
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
 const CACHE_PREFIX = 'calgas-shell-';
-const CACHE_VERSION = CACHE_PREFIX + 'v37';
+const CACHE_VERSION = CACHE_PREFIX + 'v40';
 const APP_SHELL = [
+  './',
   './index.html',
   './manifest.json',
   './logo/icon-192.png',
@@ -38,9 +39,10 @@ const APP_SHELL = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
+    // One file at a time: addAll() caches nothing at all if a single file
+    // fails, which left an install with no offline shell over one missing icon.
     caches.open(CACHE_VERSION)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .catch(() => {}) // don't block install if a shell asset is briefly unreachable
+      .then((cache) => Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => {}))))
   );
   // NOT skipWaiting() here. Taking over immediately would swap the shell
   // under someone mid-entry, and on a shop floor that means a half-typed
