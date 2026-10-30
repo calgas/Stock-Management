@@ -2,7 +2,7 @@
 
 A stock management system for Raw Materials (RM) and Finished Goods (FG), built entirely on Google Sheets and Google Apps Script, with an installable PWA frontend. No external hosting, database, or server required for the backend — the spreadsheet *is* the database.
 
-**Current version:** 3.19.0
+**Current version:** 3.19.1
 **Repo:** `calgas/Stock-Management` · **Hosted:** https://calgas.github.io/Stock-Management/
 
 ---
@@ -19,6 +19,12 @@ A stock management system for Raw Materials (RM) and Finished Goods (FG), built 
 - Detects and reports balance drift nightly, without silently correcting it.
 
 ---
+
+## What changed in 3.19.1
+
+**The Ledger page loads every entry on its own.** The newest 100 still show first; the rest follow in the background, 1,000 at a time, with "Loading every entry… N so far" under the filters, until the count reads the full total (no "+"). Paging, search, category and Export cover the whole ledger. Apply loads every matching entry the same way.
+
+Just after sign-in, both ledgers are loaded in full in the background and kept in memory, so opening RM or FG Ledger, or pressing **Reset**, shows every entry at once instead of falling back to the first 100. After an entry is posted or corrected, the table stays as it is and is swapped for the fresh one once it has loaded. App only; no backend change.
 
 ## What changed in 3.17.0 – 3.19.0
 
@@ -701,7 +707,7 @@ Bump **all three** version markers together, or installed clients will keep serv
 | `APP_VERSION` | `index.html` |
 | `CACHE_VERSION` | `sw.js` |
 
-Currently `3.19.0` / `3.19.0` / `calgas-shell-v40`.
+Currently `3.19.1` / `3.19.1` / `calgas-shell-v41`.
 
 ---
 
