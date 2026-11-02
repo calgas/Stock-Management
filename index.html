@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.19.1">
+<meta name="app-version" content="3.19.2">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -222,6 +222,17 @@
   .combo-option.is-selected { font-weight: 700; }
   .combo-option.is-selected::after { content: ' ✓'; color: var(--copper); }
   .combo-empty { padding: 12px; font-size: 13px; color: var(--ink-faint); text-align: center; }
+  /* Multi-select lists: a checkbox per option, the list stays open while
+     you tick, and the top "All …" row clears every tick. */
+  .combo-option.is-multi { display: flex; align-items: center; gap: 10px; }
+  .combo-option.is-multi::after { content: none !important; }
+  .combo-option.is-multi.is-selected { font-weight: 500; }
+  .combo-text { overflow: hidden; text-overflow: ellipsis; }
+  .combo-check { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--ink-faint); background: var(--panel); position: relative; transition: background 0.15s var(--ease), border-color 0.15s var(--ease); }
+  .combo-option.is-checked .combo-check { background: var(--copper); border-color: var(--copper); }
+  .combo-option.is-checked .combo-check::after { content: ''; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .combo-option.is-all { margin-bottom: 4px; box-shadow: 0 1px 0 var(--line-soft); border-radius: 6px 6px 0 0; }
+  .combo-select.has-picks .combo-input { border-color: var(--copper); }
   /* Enhanced native selects — the real <select> stays in the DOM (so all
      existing .value reads and change listeners keep working) but is taken
      out of the visual and tab flow. */
@@ -1295,8 +1306,8 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
-          <select id="rmCategoryFilter"></select>
-          <select id="rmStatusFilter">
+          <select id="rmCategoryFilter" multiple></select>
+          <select id="rmStatusFilter" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
             <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
           </select>
@@ -1334,9 +1345,9 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="fgSearch" placeholder="Search ID, code or name…">
-          <select id="fgCategoryFilter"></select>
-          <select id="fgSubCategoryFilter"></select>
-          <select id="fgStatusFilter">
+          <select id="fgCategoryFilter" multiple></select>
+          <select id="fgSubCategoryFilter" multiple></select>
+          <select id="fgStatusFilter" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
             <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
           </select>
@@ -1379,9 +1390,9 @@
             <option value="fg">Finished Goods</option>
           </select>
           <input type="search" id="ldgSearch" placeholder="Search code, name, reference, remarks…">
-          <select id="ldgTypeFilter"></select>
-          <select id="ldgCatFilter"></select>
-          <select id="ldgDeptFilter"></select>
+          <select id="ldgTypeFilter" multiple></select>
+          <select id="ldgCatFilter" multiple></select>
+          <select id="ldgDeptFilter" multiple></select>
         </div>
         <div class="toolbar">
           <span class="toolbar-label">From</span><input type="date" id="ldgDateFrom">
@@ -1754,7 +1765,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.19.1';
+const APP_VERSION = '3.19.2';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1952,8 +1963,8 @@ const STATUS_ICONS = {
 const state = {
   session: null,
   rmMaster: [], fgMaster: [], rmStock: [], fgStock: [], departments: [], users: [], dropdowns: {},
-  rmSearch: '', fgSearch: '', rmCategory: 'All', fgCategory: 'All', fgSubCategory: 'All', rmStatus: 'All', fgStatus: 'All',
-  ledgerKind: 'rm', ledgerRows: [], ledgerModalRows: [], ledgerLoaded: false, ledgerSearch: '', ledgerType: '', ledgerDept: '', ledgerCat: '',
+  rmSearch: '', fgSearch: '', rmCategory: [], fgCategory: [], fgSubCategory: [], rmStatus: [], fgStatus: [],
+  ledgerKind: 'rm', ledgerRows: [], ledgerModalRows: [], ledgerLoaded: false, ledgerSearch: '', ledgerType: [], ledgerDept: [], ledgerCat: [],
   ledgerPage: 1, ledgerSort: { col: 'ts', dir: 'desc' },
   rmPage: 1, fgPage: 1, rmShowInactive: false, fgShowInactive: false,
   rmSort: { col: 'idNo', dir: 'asc' }, fgSort: { col: 'idNo', dir: 'asc' },
@@ -3002,16 +3013,16 @@ function toggleRailCollapse() {
 function resetStockFilters(kind) {
   const isRM = kind === 'rm';
   if (isRM) {
-    state.rmSearch = ''; state.rmCategory = 'All'; state.rmStatus = 'All'; state.rmShowInactive = false; state.rmPage = 1;
+    state.rmSearch = ''; state.rmCategory = []; state.rmStatus = []; state.rmShowInactive = false; state.rmPage = 1;
   } else {
-    state.fgSearch = ''; state.fgCategory = 'All'; state.fgSubCategory = 'All'; state.fgStatus = 'All';
+    state.fgSearch = ''; state.fgCategory = []; state.fgSubCategory = []; state.fgStatus = [];
     state.fgShowInactive = false; state.fgPage = 1;
   }
   document.getElementById(kind + 'Search').value = '';
-  document.getElementById(kind + 'CategoryFilter').value = 'All';
-  document.getElementById(kind + 'StatusFilter').value = 'All';
+  setSelectedValues(document.getElementById(kind + 'CategoryFilter'), []);
+  setSelectedValues(document.getElementById(kind + 'StatusFilter'), []);
   document.getElementById(kind + 'ShowInactive').checked = false;
-  if (!isRM) document.getElementById('fgSubCategoryFilter').value = 'All';
+  if (!isRM) setSelectedValues(document.getElementById('fgSubCategoryFilter'), []);
   if (isRM) renderRMPage(); else renderFGPage();
 }
 
@@ -3022,15 +3033,25 @@ function syncStockResetButton(kind) {
   const btn = document.getElementById(kind + 'ResetBtn');
   if (!btn) return;
   const filtered = isRM
-    ? (state.rmSearch || state.rmCategory !== 'All' || state.rmStatus !== 'All' || state.rmShowInactive)
-    : (state.fgSearch || state.fgCategory !== 'All' || state.fgSubCategory !== 'All' || state.fgStatus !== 'All' || state.fgShowInactive);
+    ? (state.rmSearch || state.rmCategory.length || state.rmStatus.length || state.rmShowInactive)
+    : (state.fgSearch || state.fgCategory.length || state.fgSubCategory.length || state.fgStatus.length || state.fgShowInactive);
   btn.disabled = !filtered;
 }
 
 function goToStockTab(kind, filterStatus) {
-  const status = filterStatus || 'All';
-  if (kind === 'rm') { state.rmSearch = ''; state.rmCategory = 'All'; state.rmStatus = status; state.rmPage = 1; document.getElementById('rmSearch').value = ''; document.getElementById('rmCategoryFilter').value = 'All'; document.getElementById('rmStatusFilter').value = status; } 
-  else { state.fgSearch = ''; state.fgCategory = 'All'; state.fgSubCategory = 'All'; state.fgStatus = status; state.fgPage = 1; document.getElementById('fgSearch').value = ''; document.getElementById('fgCategoryFilter').value = 'All'; document.getElementById('fgSubCategoryFilter').value = 'All'; document.getElementById('fgStatusFilter').value = status; }
+  const statuses = filterStatus ? [filterStatus] : [];
+  if (kind === 'rm') {
+    state.rmSearch = ''; state.rmCategory = []; state.rmStatus = statuses; state.rmPage = 1;
+    document.getElementById('rmSearch').value = '';
+    setSelectedValues(document.getElementById('rmCategoryFilter'), []);
+    setSelectedValues(document.getElementById('rmStatusFilter'), statuses);
+  } else {
+    state.fgSearch = ''; state.fgCategory = []; state.fgSubCategory = []; state.fgStatus = statuses; state.fgPage = 1;
+    document.getElementById('fgSearch').value = '';
+    setSelectedValues(document.getElementById('fgCategoryFilter'), []);
+    setSelectedValues(document.getElementById('fgSubCategoryFilter'), []);
+    setSelectedValues(document.getElementById('fgStatusFilter'), statuses);
+  }
   navigateTo(kind);
 }
 
@@ -3140,15 +3161,21 @@ function populateCategoryFilters() {
 
   const fgSubCats = buildFilterOptions_(FG_CONFIG_UI.subCategoryDropdown, state.fgMaster, FG_CONFIG_UI.subCategoryField);
   document.getElementById('fgSubCategoryFilter').innerHTML = '<option value="All">All categories</option>' + fgSubCats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
+  // Rebuilding the options clears the ticks; put back what's still ticked.
+  setSelectedValues(document.getElementById('rmCategoryFilter'), state.rmCategory);
+  setSelectedValues(document.getElementById('fgCategoryFilter'), state.fgCategory);
+  setSelectedValues(document.getElementById('fgSubCategoryFilter'), state.fgSubCategory);
 }
 function renderRMPage() { renderStockTable(RM_CONFIG_UI); }
 function renderFGPage() { renderStockTable(FG_CONFIG_UI); }
 
 // An empty table is an invitation to act, not a dead end — so the message
 // changes with *why* it's empty instead of always blaming "your filters".
-function emptyStateMessage(config, isRM, search, category, status, showInactive) {
+function emptyStateMessage(config, isRM, showInactive) {
   const itemLabel = isRM ? 'raw material' : 'finished good';
-  const hasFilters = !!search || (category && category !== 'All') || (status && status !== 'All');
+  const hasFilters = isRM
+    ? !!(state.rmSearch || state.rmCategory.length || state.rmStatus.length)
+    : !!(state.fgSearch || state.fgCategory.length || state.fgSubCategory.length || state.fgStatus.length);
   if (hasFilters) return 'No items match your filters.';
   const masterHasItems = state[config.masterKey].length > 0;
   if (masterHasItems && !showInactive) return 'All ' + itemLabel + ' items are inactive — turn on "Show inactive" to see them.';
@@ -3156,22 +3183,31 @@ function emptyStateMessage(config, isRM, search, category, status, showInactive)
   return 'No ' + itemLabel + ' items yet.';
 }
 
+// Search plus the ticked categories, families and statuses. An empty list
+// means "all". "Needs attention" is Low and Critical together.
+function applyStockFilters_(config, rows) {
+  const isRM = config.key === 'rm';
+  const search = isRM ? state.rmSearch : state.fgSearch;
+  const cats = isRM ? state.rmCategory : state.fgCategory;
+  const subs = config.subCategoryField ? state.fgSubCategory : [];
+  const statuses = isRM ? state.rmStatus : state.fgStatus;
+  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
+  if (cats.length) rows = rows.filter(function (r) { return cats.indexOf(r.category) > -1; });
+  if (subs.length) rows = rows.filter(function (r) { return subs.indexOf(r.subCategory) > -1; });
+  if (statuses.length) {
+    const attention = statuses.indexOf('NeedsAttention') > -1;
+    rows = rows.filter(function (r) { return statuses.indexOf(r.status) > -1 || (attention && (r.status === 'Low' || r.status === 'Critical')); });
+  }
+  return rows;
+}
+
 function renderStockTable(config) {
   const isRM = config.key === 'rm';
   syncStockResetButton(config.key);
-  const search = isRM ? state.rmSearch : state.fgSearch; const category = isRM ? state.rmCategory : state.fgCategory;
-  const status = isRM ? state.rmStatus : state.fgStatus; const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
+  const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
   const sortState = isRM ? state.rmSort : state.fgSort; let page = isRM ? state.rmPage : state.fgPage;
 
-  let rows = mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive);
-  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
-  if (category && category !== 'All') rows = rows.filter(function (r) { return r.category === category; });
-  const subCategory = config.subCategoryField ? state.fgSubCategory : 'All';
-  if (subCategory && subCategory !== 'All') rows = rows.filter(function (r) { return r.subCategory === subCategory; });
-  if (status && status !== 'All') {
-    if (status === 'NeedsAttention') rows = rows.filter(function (r) { return r.status === 'Low' || r.status === 'Critical'; });
-    else rows = rows.filter(function (r) { return r.status === status; });
-  }
+  let rows = applyStockFilters_(config, mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive));
 
   rows = sortRows(rows, sortState);
 
@@ -3211,7 +3247,7 @@ function renderStockTable(config) {
   // Colspan tracks the actual column count so the empty-state row still
   // spans the full table once FG gained its extra Category column.
   const colCount = config.subCategoryField ? 8 : 7;
-  bodyEl.innerHTML = bodyHtml || ('<tr><td colspan="' + colCount + '" class="empty">' + emptyStateMessage(config, isRM, search, category, status, showInactive) + '</td></tr>');
+  bodyEl.innerHTML = bodyHtml || ('<tr><td colspan="' + colCount + '" class="empty">' + emptyStateMessage(config, isRM, showInactive) + '</td></tr>');
 
   document.getElementById(isRM ? 'rmPageInfo' : 'fgPageInfo').textContent = total === 0 ? '0 items' : ('Showing ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' of ' + total);
   document.getElementById(isRM ? 'rmPrevBtn' : 'fgPrevBtn').disabled = page <= 1; document.getElementById(isRM ? 'rmNextBtn' : 'fgNextBtn').disabled = page >= totalPages;
@@ -4554,13 +4590,15 @@ function enforceComboValue_(input) {
   }
   input.dataset.lastValid = input.value;
 }
+// Only the item form's comboboxes ([data-combo]); the enhanced selects
+// handle their own events.
 document.addEventListener('input', function (e) {
-  const input = e.target.closest('.combo-input');
+  const input = e.target.closest('[data-combo] .combo-input');
   if (!input) return;
   renderComboList_(input.closest('[data-combo]'), input.value);
 });
 document.addEventListener('focusin', function (e) {
-  const input = e.target.closest('.combo-input');
+  const input = e.target.closest('[data-combo] .combo-input');
   if (!input) return;
   input.dataset.lastValid = input.value;
   renderComboList_(input.closest('[data-combo]'), '');
@@ -4570,12 +4608,20 @@ document.addEventListener('mousedown', function (e) {
   if (toggle) {
     e.preventDefault();
     const combo = toggle.closest('[data-combo]');
+    if (!combo) return;
     const list = combo.querySelector('.combo-list');
     if (list.classList.contains('hidden')) { combo.querySelector('.combo-input').focus(); renderComboList_(combo, ''); }
     else closeCombo_(combo);
     return;
   }
-  const opt = e.target.closest('.combo-option');
+  // A click in a box that already has the cursor but whose list was closed
+  // (after a pick, or Escape) opens it again; focus alone wouldn't.
+  const typed = e.target.closest('[data-combo] .combo-input');
+  if (typed && document.activeElement === typed && typed.closest('[data-combo]').querySelector('.combo-list').classList.contains('hidden')) {
+    renderComboList_(typed.closest('[data-combo]'), '');
+    setTimeout(function () { typed.select(); }, 0);
+  }
+  const opt = e.target.closest('[data-combo] .combo-option');
   if (opt) {
     e.preventDefault(); // keep focus so blur-revert doesn't fight the click
     const combo = opt.closest('[data-combo]');
@@ -4591,7 +4637,7 @@ document.addEventListener('mousedown', function (e) {
   });
 });
 document.addEventListener('focusout', function (e) {
-  const input = e.target.closest('.combo-input');
+  const input = e.target.closest('[data-combo] .combo-input');
   if (!input) return;
   const combo = input.closest('[data-combo]');
   setTimeout(function () {
@@ -4601,7 +4647,7 @@ document.addEventListener('focusout', function (e) {
   }, 0);
 });
 document.addEventListener('keydown', function (e) {
-  const input = e.target.closest('.combo-input');
+  const input = e.target.closest('[data-combo] .combo-input');
   if (!input) return;
   const combo = input.closest('[data-combo]');
   const list = combo.querySelector('.combo-list');
@@ -4995,7 +5041,7 @@ function populateLedgerFilters() {
   const typeSel = document.getElementById('ldgTypeFilter');
   typeSel.innerHTML = '<option value="">All types</option>' +
     config.txnTypes.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
-  typeSel.value = state.ledgerType || '';
+  setSelectedValues(typeSel, state.ledgerType);
 
   // Category list follows the RM/FG toggle. RM has a single axis (Category),
   // while FG is grouped twice — Family and Category — and this filter uses
@@ -5007,13 +5053,13 @@ function populateLedgerFilters() {
   const cats = buildFilterOptions_(catKey, state[config.masterKey] || [], catField);
   catSel.innerHTML = '<option value="">All categories</option>' +
     cats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
-  catSel.value = state.ledgerCat || '';
+  setSelectedValues(catSel, state.ledgerCat);
 
   const depts = (state.departments || []).map(function (d) { return d.name || ''; }).filter(Boolean);
   const deptSel = document.getElementById('ldgDeptFilter');
   deptSel.innerHTML = '<option value="">All departments</option>' +
     depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(d) + '</option>'; }).join('');
-  deptSel.value = state.ledgerDept || '';
+  setSelectedValues(deptSel, state.ledgerDept);
 }
 
 function initLedgerPage() {
@@ -5027,25 +5073,25 @@ function initLedgerPage() {
     // Type and category options are per-config, so selections made for RM
     // are meaningless for FG — clear them rather than silently filtering
     // everything out.
-    state.ledgerType = ''; state.ledgerCat = '';
+    state.ledgerType = []; state.ledgerCat = [];
     populateLedgerFilters();
     loadLedgerPage();
   });
   document.getElementById('ldgApplyBtn').addEventListener('click', loadLedgerPage);
-  ['ldgTypeFilter', 'ldgDeptFilter'].forEach(function (id) {
+  // Type, category and department filter the entries already loaded (the
+  // whole ledger is kept in memory), so ticking one shows the result at once.
+  ['ldgTypeFilter', 'ldgCatFilter', 'ldgDeptFilter'].forEach(function (id) {
     document.getElementById(id).addEventListener('change', function () {
-      state.ledgerType = document.getElementById('ldgTypeFilter').value;
-      state.ledgerDept = document.getElementById('ldgDeptFilter').value;
-      loadLedgerPage();
+      state.ledgerType = selectedValuesOf(document.getElementById('ldgTypeFilter'));
+      state.ledgerCat = selectedValuesOf(document.getElementById('ldgCatFilter'));
+      state.ledgerDept = selectedValuesOf(document.getElementById('ldgDeptFilter'));
+      state.ledgerPage = 1;
+      renderLedgerPage();
+      ensureAllLedgerLoaded();
     });
   });
-  // Category filters rows already loaded, so it re-renders instead of refetching.
-  document.getElementById('ldgCatFilter').addEventListener('change', function (e) {
-    state.ledgerCat = e.target.value; state.ledgerPage = 1; renderLedgerPage();
-    if (state.ledgerCat) ensureAllLedgerLoaded();
-  });
   document.getElementById('ldgResetBtn').addEventListener('click', function () {
-    state.ledgerType = ''; state.ledgerDept = ''; state.ledgerSearch = ''; state.ledgerCat = '';
+    state.ledgerType = []; state.ledgerDept = []; state.ledgerSearch = ''; state.ledgerCat = [];
     ['ldgDateFrom', 'ldgDateTo', 'ldgUserFilter', 'ldgSearch'].forEach(function (id) { document.getElementById(id).value = ''; });
     populateLedgerFilters();
     loadLedgerPage();
@@ -5075,9 +5121,7 @@ function currentLedgerPageFilters() {
   return {
     dateFrom: document.getElementById('ldgDateFrom').value,
     dateTo: document.getElementById('ldgDateTo').value,
-    enteredBy: document.getElementById('ldgUserFilter').value.trim(),
-    txnType: state.ledgerType || '',
-    department: state.ledgerDept || ''
+    enteredBy: document.getElementById('ldgUserFilter').value.trim()
   };
 }
 
@@ -5141,7 +5185,7 @@ function ledgerParams(filters, extra) {
   Object.keys(filters).forEach(function (k) { if (filters[k]) out[k] = filters[k]; });
   return Object.assign(out, extra || {});
 }
-function ledgerFiltersAreDefault(f) { return !f.dateFrom && !f.dateTo && !f.enteredBy && !f.txnType && !f.department; }
+function ledgerFiltersAreDefault(f) { return !f.dateFrom && !f.dateTo && !f.enteredBy; }
 
 function mapLedgerRows(config, rows) {
   // Names live in the master sheet, not the ledger, so they're joined on here.
@@ -5199,7 +5243,7 @@ function rememberCompleteLedger(kind, rows) {
 function saveLedgerView() {
   ledgerViews[state.ledgerKind] = {
     rows: state.ledgerRows, loaded: state.ledgerLoaded, hasMore: state.ledgerHasMore, loadedAt: state.ledgerLoadedAt,
-    page: state.ledgerPage, type: state.ledgerType, dept: state.ledgerDept, cat: state.ledgerCat, search: state.ledgerSearch,
+    page: state.ledgerPage, type: state.ledgerType.slice(), dept: state.ledgerDept.slice(), cat: state.ledgerCat.slice(), search: state.ledgerSearch,
     sort: Object.assign({}, state.ledgerSort),
     dateFrom: document.getElementById('ldgDateFrom').value, dateTo: document.getElementById('ldgDateTo').value,
     user: document.getElementById('ldgUserFilter').value, searchText: document.getElementById('ldgSearch').value
@@ -5209,7 +5253,7 @@ function saveLedgerView() {
 function restoreLedgerView(kind) {
   const v = ledgerViews[kind] || {};
   state.ledgerRows = v.rows || []; state.ledgerLoaded = !!v.loaded; state.ledgerHasMore = !!v.hasMore; state.ledgerLoadedAt = v.loadedAt || 0;
-  state.ledgerPage = v.page || 1; state.ledgerType = v.type || ''; state.ledgerDept = v.dept || ''; state.ledgerCat = v.cat || '';
+  state.ledgerPage = v.page || 1; state.ledgerType = v.type || []; state.ledgerDept = v.dept || []; state.ledgerCat = v.cat || [];
   state.ledgerSearch = v.search || ''; state.ledgerSort = v.sort || { col: 'ts', dir: 'desc' };
   document.getElementById('ldgDateFrom').value = v.dateFrom || ''; document.getElementById('ldgDateTo').value = v.dateTo || '';
   document.getElementById('ldgUserFilter').value = v.user || ''; document.getElementById('ldgSearch').value = v.searchText || '';
@@ -5444,7 +5488,12 @@ function filteredLedgerRows() {
   // Category is resolved from master rather than sent to the backend — the
   // ledger sheet stores only the item code, so there's nothing server-side
   // to filter on.
-  if (state.ledgerCat) rows = rows.filter(function (r) { return r.category === state.ledgerCat; });
+  if (state.ledgerCat.length) rows = rows.filter(function (r) { return state.ledgerCat.indexOf(r.category) > -1; });
+  if (state.ledgerType.length) rows = rows.filter(function (r) { return state.ledgerType.indexOf(r.type) > -1; });
+  if (state.ledgerDept.length) {
+    const depts = state.ledgerDept.map(lc);
+    rows = rows.filter(function (r) { return depts.indexOf(lc(r.department)) > -1; });
+  }
   const q = state.ledgerSearch;
   if (q) {
     rows = rows.filter(function (r) {
@@ -5599,9 +5648,12 @@ async function handleChangePassword(e) {
 function enhanceSelect_(select) {
   if (select.dataset.comboReady) return;
   select.dataset.comboReady = '1';
+  // A <select multiple> becomes a checkbox list: tick as many as you like,
+  // the list stays open while you do, and the "All …" row clears them all.
+  const multi = select.multiple;
 
   const wrap = document.createElement('div');
-  wrap.className = 'combo combo-select';
+  wrap.className = 'combo combo-select' + (multi ? ' is-multi' : '');
   // Layout styles written inline on the select (e.g. flex:1) belong to the
   // slot it occupies, so move them to the wrapper that now fills that slot.
   if (select.getAttribute('style')) { wrap.setAttribute('style', select.getAttribute('style')); select.removeAttribute('style'); }
@@ -5631,14 +5683,36 @@ function enhanceSelect_(select) {
   toggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const list = document.createElement('div');
   list.className = 'combo-list hidden';
+  if (multi) list.setAttribute('aria-multiselectable', 'true');
   wrap.appendChild(input); wrap.appendChild(toggle); wrap.appendChild(list);
 
+  // The "All …" entry of a filter: value '' or 'All'.
+  function isAllValue(v) { return v === '' || v === 'All'; }
   function optionsOf() {
-    return Array.from(select.options).map(function (o) { return { value: o.value, text: o.textContent }; });
+    return Array.from(select.options).map(function (o) { return { value: o.value, text: o.textContent, selected: o.selected }; });
   }
+  function picked() { return Array.from(select.options).filter(function (o) { return o.selected && !isAllValue(o.value); }); }
+  // What the closed box shows for a multi-select: "All categories", one
+  // name, two names, or the first name and how many more.
+  function summary() {
+    const p = picked();
+    if (!p.length) { const all = Array.from(select.options).find(function (o) { return isAllValue(o.value); }); return all ? all.textContent : ''; }
+    if (p.length === 1) return p[0].textContent;
+    const two = p[0].textContent + ', ' + p[1].textContent;
+    return p.length === 2 && two.length <= 24 ? two : p[0].textContent + ' +' + (p.length - 1);
+  }
+  function isOpen() { return !list.classList.contains('hidden'); }
   function syncDisplay() {
-    const sel = select.options[select.selectedIndex];
-    input.value = sel ? sel.textContent : '';
+    if (multi) {
+      // While someone is typing to narrow the list, their text stays.
+      if (!(document.activeElement === input && isOpen())) input.value = summary();
+      input.placeholder = summary();
+      wrap.classList.toggle('has-picks', picked().length > 0);
+      input.title = picked().map(function (o) { return o.textContent; }).join(', ');
+    } else {
+      const sel = select.options[select.selectedIndex];
+      input.value = sel ? sel.textContent : '';
+    }
     input.disabled = select.disabled;
     wrap.classList.toggle('is-disabled', select.disabled);
     // A disabled select is exempt from validation; mirror that so a disabled
@@ -5646,15 +5720,26 @@ function enhanceSelect_(select) {
     if (select.disabled) input.required = false;
     else if (select.dataset.wasRequired === '1') input.required = true;
   }
-  function openList(filter) {
+  // keepActive: the value to leave highlighted (a tick re-renders the list).
+  function openList(filter, keepActive) {
     if (select.disabled) return;
     const q = String(filter || '').trim().toLowerCase();
+    const anyPicked = multi && picked().length > 0;
     const shown = optionsOf().filter(function (o) { return !q || o.text.toLowerCase().indexOf(q) > -1; });
+    let active = 0;
+    if (keepActive !== undefined) { const k = shown.findIndex(function (o) { return o.value === keepActive; }); if (k > -1) active = k; }
     list.innerHTML = shown.length === 0
       ? '<div class="combo-empty">No match</div>'
       : shown.map(function (o, i) {
+          const act = i === active ? ' is-active' : '';
+          if (multi) {
+            const all = isAllValue(o.value);
+            const on = all ? !anyPicked : o.selected;
+            return '<div class="combo-option is-multi' + (on ? ' is-checked' : '') + (all ? ' is-all' : '') + act + '" role="option" aria-selected="' + on + '" data-value="' + escapeHtml(o.value) + '">' +
+              '<span class="combo-check" aria-hidden="true"></span><span class="combo-text">' + escapeHtml(o.text) + '</span></div>';
+          }
           const isSel = o.value === select.value ? ' is-selected' : '';
-          return '<div class="combo-option' + isSel + (i === 0 ? ' is-active' : '') + '" data-value="' + escapeHtml(o.value) + '">' + escapeHtml(o.text) + '</div>';
+          return '<div class="combo-option' + isSel + act + '" role="option" data-value="' + escapeHtml(o.value) + '">' + escapeHtml(o.text) + '</div>';
         }).join('');
     list.classList.remove('hidden');
     input.setAttribute('aria-expanded', 'true');
@@ -5666,23 +5751,48 @@ function enhanceSelect_(select) {
     closeList();
     select.dispatchEvent(new Event('change', { bubbles: true }));
   }
+  // Multi-select: tick or untick one option, or clear them all with "All".
+  function toggleValue(value) {
+    const opts = Array.from(select.options);
+    if (isAllValue(value)) opts.forEach(function (o) { o.selected = false; });
+    else {
+      const o = opts.find(function (x) { return x.value === value; });
+      if (o) o.selected = !o.selected;
+      opts.forEach(function (x) { if (isAllValue(x.value)) x.selected = false; });
+    }
+    syncDisplay();
+    openList(input.value, value);
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  // Opens on focus, and again on a click or the arrow when the box already
+  // has the cursor but its list was closed (after a pick, or Escape) — the
+  // case where nothing used to happen.
+  function openFresh() {
+    if (multi) { input.value = ''; input.placeholder = summary(); }
+    openList('');
+    if (!multi) setTimeout(function () { if (document.activeElement === input) input.select(); }, 0);
+  }
 
-  input.addEventListener('focus', function () { input.select(); openList(''); });
+  input.addEventListener('focus', openFresh);
+  input.addEventListener('mousedown', function () { if (document.activeElement === input && !isOpen()) openFresh(); });
   input.addEventListener('input', function () { openList(input.value); });
-  input.addEventListener('blur', function () { setTimeout(function () { if (!wrap.contains(document.activeElement)) { syncDisplay(); closeList(); } }, 0); });
+  input.addEventListener('blur', function () { setTimeout(function () { if (!wrap.contains(document.activeElement)) { closeList(); syncDisplay(); } }, 0); });
   toggle.addEventListener('mousedown', function (e) {
     e.preventDefault();
-    if (list.classList.contains('hidden')) { input.focus(); } else { closeList(); }
+    if (isOpen()) { closeList(); syncDisplay(); }
+    else if (document.activeElement === input) openFresh();
+    else input.focus();
   });
   list.addEventListener('mousedown', function (e) {
     const opt = e.target.closest('.combo-option');
     if (!opt) return;
     e.preventDefault(); // hold focus so the blur handler doesn't undo this
-    commit(opt.dataset.value);
+    if (multi) toggleValue(opt.dataset.value); else commit(opt.dataset.value);
   });
   input.addEventListener('keydown', function (e) {
-    if (list.classList.contains('hidden') && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { openList(''); return; }
+    if (!isOpen() && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); openFresh(); return; }
     const opts = Array.from(list.querySelectorAll('.combo-option'));
+    if (e.key === 'Escape') { closeList(); syncDisplay(); return; }
     if (opts.length === 0) return;
     let idx = opts.findIndex(function (o) { return o.classList.contains('is-active'); });
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -5692,8 +5802,8 @@ function enhanceSelect_(select) {
       opts[idx].classList.add('is-active');
       opts[idx].scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter') {
-      if (idx > -1) { e.preventDefault(); commit(opts[idx].dataset.value); }
-    } else if (e.key === 'Escape') { syncDisplay(); closeList(); }
+      if (idx > -1 && isOpen()) { e.preventDefault(); if (multi) toggleValue(opts[idx].dataset.value); else commit(opts[idx].dataset.value); }
+    }
   });
 
   // Repopulation (innerHTML replaced) or a runtime disabled toggle — refresh
@@ -5719,8 +5829,24 @@ function enhanceSelect_(select) {
     get: function () { return desc.get.call(this); },
     set: function (v) { desc.set.call(this, v); syncDisplay(); }
   });
+  // For setSelectedValues(), which ticks options directly.
+  select._comboSync = syncDisplay;
 
   syncDisplay();
+}
+
+// Every ticked value of a multi-select filter, without its "All …" entry.
+// An empty list means "all".
+function selectedValuesOf(select) {
+  return Array.from(select.options)
+    .filter(function (o) { return o.selected && o.value !== '' && o.value !== 'All'; })
+    .map(function (o) { return o.value; });
+}
+// Ticks exactly these values (none = "All") and refreshes the box.
+function setSelectedValues(select, values) {
+  const want = (values || []).map(String);
+  Array.from(select.options).forEach(function (o) { o.selected = want.indexOf(o.value) > -1; });
+  if (select._comboSync) select._comboSync();
 }
 
 // Applied to filter/toolbar/modal selects. Skipped for the transaction-type
@@ -6159,14 +6285,8 @@ async function handleRecalc() {
   } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); }
 }
 async function exportToExcel(config) {
-  const isRM = config.key === 'rm'; const search = isRM ? state.rmSearch : state.fgSearch; const category = isRM ? state.rmCategory : state.fgCategory;
-  const status = isRM ? state.rmStatus : state.fgStatus; const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
-  let rows = mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive);
-  if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
-  if (category && category !== 'All') rows = rows.filter(function (r) { return r.category === category; });
-  const subCategory = config.subCategoryField ? state.fgSubCategory : 'All';
-  if (subCategory && subCategory !== 'All') rows = rows.filter(function (r) { return r.subCategory === subCategory; });
-  if (status && status !== 'All') rows = (status === 'NeedsAttention') ? rows.filter(function (r) { return r.status === 'Low' || r.status === 'Critical'; }) : rows.filter(function (r) { return r.status === status; });
+  const isRM = config.key === 'rm'; const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
+  const rows = applyStockFilters_(config, mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive));
   if (rows.length === 0) { toast('Nothing to export.', true); return; }
 
   const btn = document.getElementById(isRM ? 'rmExportBtn' : 'fgExportBtn'); setBtnLoading(btn, 'Exporting…');
@@ -6319,10 +6439,10 @@ function wireStockPageEvents(kind) {
   const els = { search: isRM ? 'rmSearch' : 'fgSearch', cat: isRM ? 'rmCategoryFilter' : 'fgCategoryFilter', status: isRM ? 'rmStatusFilter' : 'fgStatusFilter', inactive: isRM ? 'rmShowInactive' : 'fgShowInactive', prev: isRM ? 'rmPrevBtn' : 'fgPrevBtn', next: isRM ? 'rmNextBtn' : 'fgNextBtn', body: isRM ? 'rmTableBody' : 'fgTableBody', refresh: isRM ? 'rmRefreshBtn' : 'fgRefreshBtn', export: isRM ? 'rmExportBtn' : 'fgExportBtn', add: isRM ? 'rmAddItemBtn' : 'fgAddItemBtn', import: isRM ? 'rmImportBtn' : 'fgImportBtn' };
   
   document.getElementById(els.search).addEventListener('input', debounce(function (e) { if (isRM) { state.rmSearch = e.target.value; state.rmPage = 1; } else { state.fgSearch = e.target.value; state.fgPage = 1; } render(); }, 150));
-  document.getElementById(els.cat).addEventListener('change', function (e) { if (isRM) { state.rmCategory = e.target.value; state.rmPage = 1; } else { state.fgCategory = e.target.value; state.fgPage = 1; } render(); });
+  document.getElementById(els.cat).addEventListener('change', function (e) { if (isRM) { state.rmCategory = selectedValuesOf(e.target); state.rmPage = 1; } else { state.fgCategory = selectedValuesOf(e.target); state.fgPage = 1; } render(); });
   // FG only — RM has no second grouping axis, so this element doesn't exist there.
-  if (!isRM) document.getElementById('fgSubCategoryFilter').addEventListener('change', function (e) { state.fgSubCategory = e.target.value; state.fgPage = 1; render(); });
-  document.getElementById(els.status).addEventListener('change', function (e) { if (isRM) { state.rmStatus = e.target.value; state.rmPage = 1; } else { state.fgStatus = e.target.value; state.fgPage = 1; } render(); });
+  if (!isRM) document.getElementById('fgSubCategoryFilter').addEventListener('change', function (e) { state.fgSubCategory = selectedValuesOf(e.target); state.fgPage = 1; render(); });
+  document.getElementById(els.status).addEventListener('change', function (e) { if (isRM) { state.rmStatus = selectedValuesOf(e.target); state.rmPage = 1; } else { state.fgStatus = selectedValuesOf(e.target); state.fgPage = 1; } render(); });
   document.getElementById(els.inactive).addEventListener('change', function (e) { if (isRM) { state.rmShowInactive = e.target.checked; state.rmPage = 1; } else { state.fgShowInactive = e.target.checked; state.fgPage = 1; } render(); });
   document.getElementById(els.prev).addEventListener('click', function () { if (isRM) state.rmPage--; else state.fgPage--; render(); });
   document.getElementById(els.next).addEventListener('click', function () { if (isRM) state.rmPage++; else state.fgPage++; render(); });
