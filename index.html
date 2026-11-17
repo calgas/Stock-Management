@@ -752,6 +752,9 @@
   .ledger-table-wrap thead th { position: sticky; top: 0; background: var(--paper); border-bottom: 1px solid var(--line); }
 
   .txn-pill { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 4px 14px; border-radius: 20px; text-align: center; }
+  /* A late entry: booked on the day the stock moved, typed in later. */
+  .late-tag { display: inline-block; margin-top: 3px; font-family: inherit; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 8px; border-radius: 10px; background: var(--low-soft); color: var(--low); white-space: nowrap; }
+  .txn-date-late { color: var(--low); font-weight: 600; }
   .txn-type-receipt { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
@@ -1465,6 +1468,7 @@
         <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
         <div class="field"><label for="txnQty">Quantity</label><div class="input-with-unit"><input type="number" id="txnQty" step="any" required><span class="input-unit hidden" id="txnQtyUnit"></span></div><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
+        <div class="field hidden" id="txnDateField"><label for="txnDate">Entry date</label><input type="date" id="txnDate"><div class="hint" id="txnDateHint">Today. Pick an earlier day only when the paperwork is late.</div></div>
         <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any" min="0"><div class="hint" id="txnRateHint"></div></div>
 
         <div id="receiptFields" class="receipt-fields hidden span-2">
@@ -1765,7 +1769,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.19.2';
+const APP_VERSION = '3.21.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2459,6 +2463,37 @@ function qtyWithUnit(n, unit) {
   unit = unit ? String(unit).trim() : '';
   return formatQty(n) + (unit ? ' ' + unit : '');
 }
+// 'yyyy-mm-dd' in this device's time zone. toISOString() is UTC, which in
+// India turns midnight into the previous day.
+function localDayISO(d) {
+  const x = d instanceof Date ? d : new Date(d);
+  if (isNaN(x.getTime())) return '';
+  return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+}
+// '12 Nov 2026' from a date or a 'yyyy-mm-dd' string.
+function formatDay(d) {
+  const x = /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? new Date(String(d) + 'T00:00:00') : new Date(d);
+  if (isNaN(x.getTime())) return '—';
+  return x.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+// '12 Nov', for tables where the year is plain from the rest of the list.
+function formatDayShort(d) {
+  const x = /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? new Date(String(d) + 'T00:00:00') : new Date(d);
+  if (isNaN(x.getTime())) return '—';
+  return x.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+}
+// The day the stock moved, and whether it was typed in on a later day.
+function movementDate(r) { return r.Date || r.Timestamp || ''; }
+function isLateEntry(r) {
+  const moved = localDayISO(r.Date), posted = localDayISO(r.Timestamp);
+  return !!(moved && posted && moved < posted);
+}
+function lateTag(r) {
+  return isLateEntry(r)
+    ? '<div class="late-tag" title="Entered ' + escapeHtml(formatDateTime(r.Timestamp)) + '">entered ' + escapeHtml(formatDayShort(r.Timestamp)) + '</div>'
+    : '';
+}
+
 function formatDateTime(d) {
   if (!d) return '—';
   const date = new Date(d);
@@ -3414,6 +3449,11 @@ function openTxnModal(key, code) {
   document.getElementById('txnSupplier').innerHTML = '<option value="">— None —</option>' +
     suppliers.map(function (s) { return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; }).join('');
 
+  const dateInput = document.getElementById('txnDate');
+  dateInput.max = localDayISO(new Date()); dateInput.value = localDayISO(new Date());
+  document.getElementById('txnDateField').classList.toggle('hidden', !can('stock.backdate'));
+  updateTxnDateHint();
+
   txnRateTouched = false;
   document.getElementById('txnRateHint').textContent = '';
   document.getElementById('txnStockPrice').classList.add('hidden');
@@ -3773,15 +3813,37 @@ function closeTxnModal() {
   resetTxnAttachments();
 }
 
+// The day the entry is booked on: '' for today (the backend then dates it
+// with the moment it's posted), false for a day that hasn't happened yet.
+function txnEntryDate() {
+  if (!can('stock.backdate')) return '';
+  const v = document.getElementById('txnDate').value;
+  const today = localDayISO(new Date());
+  if (!v || v === today) return '';
+  return v > today ? false : v;
+}
+
+function updateTxnDateHint() {
+  const v = txnEntryDate();
+  const hint = document.getElementById('txnDateHint');
+  hint.classList.toggle('txn-date-late', !!v);
+  hint.textContent = v === false ? 'That day hasn\u2019t happened yet.'
+    : v ? 'Late entry: booked on ' + formatDay(v) + '. The time you post it is recorded too.'
+    : 'Today. Pick an earlier day only when the paperwork is late.';
+}
+
 async function handleTxnSubmit(e) {
   e.preventDefault();
   // The entry is already saved; what's left is its files.
   if (txnUploadStage) { await runTxnUploads(); return; }
+  const entryDate = txnEntryDate();
+  if (entryDate === false) { document.getElementById('txnError').textContent = 'The entry date can\u2019t be in the future.'; return; }
   const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
   errEl.textContent = ''; setBtnLoading(btn, 'Posting…');
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
   const rateRaw = document.getElementById('txnRate').value; if(rateRaw !== '') payload.rate = Number(rateRaw);
+  if (entryDate) payload.date = entryDate;
   // The ID identifies this ENTRY, not this attempt. It was minted when the
   // form opened and is reused by every resend, so pressing Post again after
   // a dropped connection cannot produce a second row.
@@ -3806,7 +3868,7 @@ async function handleTxnSubmit(e) {
     state[config.key + 'LastUpdated'] = new Date(); updateFreshnessLabel(config.key);
     const postedMsg = result.duplicate
       ? 'Already recorded · ' + code + ' · balance ' + qtyWithUnit(result.newBalance, unit) + ' (no second entry made)'
-      : 'Posted ' + txnType + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit);
+      : 'Posted ' + txnType + (entryDate ? ' dated ' + formatDay(entryDate) : '') + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit);
     if (result.warning) toast(result.warning, true);
     if (config.key === 'rm') renderRMPage(); else renderFGPage();
     renderHome();
@@ -4350,8 +4412,7 @@ function wireAttachments() {
    LEDGER HISTORY MODAL
    ========================================================================= */
 function renderLedgerRow(r) {
-  const rawDate = r.Timestamp || r.Date; let dateStr = '—';
-  if (rawDate) { const d = new Date(rawDate); if (!isNaN(d.getTime())) { dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); } }
+  const dateStr = (localDayISO(movementDate(r)) || '—') + lateTag(r);
 
   const txnTypeLower = (r.TxnType || '').toLowerCase(); const isReceipt = txnTypeLower === 'receipt';
   const qtyClass = isReceipt ? 'qty-bold qty-positive' : 'qty-bold';
@@ -4484,7 +4545,8 @@ async function exportLedgerToExcel() {
     if (rows.length === 0) { toast('Nothing to export for these filters.', true); return; }
     const exportRows = rows.map(function (r) {
       return {
-        date: r.Timestamp ? new Date(r.Timestamp).toISOString().slice(0, 10) : '',
+        date: localDayISO(movementDate(r)),
+        entered: isLateEntry(r) ? localDayISO(r.Timestamp) : '',
         type: r.TxnType || '', qty: r.Qty, department: r.Department || '',
         reference: r.Reference || '', supplier: r.Supplier || '', invoiceNo: r.InvoiceNo || '',
         invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
@@ -4500,7 +4562,8 @@ async function exportLedgerToExcel() {
       { key: 'supplier', label: 'Supplier', width: 150 },
       { key: 'invoiceNo', label: 'Invoice No', width: 100 },
       { key: 'invoiceDate', label: 'Invoice Date', width: 100 },
-      { key: 'enteredBy', label: 'Entered By', width: 110 }
+      { key: 'enteredBy', label: 'Entered By', width: 110 },
+      { key: 'entered', label: 'Entered late on', width: 100 }
     ];
     const rangeSuffix = (filters.dateFrom || filters.dateTo) ? ('_' + (filters.dateFrom || 'start') + '_to_' + (filters.dateTo || 'now')) : '';
     const item = state[config.masterKey].find(function (m) { return m[config.codeField] === code; });
@@ -5200,9 +5263,11 @@ function mapLedgerRows(config, rows) {
   });
   return (rows || []).map(function (r) {
     return {
-      ts: r.Timestamp ? new Date(r.Timestamp).getTime() : 0,
-      dateText: r.Timestamp ? formatDateTime(r.Timestamp) : '—',
-      dateISO: r.Timestamp ? new Date(r.Timestamp).toISOString().slice(0, 10) : '',
+      ts: movementDate(r) ? new Date(movementDate(r)).getTime() : 0,
+      // A late entry is shown on the day the stock moved; its time is when it was typed in, so it's left off.
+      dateText: !movementDate(r) ? '—' : (isLateEntry(r) ? formatDayShort(r.Date) : formatDateTime(movementDate(r))),
+      dateISO: localDayISO(movementDate(r)),
+      late: isLateEntry(r), lateTag: lateTag(r), enteredISO: isLateEntry(r) ? localDayISO(r.Timestamp) : '',
       code: r[config.codeField] || '',
       name: nameByCode[r[config.codeField]] || '',
       category: catByCode[r[config.codeField]] || '',
@@ -5534,7 +5599,7 @@ function renderLedgerPage() {
   tbody.innerHTML = rows.slice(start, start + LEDGER_PAGE_SIZE).map(function (r) {
     const cls = 'txn-type-' + String(r.type || '').toLowerCase();
     return '<tr>' +
-      '<td class="mono" data-label="Date">' + escapeHtml(r.dateText) + '</td>' +
+      '<td class="mono" data-label="Date">' + escapeHtml(r.dateText) + (r.lateTag || '') + '</td>' +
       '<td class="mono" data-label="Code">' + escapeHtml(r.code) + '</td>' +
       '<td data-label="Name">' + escapeHtml(r.name || '—') + '</td>' +
       '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span>' + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
@@ -5576,7 +5641,8 @@ async function exportLedgerPageToExcel() {
       { key: 'invoiceNo', label: 'Invoice No', width: 100 },
       { key: 'invoiceDate', label: 'Invoice Date', width: 100 },
       { key: 'remarks', label: 'Remarks', width: 180 },
-      { key: 'enteredBy', label: 'Entered By', width: 110 }
+      { key: 'enteredBy', label: 'Entered By', width: 110 },
+      { key: 'enteredISO', label: 'Entered late on', width: 100 }
     ];
     const label = state.ledgerKind === 'fg' ? 'FG' : 'RM';
     const res = await api('exportStyledWorkbook', {
@@ -6363,6 +6429,7 @@ function wireStaticEvents() {
 
   document.getElementById('alertsList').addEventListener('click', function (e) { const card = e.target.closest('.alert-card'); if (card) openTxnModal(card.dataset.key, card.dataset.code); });
   wireAttachments();
+  document.getElementById('txnDate').addEventListener('change', updateTxnDateHint);
   document.getElementById('txnForm').addEventListener('submit', handleTxnSubmit); document.getElementById('txnType').addEventListener('change', updateTxnFormVisibility);
   // Guard first, so the box is corrected before anything reads it.
   txnQtyMinSync = guardQtyInput(document.getElementById('txnQty'), document.getElementById('txnType'));
