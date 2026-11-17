@@ -755,6 +755,10 @@
   /* A late entry: booked on the day the stock moved, typed in later. */
   .late-tag { display: inline-block; margin-top: 3px; font-family: inherit; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 8px; border-radius: 10px; background: var(--low-soft); color: var(--low); white-space: nowrap; }
   .txn-date-late { color: var(--low); font-weight: 600; }
+  /* Reversals: the cancelled entry is struck through, the reversing one tagged. */
+  .rev-tag { display: inline-block; margin: 3px 0 0 6px; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 8px; border-radius: 10px; background: var(--line-soft); color: var(--ink-soft); white-space: nowrap; vertical-align: middle; }
+  tr.is-reversed td { opacity: 0.6; }
+  tr.is-reversed td.col-qty, tr.is-reversed td[data-label="Qty"] { text-decoration: line-through; }
   .txn-type-receipt { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
@@ -1685,7 +1689,7 @@
 <div class="modal-backdrop hidden" id="fixModal">
   <div class="modal">
     <div class="modal-head">
-      <div><div class="modal-eyebrow">CORRECT ENTRY</div><h3 class="modal-title" id="fixTitle"></h3>
+      <div><div class="modal-eyebrow">CORRECT OR REVERSE ENTRY</div><h3 class="modal-title" id="fixTitle"></h3>
         <div class="muted mono" style="font-size:12px" id="fixTxnId"></div></div>
       <button class="icon-btn" id="fixCloseBtn" aria-label="Close">&times;</button>
     </div>
@@ -1697,12 +1701,13 @@
         <div class="field"><label for="fixReference">Reference</label><input type="text" id="fixReference"></div>
         <div class="field span-2"><label for="fixRemarks">Remarks</label><input type="text" id="fixRemarks"></div>
       </div>
-      <div class="hint">The balance moves by the difference, and the change is recorded against your name.
-        Picking the wrong item isn't a correction — delete the entry and post it again.</div>
+      <div class="hint">Changing the type or quantity reverses this entry and posts the corrected one in its place, on the same date. Both stay in the ledger, recorded against your name.
+        Department, reference and remarks are simply updated. Picked the wrong item? Reverse the entry and post it again.</div>
+      <div class="field" id="fixReasonField" style="margin-top:14px"><label for="fixReason">Reason for reversing</label><input type="text" id="fixReason" maxlength="200" placeholder="e.g. posted twice, wrong item"></div>
       <div class="modal-error hidden" id="fixError"></div>
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn-danger" id="fixDeleteBtn">Delete entry</button>
+      <button type="button" class="btn-danger" id="fixDeleteBtn">Reverse entry</button>
       <div class="modal-actions-right">
         <button type="button" class="btn-ghost" id="fixCancelBtn">Cancel</button>
         <button type="button" class="btn-primary" id="fixSaveBtn">Save correction</button>
@@ -1769,7 +1774,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.21.0';
+const APP_VERSION = '3.22.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2492,6 +2497,13 @@ function lateTag(r) {
   return isLateEntry(r)
     ? '<div class="late-tag" title="Entered ' + escapeHtml(formatDateTime(r.Timestamp)) + '">entered ' + escapeHtml(formatDayShort(r.Timestamp)) + '</div>'
     : '';
+}
+
+// A reversed entry, or the entry that reverses one.
+function revTag(reversalOf, reversedBy) {
+  if (reversedBy) return '<span class="rev-tag" title="Reversed by ' + escapeHtml(reversedBy) + '">reversed</span>';
+  if (reversalOf) return '<span class="rev-tag" title="Reverses ' + escapeHtml(reversalOf) + '">reversal</span>';
+  return '';
 }
 
 function formatDateTime(d) {
@@ -3604,10 +3616,10 @@ function syncStockFromLedger(config, code, stock) {
 
 function ledgerTotal(config, rows, opening) {
   return rows.reduce(function (sum, r) {
+    // Signed, as the backend counts it: a reversal carries the opposite quantity.
     const q = Number(r.Qty) || 0;
-    if ((config.outTypes || []).indexOf(r.TxnType) > -1) return sum - Math.abs(q);
-    if (r.TxnType === 'Adjustment') return sum + q;
-    return sum + Math.abs(q);
+    if ((config.outTypes || []).indexOf(r.TxnType) > -1) return sum - q;
+    return sum + q;
   }, opening);
 }
 
@@ -4415,7 +4427,7 @@ function renderLedgerRow(r) {
   const dateStr = (localDayISO(movementDate(r)) || '—') + lateTag(r);
 
   const txnTypeLower = (r.TxnType || '').toLowerCase(); const isReceipt = txnTypeLower === 'receipt';
-  const qtyClass = isReceipt ? 'qty-bold qty-positive' : 'qty-bold';
+  const qtyClass = isReceipt && Number(r.Qty) > 0 ? 'qty-bold qty-positive' : 'qty-bold';
 
   let refSuppHtml = escapeHtml(r.Reference || '—');
   if (isReceipt && (r.Supplier || r.InvoiceNo)) {
@@ -4423,8 +4435,9 @@ function renderLedgerRow(r) {
      refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
   }
 
-  return '<tr><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span>' + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
-    ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key) + '</tr>';
+  const revOf = asText(r.ReversalOf), revBy = asText(r.ReversedBy);
+  return '<tr' + (revBy ? ' class="is-reversed"' : '') + '><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span>' + revTag(revOf, revBy) + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
+    ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key, !!(revOf || revBy)) + '</tr>';
 }
 
 function currentLedgerFilters() {
@@ -4956,14 +4969,14 @@ let activeFixTxn = null;
 
 function canFixLedger() { return can('stock.ledger.edit') || can('stock.ledger.delete'); }
 
-function ledgerActionsCell(txnId, key) {
-  if (!canFixLedger() || !txnId) return canFixLedger() ? '<td class="ledger-actions-col"></td>' : '';
+function ledgerActionsCell(txnId, key, locked) {
+  if (!canFixLedger() || !txnId || locked) return canFixLedger() ? '<td class="ledger-actions-col"></td>' : '';
   return '<td class="ledger-actions-col" style="text-align:center;white-space:nowrap">' +
     (can('stock.ledger.edit')
       ? '<button class="icon-btn" data-fix-edit="' + escapeHtml(txnId) + '" data-key="' + escapeHtml(key || 'rm') + '" title="Correct this entry">✎</button>'
       : '') +
     (can('stock.ledger.delete')
-      ? '<button class="icon-btn" data-fix-delete="' + escapeHtml(txnId) + '" data-key="' + escapeHtml(key || 'rm') + '" title="Delete this entry">🗑</button>'
+      ? '<button class="icon-btn" data-fix-delete="' + escapeHtml(txnId) + '" data-key="' + escapeHtml(key || 'rm') + '" title="Reverse this entry">↺</button>'
       : '') +
     '</td>';
 }
@@ -4980,14 +4993,16 @@ function findLedgerEntry(txnId, key) {
   if (fromPage) {
     return { txnId: txnId, key: key, code: fromPage.code, name: fromPage.name, type: fromPage.type,
              qty: fromPage.qty, unit: fromPage.unit, department: fromPage.department,
-             reference: fromPage.reference, remarks: fromPage.remarks };
+             reference: fromPage.reference, remarks: fromPage.remarks,
+             reversalOf: fromPage.reversalOf, reversedBy: fromPage.reversedBy };
   }
   const fromItem = (state.ledgerModalRows || []).filter(function (r) { return r.TxnID === txnId; })[0];
   if (fromItem) {
     const config = activeLedgerConfig || RM_CONFIG_UI;
     return { txnId: txnId, key: key, code: fromItem[config.codeField], name: '', type: fromItem.TxnType,
              qty: Number(fromItem.Qty) || 0, unit: fromItem.Unit || '', department: fromItem.Department,
-             reference: fromItem.Reference, remarks: fromItem.Remarks };
+             reference: fromItem.Reference, remarks: fromItem.Remarks,
+             reversalOf: asText(fromItem.ReversalOf), reversedBy: asText(fromItem.ReversedBy) };
   }
   return null;
 }
@@ -4995,6 +5010,8 @@ function findLedgerEntry(txnId, key) {
 function openFixModal(txnId, key) {
   const entry = findLedgerEntry(txnId, key);
   if (!entry) return toast('That entry is no longer on screen — reload the ledger and try again.', true);
+  if (entry.reversedBy) return toast('That entry was reversed by ' + entry.reversedBy + ', so it stays as it is.', true);
+  if (entry.reversalOf) return toast('That entry reverses ' + entry.reversalOf + ', so it stays as it is. Post a new entry instead.', true);
   activeFixTxn = entry;
 
   const config = key === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
@@ -5017,6 +5034,8 @@ function openFixModal(txnId, key) {
   document.getElementById('fixError').textContent = '';
   document.getElementById('fixError').classList.add('hidden');
   document.getElementById('fixDeleteBtn').classList.toggle('hidden', !can('stock.ledger.delete'));
+  document.getElementById('fixReasonField').classList.toggle('hidden', !can('stock.ledger.delete'));
+  document.getElementById('fixReason').value = '';
   document.getElementById('fixSaveBtn').classList.toggle('hidden', !can('stock.ledger.edit'));
   document.getElementById('fixModal').classList.remove('hidden');
   enhanceAllSelects_();
@@ -5044,7 +5063,9 @@ async function saveFix() {
       remarks: document.getElementById('fixRemarks').value.trim()
     });
     closeFixModal();
-    toast('Corrected ' + result.code + ' · balance now ' + formatQty(result.newBalance));
+    toast(result.mode === 'reposted'
+      ? 'Corrected ' + result.code + ': the entry was reversed and re-posted as ' + result.txnType + ' ' + formatQty(result.qty) + ' · balance now ' + formatQty(result.newBalance)
+      : 'Updated ' + result.code + ' · balance ' + formatQty(result.newBalance));
     await afterLedgerFix(activeFixTxn && activeFixTxn.key);
   } catch (err) {
     errEl.textContent = err.message;
@@ -5057,25 +5078,30 @@ async function saveFix() {
 async function deleteFix() {
   if (!activeFixTxn) return;
   const entry = activeFixTxn;
-  if (!confirm('Delete this entry?\n\n' + entry.type + ' · ' + formatQty(entry.qty) + ' · ' + entry.code +
-               '\n\nThe balance moves back by the same amount. The full row is kept in the audit log.')) return;
-  const btn = document.getElementById('fixDeleteBtn');
   const errEl = document.getElementById('fixError');
+  const reason = document.getElementById('fixReason').value.trim();
+  if (reason.length < 3) {
+    errEl.textContent = 'Say why this entry is being reversed, in a few words.';
+    errEl.classList.remove('hidden');
+    document.getElementById('fixReason').focus();
+    return;
+  }
+  if (!confirm('Reverse this entry?\n\n' + entry.type + ' · ' + formatQty(entry.qty) + ' · ' + entry.code +
+               '\n\nA reversing entry is added on the same date, so the balance moves back by the same amount. Both entries stay in the ledger.')) return;
+  const btn = document.getElementById('fixDeleteBtn');
   errEl.classList.add('hidden');
-  setBtnLoading(btn, 'Deleting…');
+  setBtnLoading(btn, 'Reversing…');
   try {
-    const action = entry.key === 'fg' ? 'deleteFGTransaction' : 'deleteRMTransaction';
-    const result = await api(action, { txnId: entry.txnId });
+    const action = entry.key === 'fg' ? 'reverseFGTransaction' : 'reverseRMTransaction';
+    const result = await api(action, { txnId: entry.txnId, reason: reason });
     closeFixModal();
-    toast(result.alreadyDone
-      ? 'Deleted · ' + entry.code + ' — the first reply was lost, but the entry is gone'
-      : 'Deleted · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
+    toast('Reversed · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
     await afterLedgerFix(entry.key);
   } catch (err) {
     errEl.textContent = err.message;
     errEl.classList.remove('hidden');
   } finally {
-    clearBtnLoading(btn, 'Delete entry');
+    clearBtnLoading(btn, 'Reverse entry');
   }
 }
 
@@ -5276,7 +5302,8 @@ function mapLedgerRows(config, rows) {
       department: asText(r.Department), reference: asText(r.Reference),
       supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
       invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
-      remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy)
+      remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy),
+      reversalOf: asText(r.ReversalOf), reversedBy: asText(r.ReversedBy)
     };
   });
 }
@@ -5598,16 +5625,16 @@ function renderLedgerPage() {
 
   tbody.innerHTML = rows.slice(start, start + LEDGER_PAGE_SIZE).map(function (r) {
     const cls = 'txn-type-' + String(r.type || '').toLowerCase();
-    return '<tr>' +
+    return '<tr' + (r.reversedBy ? ' class="is-reversed"' : '') + '>' +
       '<td class="mono" data-label="Date">' + escapeHtml(r.dateText) + (r.lateTag || '') + '</td>' +
       '<td class="mono" data-label="Code">' + escapeHtml(r.code) + '</td>' +
       '<td data-label="Name">' + escapeHtml(r.name || '—') + '</td>' +
-      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span>' + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
+      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span>' + revTag(r.reversalOf, r.reversedBy) + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
       '<td class="mono num" data-label="Qty">' + qtyWithUnit(r.qty, r.unit) + '</td>' +
       '<td data-label="Department">' + escapeHtml(r.department || '—') + '</td>' +
       '<td data-label="Reference">' + escapeHtml(r.reference || '—') + '</td>' +
       '<td data-label="Entered by">' + escapeHtml(r.enteredBy || '—') + '</td>' +
-      ledgerActionsCell(r.txnId, state.ledgerKind) +
+      ledgerActionsCell(r.txnId, state.ledgerKind, !!(r.reversalOf || r.reversedBy)) +
       '</tr>';
   }).join('');
 
@@ -6478,7 +6505,10 @@ function wireStaticEvents() {
     const edit = e.target.closest('[data-fix-edit]');
     if (edit) return openFixModal(edit.dataset.fixEdit, edit.dataset.key);
     const del = e.target.closest('[data-fix-delete]');
-    if (del) { openFixModal(del.dataset.fixDelete, del.dataset.key); deleteFix(); }
+    if (del) {
+      openFixModal(del.dataset.fixDelete, del.dataset.key);
+      if (activeFixTxn) setTimeout(function () { document.getElementById('fixReason').focus(); }, 50);
+    }
   });
   document.getElementById('tierModalClose').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
   document.getElementById('tierCancelBtn').addEventListener('click', function () { document.getElementById('tierModal').classList.add('hidden'); });
