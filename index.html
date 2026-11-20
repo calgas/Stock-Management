@@ -314,6 +314,31 @@
   .rail.collapsed .nav-link:hover { transform: translateY(-2px); }
   .rail.collapsed .nav-link .label { display: none; }
 
+  /* Stock and Ledger are headings with RM, FG and Trade under them (3.24). */
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-head { position: relative; z-index: 1; width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 0; border-radius: 12px; background: transparent; font: inherit; font-size: 14.5px; font-weight: 600; color: var(--rail-soft); cursor: pointer; text-align: left; transition: color 0.2s, background 0.2s; }
+  .nav-group-head > svg { flex-shrink: 0; opacity: 0.8; }
+  .nav-group-head:hover { color: #fff; background: rgba(255,255,255,0.03); }
+  .nav-group-head:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
+  .nav-group-head.has-active { color: #fff; }
+  .nav-group-head.has-active > svg.nav-icon { color: var(--copper); opacity: 1; }
+  .nav-group-head .nav-caret { margin-left: auto; opacity: 0.55; transition: transform 0.25s var(--spring); }
+  .nav-group.is-closed .nav-caret { transform: rotate(-90deg); }
+  .nav-sub { overflow: hidden; max-height: 160px; opacity: 1; transition: max-height 0.25s ease, opacity 0.2s ease; padding: 0 0 2px; background: linear-gradient(90deg, transparent 23px, rgba(255,255,255,0.09) 23px, rgba(255,255,255,0.09) 24px, transparent 24px); }
+  .nav-group.is-closed .nav-sub { max-height: 0; opacity: 0; }
+  .nav-link.nav-sub-link { padding: 8px 14px 8px 46px; font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+  .nav-sub-link .nav-dot { position: absolute; left: 21px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--rail); border: 1.5px solid rgba(255,255,255,0.35); transition: all 0.2s; }
+  .nav-sub-link:hover .nav-dot { border-color: #fff; }
+  .nav-sub-link.active { font-weight: 600; }
+  .nav-sub-link.active .nav-dot { background: var(--copper); border-color: var(--copper); box-shadow: 0 0 0 3px rgba(181, 101, 46, 0.25); }
+  .nav-sub-link .nav-abbr { display: none; }
+  .rail.collapsed .nav-group-head { justify-content: center; }
+  .rail.collapsed .nav-group-head .label, .rail.collapsed .nav-caret { display: none; }
+  .rail.collapsed .nav-sub { background: none; }
+  .rail.collapsed .nav-link.nav-sub-link { padding: 7px 0; justify-content: center; }
+  .rail.collapsed .nav-sub-link .nav-dot, .rail.collapsed .nav-sub-link .label { display: none; }
+  .rail.collapsed .nav-sub-link .nav-abbr { display: inline; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+
   .rail-footer { margin-top: auto; padding-top: 20px; }
   .rail-btn { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--rail-soft); padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 12px; transition: all 0.2s; }
   .rail-btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.2); }
@@ -563,10 +588,10 @@
   .row-action:hover { background: var(--copper-soft); border-color: var(--copper-soft); color: var(--copper); transform: translateY(-2px); box-shadow: var(--shadow); }
   tr.row-inactive { opacity: 0.6; filter: grayscale(50%); }
 
-  #page-rm table, #page-fg table { border-spacing: 0 4px; margin-top: -4px; }
-  #page-rm tbody td, #page-fg tbody td { padding: 10px 20px; }
-  #page-rm tbody tr, #page-fg tbody tr { animation: none; }
-  #page-rm tbody tr[data-code]:hover, #page-fg tbody tr[data-code]:hover { transform: none; box-shadow: var(--shadow); }
+  #page-rm table, #page-fg table, #page-trade table { border-spacing: 0 4px; margin-top: -4px; }
+  #page-rm tbody td, #page-fg tbody td, #page-trade tbody td { padding: 10px 20px; }
+  #page-rm tbody tr, #page-fg tbody tr, #page-trade tbody tr { animation: none; }
+  #page-rm tbody tr[data-code]:hover, #page-fg tbody tr[data-code]:hover, #page-trade tbody tr[data-code]:hover { transform: none; box-shadow: var(--shadow); }
 
   .skeleton-bar { height: 16px; border-radius: 6px; width: 100%; background: linear-gradient(90deg, var(--line-soft) 25%, var(--line) 37%, var(--line-soft) 63%); background-size: 400% 100%; animation: shimmer 1.5s ease infinite; }
 
@@ -759,7 +784,7 @@
   .rev-tag { display: inline-block; margin: 3px 0 0 6px; font-size: 11px; font-weight: 600; line-height: 1.4; padding: 1px 8px; border-radius: 10px; background: var(--line-soft); color: var(--ink-soft); white-space: nowrap; vertical-align: middle; }
   tr.is-reversed td { opacity: 0.6; }
   tr.is-reversed td.col-qty, tr.is-reversed td[data-label="Qty"] { text-decoration: line-through; }
-  .txn-type-receipt { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
+  .txn-type-receipt, .txn-type-purchase { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-scrap { background: var(--critical-soft); color: var(--critical); border: 1px solid rgba(217, 80, 58, 0.25); }
@@ -982,7 +1007,7 @@
     .main { height: auto; min-height: 100vh; padding-bottom: calc(96px + env(safe-area-inset-bottom)); display: block; }
     .page { height: auto; overflow: visible; animation: none; padding: 20px 16px; }
 
-    #page-rm > div:last-child, #page-fg > div:last-child, #page-users > div:last-child {
+    #page-rm > div:last-child, #page-fg > div:last-child, #page-trade > div:last-child, #page-users > div:last-child {
       overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px 16px; width: 100vw;
     }
     table { min-width: 800px; }
@@ -1016,6 +1041,29 @@
     .nav-link.active { background: transparent; color: #fff; }
     .nav-link.active svg { color: #e08a52; transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 4px 6px rgba(224, 138, 82, 0.4)); }
     .nav-link.active .label { color: #e08a52; transform: translateY(2px); }
+
+    .rail { overflow: visible; }
+    .nav-group { flex: 1; display: flex; justify-content: center; margin: 0; }
+    .nav-group-head { flex-direction: column; justify-content: center; align-items: center; gap: 4px; padding: 8px 12px; min-height: 52px; color: rgba(255,255,255,0.5); }
+    .nav-group-head > svg.nav-icon { width: 22px; height: 22px; transition: transform 0.3s var(--spring); }
+    .nav-group-head .label { display: block !important; font-size: 11px; font-weight: 600; transition: all 0.3s var(--spring); }
+    .nav-group-head .nav-caret { display: none; }
+    .nav-group-head:hover { background: transparent; }
+    .nav-group-head.has-active { color: #fff; }
+    .nav-group-head.has-active > svg.nav-icon { color: #e08a52; transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 4px 6px rgba(224, 138, 82, 0.4)); }
+    .nav-group-head.has-active .label { color: #e08a52; transform: translateY(2px); }
+    .rail .nav-group .nav-sub, .rail .nav-group.is-closed .nav-sub {
+      display: none; position: absolute; left: 12px; right: 12px; bottom: calc(100% + 10px); max-height: none; opacity: 1;
+      gap: 8px; padding: 10px; background: rgba(20, 23, 28, 0.97); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px;
+      box-shadow: 0 -12px 32px rgba(0,0,0,0.35); z-index: 101;
+    }
+    .rail .nav-group.is-open-mobile .nav-sub { display: flex; animation: navMenuIn 0.18s ease-out; }
+    .rail .nav-sub .nav-link.nav-sub-link { flex: 1; flex-direction: row; min-height: 48px; margin: 0; padding: 10px 8px; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.06); border-radius: 12px; }
+    .rail .nav-sub .nav-sub-link .label { font-size: 14px; transform: none; }
+    .rail .nav-sub .nav-sub-link .nav-dot { position: static; margin: 0; }
+    .rail .nav-sub .nav-sub-link.active { background: rgba(224, 138, 82, 0.22); color: #fff; }
+    .rail .nav-sub .nav-sub-link.active .label { color: #fff; transform: none; }
+    @keyframes navMenuIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     .stat-grid, .chart-grid { grid-template-columns: 1fr; gap: 16px; }
     .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
@@ -1211,22 +1259,22 @@
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M2 7L8 2L14 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 6.5V13.5H12V6.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       <span class="label">Overview</span>
     </a>
-    <a href="#" class="nav-link" data-page="rm">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="4" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/><path d="M5 4V2.5H11V4" stroke="currentColor" stroke-width="1.6"/></svg>
-      <span class="label">RM Stock</span>
-    </a>
-    <a href="#" class="nav-link" data-page="fg">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><line x1="3" y1="8" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="6.5" y1="3.5" x2="6.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="3.5" x2="9.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.6"/></svg>
-      <span class="label">FG Stock</span>
-    </a>
-    <a href="#" class="nav-link" data-page="ledger" data-kind="rm">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.2" stroke="currentColor" stroke-width="1.6"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span class="label">RM Ledger</span>
-    </a>
-    <a href="#" class="nav-link" data-page="ledger" data-kind="fg">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.2" stroke="currentColor" stroke-width="1.6"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span class="label">FG Ledger</span>
-    </a>
+    <div class="nav-group" data-group="stock">
+      <button type="button" class="nav-group-head" aria-expanded="true"><svg class="nav-icon" width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1.8 14 4.8v6.4L8 14.2 2 11.2V4.8L8 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2.3 5 8 7.9 13.7 5M8 7.9v6.1" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="label">Stock</span><svg class="nav-caret" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="nav-sub">
+      <a href="#" class="nav-link nav-sub-link" data-page="rm"><span class="nav-dot" aria-hidden="true"></span><span class="label">RM</span><span class="nav-abbr" aria-hidden="true">RM</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="fg"><span class="nav-dot" aria-hidden="true"></span><span class="label">FG</span><span class="nav-abbr" aria-hidden="true">FG</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="trade"><span class="nav-dot" aria-hidden="true"></span><span class="label">Trade</span><span class="nav-abbr" aria-hidden="true">TR</span></a>
+      </div>
+    </div>
+    <div class="nav-group" data-group="ledger">
+      <button type="button" class="nav-group-head" aria-expanded="true"><svg class="nav-icon" width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.2" stroke="currentColor" stroke-width="1.6"/><line x1="5.5" y1="5.5" x2="10.5" y2="5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="8" x2="10.5" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="label">Ledger</span><svg class="nav-caret" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="nav-sub">
+      <a href="#" class="nav-link nav-sub-link" data-page="ledger" data-kind="rm"><span class="nav-dot" aria-hidden="true"></span><span class="label">RM</span><span class="nav-abbr" aria-hidden="true">RM</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="ledger" data-kind="fg"><span class="nav-dot" aria-hidden="true"></span><span class="label">FG</span><span class="nav-abbr" aria-hidden="true">FG</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="ledger" data-kind="trade"><span class="nav-dot" aria-hidden="true"></span><span class="label">Trade</span><span class="nav-abbr" aria-hidden="true">TR</span></a>
+      </div>
+    </div>
     <a href="#" class="nav-link hidden" id="navUsers" data-page="users">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M1.5 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.3c1.8.2 3 1.4 3 3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <span class="label">Team &amp; Access</span>
@@ -1390,6 +1438,45 @@
       </div>
     </section>
 
+    <section class="page page-grid hidden" id="page-trade">
+      <div class="page-head"><h2>Trade Stock</h2><p>Finished goods bought in from suppliers and dispatched to customers, without being made here.</p></div>
+      <div class="filter-bar">
+        <div class="toolbar">
+          <input type="search" id="tradeSearch" placeholder="Search ID, code or name…">
+          <select id="tradeCategoryFilter" multiple></select>
+          <select id="tradeStatusFilter" multiple>
+            <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+          </select>
+          <label class="check-inline"><input type="checkbox" id="tradeShowInactive"> Show inactive</label>
+          <button class="btn-ghost" id="tradeExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
+          <button class="btn-ghost" id="tradeResetBtn" title="Clear search and filters" disabled>Reset</button>
+          <button class="btn-ghost" id="tradeRefreshBtn">Refresh</button>
+          <span class="freshness-label" id="tradeFreshness"></span>
+          <button class="btn-ghost hidden add-btn-spacer" id="tradeImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
+          <button class="btn-primary btn-compact hidden" id="tradeAddItemBtn">+ Add Trade item</button>
+        </div>
+        <p class="toolbar-hint">Click a row to post a purchase or dispatch. Clock icon shows history, pencil edits the item.</p>
+      </div>
+      <div class="grid-panel">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th class="sortable" data-col="idNo">ID No.</th>
+              <th class="sortable" data-col="code">Code</th>
+              <th class="sortable" data-col="name">Name</th>
+              <th class="sortable" data-col="category">Category</th>
+              <th class="sortable" data-col="balance" style="text-align:right">Balance</th>
+              <th class="sortable" data-col="status">Health / Status</th>
+              <th class="actions-head" style="width: 120px; text-align: center; vertical-align: middle;">Actions</th>
+            </tr></thead>
+            <tbody id="tradeTableBody"></tbody>
+          </table>
+        </div>
+          <div class="pagination"><span id="tradePageInfo"></span><div class="btns"><button class="btn-ghost" id="tradePrevBtn">Previous</button><button class="btn-ghost" id="tradeNextBtn">Next</button></div></div>
+      </div>
+    </section>
+
     <section class="page page-grid hidden" id="page-ledger">
       <div class="page-head"><h2 id="ldgHeading">RM Ledger</h2><p id="ldgSub">Every raw-material transaction, newest first.</p></div>
       <div class="filter-bar">
@@ -1397,6 +1484,7 @@
           <select id="ldgKind" class="hidden" aria-hidden="true" tabindex="-1">
             <option value="rm">Raw Material</option>
             <option value="fg">Finished Goods</option>
+            <option value="trade">Trade</option>
           </select>
           <input type="search" id="ldgSearch" placeholder="Search code, name, reference, remarks…">
           <select id="ldgTypeFilter" multiple></select>
@@ -1776,7 +1864,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.23.0';
+const APP_VERSION = '3.24.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1906,6 +1994,12 @@ if ('serviceWorker' in navigator) {
 
 const RM_CONFIG_UI = {
   key: 'rm', codeField: 'RM_Code', idField: 'ID_No.', nameField: 'RM_Name', categoryField: 'Category',
+  label: 'RM', longLabel: 'RAW MATERIAL', itemNoun: 'raw material', catLabel: 'Category', catDropdown: 'RM_Category', catAll: 'All categories',
+  firstInType: 'Receipt', supplierTypes: ['Receipt', 'Return to supplier'],
+  postPerm: 'stock.rm.post', itemsPerm: 'stock.rm.items', retirePerm: 'stock.rm.retire',
+  masterAction: 'getRMMaster', stockAction: 'getRMCurrentStock', updateTxnAction: 'updateRMTransaction',
+  reverseTxnAction: 'reverseRMTransaction', recalcAction: 'recalculateRMStock', bulkAction: 'bulkAddRMItems',
+  ledgerTitle: 'RM Ledger', ledgerSub: 'Every raw-material transaction, newest first.',
   unitField: 'Unit', reorderField: 'ReorderLevel',
   txnTypes: ['Receipt', 'Issue', 'Adjustment', 'Return', 'Return to supplier', 'Scrap'],
   outTypes: ['Issue', 'Return to supplier', 'Scrap'],
@@ -1925,6 +2019,12 @@ const RM_CONFIG_UI = {
 };
 const FG_CONFIG_UI = {
   key: 'fg', codeField: 'FG_Code', idField: 'ID_No.', nameField: 'FG_Name', categoryField: 'FG_Family',
+  label: 'FG', longLabel: 'FINISHED GOODS', itemNoun: 'finished good', catLabel: 'Family', catDropdown: 'FG_Family', catAll: 'All families',
+  firstInType: 'Production', supplierTypes: [],
+  postPerm: 'stock.fg.post', itemsPerm: 'stock.fg.items', retirePerm: 'stock.fg.retire',
+  masterAction: 'getFGMaster', stockAction: 'getFGCurrentStock', updateTxnAction: 'updateFGTransaction',
+  reverseTxnAction: 'reverseFGTransaction', recalcAction: 'recalculateFGStock', bulkAction: 'bulkAddFGItems',
+  ledgerTitle: 'FG Ledger', ledgerSub: 'Every finished-goods transaction, newest first.',
   // FG items are grouped twice: by Family (CYL-STD, BOX-STD…) and by
   // Category (MFD, KVAR…). RM has no equivalent second axis, so this is
   // optional — the shared table/filter code skips it when absent.
@@ -1957,6 +2057,43 @@ const FG_CONFIG_UI = {
   ]
 };
 
+// Bought in and sold on without being made here (3.24). Like FG, except that
+// stock arrives by Purchase, with the supplier and invoice kept on it.
+const TRADE_CONFIG_UI = {
+  key: 'trade', codeField: 'Trade_Code', idField: 'ID_No.', nameField: 'Trade_Name', categoryField: 'Category',
+  label: 'Trade', longLabel: 'TRADE GOODS', itemNoun: 'trade', catLabel: 'Category', catDropdown: 'Trade_Category', catAll: 'All categories',
+  firstInType: 'Purchase', supplierTypes: ['Purchase'],
+  postPerm: 'stock.trade.post', itemsPerm: 'stock.trade.items', retirePerm: 'stock.trade.retire',
+  masterAction: 'getTradeMaster', stockAction: 'getTradeCurrentStock', updateTxnAction: 'updateTradeTransaction',
+  reverseTxnAction: 'reverseTradeTransaction', recalcAction: 'recalculateTradeStock', bulkAction: 'bulkAddTradeItems',
+  ledgerTitle: 'Trade Ledger', ledgerSub: 'Every trade transaction — purchases, dispatches and adjustments — newest first.',
+  unitField: 'Unit', reorderField: 'ReorderLevel',
+  txnTypes: ['Purchase', 'Dispatch', 'Adjustment'],
+  outTypes: ['Dispatch'],
+  inTypes: ['Purchase'],
+  addAction: 'addTradeTransaction', ledgerAction: 'getTradeLedger', masterKey: 'tradeMaster', stockKey: 'tradeStock',
+  addItemAction: 'addTradeItem', updateItemAction: 'updateTradeItem',
+  deleteItemAction: 'deleteTradeItem', reactivateItemAction: 'reactivateTradeItem',
+  itemFields: [
+    { key: 'Trade_Name', label: 'Name', type: 'text', required: true },
+    // A new category can be typed here: the list starts empty, and grows
+    // from the Trade_Category column of the Dropdowns tab and from use.
+    { key: 'Category', label: 'Category', type: 'select', dropdownSource: 'Trade_Category', allowNew: true, options: [], required: true },
+    { key: 'Unit', label: 'Unit', type: 'select', dropdownSource: 'Unit', options: [], required: true },
+    { key: 'HSN_Code', label: 'HSN code', type: 'text' },
+    { key: 'GST_Percent', label: 'GST %', type: 'number' },
+    { key: 'ReorderLevel', label: 'Minimum quantity', type: 'number' },
+    { key: 'StandardCost', label: 'Purchase cost', type: 'number' },
+    { key: 'SalesPrice', label: 'Sales price', type: 'number' },
+    { key: 'Supplier', label: 'Usual supplier', type: 'select', dropdownSource: 'Supplier', options: [], section: 'more' }
+  ]
+};
+const STOCK_KINDS = ['rm', 'fg', 'trade'];
+function uiConfig(key) { return key === 'fg' ? FG_CONFIG_UI : key === 'trade' ? TRADE_CONFIG_UI : RM_CONFIG_UI; }
+function renderStockPage(key) { renderStockTable(uiConfig(key)); }
+// Per ledger: someone may look after FG items and not Trade ones.
+function canEditItems(config) { return can(config.itemsPerm); }
+
 const EDIT_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M11.3 2.3a1.5 1.5 0 0 1 2.4 1.8l-.2.3L5.5 12.4l-3 .6.6-3 8-8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 const HISTORY_ICON = '<svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5.5V8.5L10 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 2.5 2.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 // Status pills read by shape as well as color — Low/Critical are both
@@ -1973,13 +2110,13 @@ const STATUS_ICONS = {
    ========================================================================= */
 const state = {
   session: null,
-  rmMaster: [], fgMaster: [], rmStock: [], fgStock: [], departments: [], users: [], dropdowns: {},
-  rmSearch: '', fgSearch: '', rmCategory: [], fgCategory: [], fgSubCategory: [], rmStatus: [], fgStatus: [],
+  rmMaster: [], fgMaster: [], rmStock: [], fgStock: [], tradeMaster: [], tradeStock: [], departments: [], users: [], dropdowns: {},
+  rmSearch: '', fgSearch: '', tradeSearch: '', rmCategory: [], fgCategory: [], tradeCategory: [], fgSubCategory: [], rmStatus: [], fgStatus: [], tradeStatus: [],
   ledgerKind: 'rm', ledgerRows: [], ledgerModalRows: [], ledgerLoaded: false, ledgerSearch: '', ledgerType: [], ledgerDept: [], ledgerCat: [],
   ledgerPage: 1, ledgerSort: { col: 'ts', dir: 'desc' },
-  rmPage: 1, fgPage: 1, rmShowInactive: false, fgShowInactive: false,
-  rmSort: { col: 'idNo', dir: 'asc' }, fgSort: { col: 'idNo', dir: 'asc' },
-  rmLastUpdated: null, fgLastUpdated: null,
+  rmPage: 1, fgPage: 1, tradePage: 1, rmShowInactive: false, fgShowInactive: false, tradeShowInactive: false,
+  rmSort: { col: 'idNo', dir: 'asc' }, fgSort: { col: 'idNo', dir: 'asc' }, tradeSort: { col: 'idNo', dir: 'asc' },
+  rmLastUpdated: null, fgLastUpdated: null, tradeLastUpdated: null,
   userSearch: '', canEditMaster: false, isDarkMode: false
 };
 let activeTxnConfig = null, activeTxnClientId = null, txnQtyMinSync = null;
@@ -2239,11 +2376,11 @@ async function resolvePendingTxn(options) {
     }
     if (answer && answer.found) {
       clearPendingTxn();
-      const config = p.key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+      const config = uiConfig(p.key);
       if (typeof answer.newBalance === 'number') {
         applyLocalStockUpdate(config, p.code, answer.newBalance);
         state[config.key + 'LastUpdated'] = new Date();
-        if (config.key === 'rm') renderRMPage(); else renderFGPage();
+        renderStockPage(config.key);
         renderHome();
       }
       // If the form for this entry is still open, its work is done — close it
@@ -2676,7 +2813,7 @@ function hideAppProgress() {
 }
 function startFreshnessInterval() {
   if (freshnessIntervalId) clearInterval(freshnessIntervalId);
-  freshnessIntervalId = setInterval(function () { updateFreshnessLabel('rm'); updateFreshnessLabel('fg'); }, 20000);
+  freshnessIntervalId = setInterval(function () { STOCK_KINDS.forEach(updateFreshnessLabel); }, 20000);
 }
 function stopFreshnessInterval() {
   if (freshnessIntervalId) { clearInterval(freshnessIntervalId); freshnessIntervalId = null; }
@@ -2771,14 +2908,12 @@ async function boot() {
   document.getElementById('adminRecalcBtn').classList.toggle('hidden', !can('stock.recalculate'));
   document.getElementById('navUsers').classList.toggle('hidden', state.session.role !== 'Admin');
 
-  state.canEditMaster = can('stock.rm.items') || can('stock.fg.items');
-  document.getElementById('rmAddItemBtn').classList.toggle('hidden', !state.canEditMaster);
-  document.getElementById('fgAddItemBtn').classList.toggle('hidden', !state.canEditMaster);
-  document.getElementById('rmImportBtn').classList.toggle('hidden', !state.canEditMaster);
-  document.getElementById('fgImportBtn').classList.toggle('hidden', !state.canEditMaster);
+  state.canEditMaster = STOCK_KINDS.some(function (k) { return canEditItems(uiConfig(k)); });
+  syncItemButtons();
 
   renderTableSkeleton('rmTableBody', 7, 6);
   renderTableSkeleton('fgTableBody', 8, 6);
+  renderTableSkeleton('tradeTableBody', 7, 6);
   setStatsLoading();
 
   setLoaderProgress(78, 'Fetching stock data…');
@@ -2802,6 +2937,15 @@ async function boot() {
   hideAppProgress();
 }
 
+// Add and Import follow each ledger's own access.
+function syncItemButtons() {
+  STOCK_KINDS.forEach(function (k) {
+    const config = uiConfig(k);
+    document.getElementById(k + 'AddItemBtn').classList.toggle('hidden', !canEditItems(config));
+    document.getElementById(k + 'ImportBtn').classList.toggle('hidden', !(canEditItems(config) && can('stock.import')));
+  });
+}
+
 async function refreshAllData() {
   // One round trip instead of five-to-six parallel ones. Each separate
   // api() call pays its own session validation (a Sessions-sheet read) and
@@ -2811,12 +2955,14 @@ async function refreshAllData() {
   // connections, and on every "Refresh" click.
   const data = await api('getBootstrap');
   state.rmMaster = data.rmMaster; state.fgMaster = data.fgMaster; state.rmStock = data.rmStock; state.fgStock = data.fgStock; state.departments = data.departments;
+  // An older backend sends no Trade lists; the Trade pages are then simply empty.
+  state.tradeMaster = data.tradeMaster || []; state.tradeStock = data.tradeStock || [];
   state.dropdowns = data.dropdowns || {};
   // Refreshed on every load: an Admin may have changed this person's access
   // while they were signed in.
-  if (data.permissions) state.permissions = data.permissions;
+  if (data.permissions) { state.permissions = data.permissions; if (state.session) syncItemButtons(); }
   if (data.users) state.users = data.users;
-  state.rmLastUpdated = new Date(); state.fgLastUpdated = new Date();
+  state.rmLastUpdated = new Date(); state.fgLastUpdated = new Date(); state.tradeLastUpdated = new Date();
   invalidateMergeCache();
   warmLedgers();
 }
@@ -2827,14 +2973,14 @@ async function refreshAllData() {
 // live data here, none of this is gated by role.
 const STOCK_REFRESH_MIN_GAP_MS = 5000; // don't re-fetch on rapid tab-flicking
 async function refreshStockData(key) {
-  const config = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+  const config = uiConfig(key);
   const lastField = key + 'LastUpdated';
   if (state[lastField] && (Date.now() - state[lastField].getTime()) < STOCK_REFRESH_MIN_GAP_MS) return;
   try {
-    const [master, stock] = await Promise.all([api(key === 'rm' ? 'getRMMaster' : 'getFGMaster'), api(key === 'rm' ? 'getRMCurrentStock' : 'getFGCurrentStock')]);
+    const [master, stock] = await Promise.all([api(config.masterAction), api(config.stockAction)]);
     state[config.masterKey] = master; state[config.stockKey] = stock; state[lastField] = new Date();
     invalidateMergeCache();
-    if (key === 'rm') renderRMPage(); else renderFGPage();
+    renderStockPage(key);
     renderHome();
     updateFreshnessLabel(key);
   } catch (err) {
@@ -2992,11 +3138,12 @@ function navigateTo(page, kind) {
   document.querySelectorAll('.nav-link').forEach(function (el) {
     el.classList.toggle('active', el.dataset.page === page && (!el.dataset.kind || el.dataset.kind === state.ledgerKind));
   });
+  syncNavGroups();
+  closeMobileNavMenus(null);
   document.querySelectorAll('.page').forEach(function (el) { el.classList.toggle('hidden', el.id !== 'page-' + page); });
   syncTopbarTitle(document.getElementById('page-' + page));
   if (page === 'home') renderHome();
-  if (page === 'rm') { renderRMPage(); updateFreshnessLabel('rm'); refreshStockData('rm'); }
-  if (page === 'fg') { renderFGPage(); updateFreshnessLabel('fg'); refreshStockData('fg'); }
+  if (STOCK_KINDS.indexOf(page) > -1) { renderStockPage(page); updateFreshnessLabel(page); refreshStockData(page); }
   if (page === 'users') renderUsersPage();
   // Loads on first visit rather than at boot — the ledger can be large and
   // most sessions never open it.
@@ -3014,10 +3161,69 @@ function navigateTo(page, kind) {
   updateScrollTopBtn();
 }
 function updateNavIndicator() {
-  const active = document.querySelector('.nav-link.active:not(.hidden)');
   const indicator = document.getElementById('navIndicator');
-  if (!active || !indicator) return;
-  if (window.innerWidth > 780) { indicator.style.top = active.offsetTop + 'px'; indicator.style.height = active.offsetHeight + 'px'; indicator.style.opacity = '1'; } else { indicator.style.opacity = '0'; }
+  const rail = document.querySelector('.rail');
+  if (!indicator || !rail) return;
+  let target = document.querySelector('.nav-link.active:not(.hidden)');
+  // Inside a folded group, the group's own heading is what's highlighted.
+  const group = target && target.closest('.nav-group');
+  if (group && group.classList.contains('is-closed')) target = group.querySelector('.nav-group-head');
+  if (!target || isMobileNav()) { indicator.style.opacity = '0'; return; }
+  // Measured against the rail, so it holds for links nested in a group.
+  const top = target.getBoundingClientRect().top - rail.getBoundingClientRect().top + rail.scrollTop;
+  indicator.style.top = top + 'px'; indicator.style.height = target.offsetHeight + 'px'; indicator.style.opacity = '1';
+}
+
+/* ---- Sidebar groups (3.24) ----
+   Stock and Ledger each hold RM, FG and Trade. On a computer a group folds
+   open and shut, and stays as it was left. On a phone the four buttons sit
+   along the bottom and Stock or Ledger opens a small menu above them. */
+const NAV_GROUPS_KEY = 'stock_nav_groups';
+function isMobileNav() { return window.innerWidth <= 780; }
+function readNavGroups() {
+  try { return JSON.parse(localStorage.getItem(NAV_GROUPS_KEY) || '{}') || {}; } catch (e) { return {}; }
+}
+function setNavGroupOpen(groupEl, open, remember) {
+  groupEl.classList.toggle('is-closed', !open);
+  groupEl.querySelector('.nav-group-head').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (!remember) return;
+  const saved = readNavGroups(); saved[groupEl.dataset.group] = open;
+  try { localStorage.setItem(NAV_GROUPS_KEY, JSON.stringify(saved)); } catch (e) {}
+}
+function closeMobileNavMenus(except) {
+  document.querySelectorAll('.nav-group.is-open-mobile').forEach(function (g) {
+    if (g !== except) { g.classList.remove('is-open-mobile'); g.querySelector('.nav-group-head').setAttribute('aria-expanded', 'false'); }
+  });
+}
+// The heading of the group holding the current page is lit, and a folded
+// group opens when one of its pages is shown.
+function syncNavGroups() {
+  document.querySelectorAll('.nav-group').forEach(function (g) {
+    const has = !!g.querySelector('.nav-link.active');
+    g.querySelector('.nav-group-head').classList.toggle('has-active', has);
+    if (has && g.classList.contains('is-closed')) setNavGroupOpen(g, true, true);
+  });
+}
+function wireNavGroups() {
+  const saved = readNavGroups();
+  document.querySelectorAll('.nav-group').forEach(function (g) {
+    if (saved[g.dataset.group] === false) setNavGroupOpen(g, false, false);
+    g.querySelector('.nav-group-head').addEventListener('click', function (e) {
+      e.preventDefault();
+      if (isMobileNav()) {
+        const open = !g.classList.contains('is-open-mobile');
+        closeMobileNavMenus(g);
+        g.classList.toggle('is-open-mobile', open);
+        g.querySelector('.nav-group-head').setAttribute('aria-expanded', open ? 'true' : 'false');
+        return;
+      }
+      setNavGroupOpen(g, g.classList.contains('is-closed'), true);
+      updateNavIndicator();
+      setTimeout(updateNavIndicator, 280);
+    });
+  });
+  document.addEventListener('click', function (e) { if (!e.target.closest('.nav-group')) closeMobileNavMenus(null); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMobileNavMenus(null); });
 }
 
 // Which element is actually scrolling depends on the page and the viewport:
@@ -3075,47 +3281,40 @@ function toggleRailCollapse() {
 }
 // Clears every filter on a stock page back to "show everything active".
 function resetStockFilters(kind) {
-  const isRM = kind === 'rm';
-  if (isRM) {
-    state.rmSearch = ''; state.rmCategory = []; state.rmStatus = []; state.rmShowInactive = false; state.rmPage = 1;
-  } else {
-    state.fgSearch = ''; state.fgCategory = []; state.fgSubCategory = []; state.fgStatus = [];
-    state.fgShowInactive = false; state.fgPage = 1;
-  }
+  const config = uiConfig(kind);
+  state[kind + 'Search'] = ''; state[kind + 'Category'] = []; state[kind + 'Status'] = [];
+  state[kind + 'ShowInactive'] = false; state[kind + 'Page'] = 1;
+  if (config.subCategoryField) state[kind + 'SubCategory'] = [];
   document.getElementById(kind + 'Search').value = '';
   setSelectedValues(document.getElementById(kind + 'CategoryFilter'), []);
   setSelectedValues(document.getElementById(kind + 'StatusFilter'), []);
   document.getElementById(kind + 'ShowInactive').checked = false;
-  if (!isRM) setSelectedValues(document.getElementById('fgSubCategoryFilter'), []);
-  if (isRM) renderRMPage(); else renderFGPage();
+  if (config.subCategoryField) setSelectedValues(document.getElementById(kind + 'SubCategoryFilter'), []);
+  renderStockPage(kind);
+}
+
+// Search, category, family and status ticks on one stock page.
+function stockFiltersOn(kind) {
+  return !!(state[kind + 'Search'] || state[kind + 'Category'].length || state[kind + 'Status'].length ||
+            (uiConfig(kind).subCategoryField && state[kind + 'SubCategory'].length));
 }
 
 // Reset is only offered when there's something to reset, so an enabled
 // button is itself a sign that the list is filtered.
 function syncStockResetButton(kind) {
-  const isRM = kind === 'rm';
   const btn = document.getElementById(kind + 'ResetBtn');
   if (!btn) return;
-  const filtered = isRM
-    ? (state.rmSearch || state.rmCategory.length || state.rmStatus.length || state.rmShowInactive)
-    : (state.fgSearch || state.fgCategory.length || state.fgSubCategory.length || state.fgStatus.length || state.fgShowInactive);
-  btn.disabled = !filtered;
+  btn.disabled = !(stockFiltersOn(kind) || state[kind + 'ShowInactive']);
 }
 
 function goToStockTab(kind, filterStatus) {
   const statuses = filterStatus ? [filterStatus] : [];
-  if (kind === 'rm') {
-    state.rmSearch = ''; state.rmCategory = []; state.rmStatus = statuses; state.rmPage = 1;
-    document.getElementById('rmSearch').value = '';
-    setSelectedValues(document.getElementById('rmCategoryFilter'), []);
-    setSelectedValues(document.getElementById('rmStatusFilter'), statuses);
-  } else {
-    state.fgSearch = ''; state.fgCategory = []; state.fgSubCategory = []; state.fgStatus = statuses; state.fgPage = 1;
-    document.getElementById('fgSearch').value = '';
-    setSelectedValues(document.getElementById('fgCategoryFilter'), []);
-    setSelectedValues(document.getElementById('fgSubCategoryFilter'), []);
-    setSelectedValues(document.getElementById('fgStatusFilter'), statuses);
-  }
+  const config = uiConfig(kind);
+  state[kind + 'Search'] = ''; state[kind + 'Category'] = []; state[kind + 'Status'] = statuses; state[kind + 'Page'] = 1;
+  document.getElementById(kind + 'Search').value = '';
+  setSelectedValues(document.getElementById(kind + 'CategoryFilter'), []);
+  if (config.subCategoryField) { state[kind + 'SubCategory'] = []; setSelectedValues(document.getElementById(kind + 'SubCategoryFilter'), []); }
+  setSelectedValues(document.getElementById(kind + 'StatusFilter'), statuses);
   navigateTo(kind);
 }
 
@@ -3194,7 +3393,7 @@ function renderTableSkeleton(bodyId, cols, rows) {
   document.getElementById(bodyId).innerHTML = html;
 }
 function setStatsLoading() {
-  ['statRmTotal', 'statFgTotal', 'statRmAlerts', 'statFgAlerts'].forEach(function (id) { const el = document.getElementById(id); el.classList.add('pulse'); el.textContent = '—'; });
+  ['statRmTotal', 'statFgTotal', 'statRmAlerts', 'statFgAlerts'].forEach(function (id) { const el = document.getElementById(id); if (!el) return; el.classList.add('pulse'); el.textContent = '—'; });
 }
 
 /* =========================================================================
@@ -3225,7 +3424,10 @@ function populateCategoryFilters() {
 
   const fgSubCats = buildFilterOptions_(FG_CONFIG_UI.subCategoryDropdown, state.fgMaster, FG_CONFIG_UI.subCategoryField);
   document.getElementById('fgSubCategoryFilter').innerHTML = '<option value="All">All categories</option>' + fgSubCats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
+  const tradeCats = buildFilterOptions_('Trade_Category', state.tradeMaster, TRADE_CONFIG_UI.categoryField);
+  document.getElementById('tradeCategoryFilter').innerHTML = '<option value="All">All categories</option>' + tradeCats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
   // Rebuilding the options clears the ticks; put back what's still ticked.
+  setSelectedValues(document.getElementById('tradeCategoryFilter'), state.tradeCategory);
   setSelectedValues(document.getElementById('rmCategoryFilter'), state.rmCategory);
   setSelectedValues(document.getElementById('fgCategoryFilter'), state.fgCategory);
   setSelectedValues(document.getElementById('fgSubCategoryFilter'), state.fgSubCategory);
@@ -3235,26 +3437,23 @@ function renderFGPage() { renderStockTable(FG_CONFIG_UI); }
 
 // An empty table is an invitation to act, not a dead end — so the message
 // changes with *why* it's empty instead of always blaming "your filters".
-function emptyStateMessage(config, isRM, showInactive) {
-  const itemLabel = isRM ? 'raw material' : 'finished good';
-  const hasFilters = isRM
-    ? !!(state.rmSearch || state.rmCategory.length || state.rmStatus.length)
-    : !!(state.fgSearch || state.fgCategory.length || state.fgSubCategory.length || state.fgStatus.length);
-  if (hasFilters) return 'No items match your filters.';
+function emptyStateMessage(config, showInactive) {
+  const itemLabel = config.itemNoun;
+  if (stockFiltersOn(config.key)) return 'No items match your filters.';
   const masterHasItems = state[config.masterKey].length > 0;
   if (masterHasItems && !showInactive) return 'All ' + itemLabel + ' items are inactive — turn on "Show inactive" to see them.';
-  if (state.canEditMaster) return 'No ' + itemLabel + ' items yet — use "+ Add ' + (isRM ? 'RM' : 'FG') + ' item" above to add the first one.';
+  if (canEditItems(config)) return 'No ' + itemLabel + ' items yet — use "+ Add ' + config.label + ' item" above to add the first one.';
   return 'No ' + itemLabel + ' items yet.';
 }
 
 // Search plus the ticked categories, families and statuses. An empty list
 // means "all". "Needs attention" is Low and Critical together.
 function applyStockFilters_(config, rows) {
-  const isRM = config.key === 'rm';
-  const search = isRM ? state.rmSearch : state.fgSearch;
-  const cats = isRM ? state.rmCategory : state.fgCategory;
-  const subs = config.subCategoryField ? state.fgSubCategory : [];
-  const statuses = isRM ? state.rmStatus : state.fgStatus;
+  const k = config.key;
+  const search = state[k + 'Search'];
+  const cats = state[k + 'Category'];
+  const subs = config.subCategoryField ? state[k + 'SubCategory'] : [];
+  const statuses = state[k + 'Status'];
   if (search) { const q = search.toLowerCase(); rows = rows.filter(function (r) { return lc(r.code).indexOf(q) > -1 || (r.idNo || '').toLowerCase().indexOf(q) > -1 || (r.name || '').toLowerCase().indexOf(q) > -1; }); }
   if (cats.length) rows = rows.filter(function (r) { return cats.indexOf(r.category) > -1; });
   if (subs.length) rows = rows.filter(function (r) { return subs.indexOf(r.subCategory) > -1; });
@@ -3266,10 +3465,11 @@ function applyStockFilters_(config, rows) {
 }
 
 function renderStockTable(config) {
-  const isRM = config.key === 'rm';
-  syncStockResetButton(config.key);
-  const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
-  const sortState = isRM ? state.rmSort : state.fgSort; let page = isRM ? state.rmPage : state.fgPage;
+  const k = config.key;
+  syncStockResetButton(k);
+  const showInactive = state[k + 'ShowInactive'];
+  const sortState = state[k + 'Sort']; let page = state[k + 'Page'];
+  const canEdit = canEditItems(config);
 
   let rows = applyStockFilters_(config, mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive));
 
@@ -3277,14 +3477,14 @@ function renderStockTable(config) {
 
   const total = rows.length; const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   page = Math.min(Math.max(1, page), totalPages);
-  if (isRM) state.rmPage = page; else state.fgPage = page;
+  state[k + 'Page'] = page;
   const start = (page - 1) * PAGE_SIZE; const pageRows = rows.slice(start, start + PAGE_SIZE);
 
   const tagClass = function (cat) { return (cat === 'KVAR' || cat === 'HD PFC') ? ' tag-kvar' : ' tag-mfd'; };
 
   const bodyHtml = pageRows.map(function (r) {
-    const tagExtra = isRM ? '' : tagClass(r.category);
-    const editBtn = state.canEditMaster ? '<button class="row-action" data-action="edit" title="Edit item">' + EDIT_ICON + '</button>' : '';
+    const tagExtra = k === 'fg' ? tagClass(r.category) : '';
+    const editBtn = canEdit ? '<button class="row-action" data-action="edit" title="Edit item">' + EDIT_ICON + '</button>' : '';
     
     let healthPctText = '';
     // Shown on every scored row, not just Low/Critical — the column sorts by
@@ -3307,14 +3507,14 @@ function renderStockTable(config) {
       '</tr>';
   }).join('');
 
-  const bodyEl = document.getElementById(isRM ? 'rmTableBody' : 'fgTableBody');
+  const bodyEl = document.getElementById(k + 'TableBody');
   // Colspan tracks the actual column count so the empty-state row still
   // spans the full table once FG gained its extra Category column.
   const colCount = config.subCategoryField ? 8 : 7;
-  bodyEl.innerHTML = bodyHtml || ('<tr><td colspan="' + colCount + '" class="empty">' + emptyStateMessage(config, isRM, showInactive) + '</td></tr>');
+  bodyEl.innerHTML = bodyHtml || ('<tr><td colspan="' + colCount + '" class="empty">' + emptyStateMessage(config, showInactive) + '</td></tr>');
 
-  document.getElementById(isRM ? 'rmPageInfo' : 'fgPageInfo').textContent = total === 0 ? '0 items' : ('Showing ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' of ' + total);
-  document.getElementById(isRM ? 'rmPrevBtn' : 'fgPrevBtn').disabled = page <= 1; document.getElementById(isRM ? 'rmNextBtn' : 'fgNextBtn').disabled = page >= totalPages;
+  document.getElementById(k + 'PageInfo').textContent = total === 0 ? '0 items' : ('Showing ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' of ' + total);
+  document.getElementById(k + 'PrevBtn').disabled = page <= 1; document.getElementById(k + 'NextBtn').disabled = page >= totalPages;
 }
 
 /* =========================================================================
@@ -3366,7 +3566,8 @@ function renderHome() {
   }).catch(function () { /* charts are optional */ });
 
   // Render Alert Cards
-  const all = rmAlerts.map(function (r) { return Object.assign({}, r, { type: 'RM', key: 'rm' }); }).concat(fgAlerts.map(function (r) { return Object.assign({}, r, { type: 'FG', key: 'fg' }); })).sort(function (a, b) { return (a.status === 'Critical' ? 0 : 1) - (b.status === 'Critical' ? 0 : 1); }).slice(0, 25);
+  const tradeAlerts = mergeStock(state.tradeMaster, state.tradeStock, TRADE_CONFIG_UI, false).filter(function (r) { return r.status === 'Critical' || r.status === 'Low'; });
+  const all = rmAlerts.map(function (r) { return Object.assign({}, r, { type: 'RM', key: 'rm' }); }).concat(fgAlerts.map(function (r) { return Object.assign({}, r, { type: 'FG', key: 'fg' }); })).concat(tradeAlerts.map(function (r) { return Object.assign({}, r, { type: 'Trade', key: 'trade' }); })).sort(function (a, b) { return (a.status === 'Critical' ? 0 : 1) - (b.status === 'Critical' ? 0 : 1); }).slice(0, 25);
   const listEl = document.getElementById('alertsList');
   
   if (all.length === 0) {
@@ -3386,7 +3587,7 @@ function renderHome() {
       '</div>';
     }).join('') + (all.length > ALERT_CARD_LIMIT
       ? '<div class="muted" style="grid-column:1/-1;padding:8px 2px">Showing the ' + ALERT_CARD_LIMIT + ' most urgent of ' + all.length +
-        '. Filter RM Stock or FG Stock by status to see the rest.</div>'
+        '. Filter a stock page by status to see the rest.</div>'
       : '');
   }
 }
@@ -3443,14 +3644,14 @@ function renderCharts(rmRows, fgRows) {
    ========================================================================= */
 function openTxnModal(key, code) {
   resetTxnAttachments();
-  activeTxnConfig = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+  activeTxnConfig = uiConfig(key);
   // One ID per entry. It survives failed attempts so a resend is recognised
   // as the same movement; a fresh one is only minted when a new entry starts.
   activeTxnClientId = newClientTxnId();
   const master = state[activeTxnConfig.masterKey]; const item = master.find(function (m) { return m[activeTxnConfig.codeField] === code; });
   if (!item) return;
 
-  document.getElementById('txnModalEyebrow').textContent = (key === 'rm' ? 'RAW MATERIAL' : 'FINISHED GOODS') + ' · STOCK ENTRY';
+  document.getElementById('txnModalEyebrow').textContent = activeTxnConfig.longLabel + ' · STOCK ENTRY';
   document.getElementById('txnModalTitle').textContent = item[activeTxnConfig.nameField] || code;
   document.getElementById('txnModalCode').textContent = code; document.getElementById('txnCode').value = code; document.getElementById('txnKey').value = key;
 
@@ -3545,14 +3746,14 @@ function updateTxnFormVisibility() {
   } else if (removes) {
     hintEl.textContent = available > 0
       ? 'Enter a positive quantity. Available: ' + qtyWithUnit(available, unit) + '.'
-      : 'Nothing on hand to remove — post a Receipt first.';
+      : 'Nothing on hand to remove — post a ' + ((activeTxnConfig && activeTxnConfig.firstInType) || 'Receipt') + ' first.';
   } else {
     hintEl.textContent = 'Enter a positive quantity.';
   }
 
-  const isRm = activeTxnConfig && activeTxnConfig.key === 'rm';
-  const supplierReturn = isRm && type === 'Return to supplier';
-  document.getElementById('receiptFields').classList.toggle('hidden', !(isRm && (type === 'Receipt' || supplierReturn)));
+  const supplierTypes = (activeTxnConfig && activeTxnConfig.supplierTypes) || [];
+  const supplierReturn = type === 'Return to supplier' && supplierTypes.indexOf(type) > -1;
+  document.getElementById('receiptFields').classList.toggle('hidden', supplierTypes.indexOf(type) === -1);
   document.getElementById('receiptFieldsLabel').textContent = supplierReturn ? 'Going back to (required)' : 'Procurement details (Optional)';
   document.getElementById('txnInvoiceNoLabel').textContent = supplierReturn ? 'Original invoice no (optional)' : 'Invoice No';
   document.getElementById('txnReferenceLabel').textContent = supplierReturn ? 'Debit note / return challan no.' : 'Reference (optional)';
@@ -3581,7 +3782,7 @@ function validateTxnQty() {
   // Warn, don't block. The server makes the call; a stale cached balance
   // must never stop someone posting a transaction that is actually valid.
   warnEl.textContent = (out > 0 && over > 0.001)
-    ? 'Only ' + qtyWithUnit(available, currentTxnUnit()) + ' on hand — this is ' + qtyWithUnit(over, currentTxnUnit()) + ' more than available. Post the missing Receipt first, or reduce the quantity.'
+    ? 'Only ' + qtyWithUnit(available, currentTxnUnit()) + ' on hand — this is ' + qtyWithUnit(over, currentTxnUnit()) + ' more than available. Post the missing ' + (activeTxnConfig.firstInType || 'Receipt') + ' first, or reduce the quantity.'
     : '';
 }
 // What a quantity of this type does to the balance: receipts add, issues
@@ -3891,7 +4092,7 @@ async function handleTxnSubmit(e) {
   // a dropped connection cannot produce a second row.
   if (!activeTxnClientId) activeTxnClientId = newClientTxnId();
   payload.clientTxnId = activeTxnClientId;
-  if (config.key === 'rm' && (txnType === 'Receipt' || txnType === 'Return to supplier')) { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
+  if ((config.supplierTypes || []).indexOf(txnType) > -1) { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
 
   const unit = currentTxnUnit();
   // Written down before the request leaves, so an entry whose outcome is
@@ -3912,7 +4113,7 @@ async function handleTxnSubmit(e) {
       ? 'Already recorded · ' + code + ' · balance ' + qtyWithUnit(result.newBalance, unit) + ' (no second entry made)'
       : 'Posted ' + txnType + (entryDate ? ' dated ' + formatDay(entryDate) : '') + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit);
     if (result.warning) toast(result.warning, true);
-    if (config.key === 'rm') renderRMPage(); else renderFGPage();
+    renderStockPage(config.key);
     renderHome();
     // The entry is safely recorded before any file is sent, so a file that
     // fails on a weak signal never costs the entry.
@@ -3945,7 +4146,7 @@ async function handleTxnSubmit(e) {
         toast(savedMsg);
       }
       await refreshStockData(config.key);
-      if (config.key === 'rm') renderRMPage(); else renderFGPage();
+      renderStockPage(config.key);
       renderHome();
     } else if (outcome === 'not-saved') {
       errEl.textContent = 'Not saved. Press Post transaction to try again — the same entry cannot be recorded twice.';
@@ -4123,7 +4324,7 @@ function myDepartment() { return (state.session && state.session.department) || 
 
 // What the buttons offer. The backend checks again for itself.
 function canAttachTo(ledger, department) {
-  return can(ledger === 'fg' ? 'stock.fg.post' : 'stock.rm.post') &&
+  return can(uiConfig(ledger).postPerm) &&
          (can('stock.post.any') || String(department || '') === myDepartment());
 }
 function canRemoveFrom(department) {
@@ -4218,7 +4419,7 @@ async function runTxnUploads() {
 async function openAttachModal(ledger, txnId, department) {
   if (attachView) releaseAttachItems(attachView.pending);
   attachView = { ledger: ledger, txnId: txnId, department: department || '', items: [], pending: [], busy: false };
-  document.getElementById('attachEyebrow').textContent = (ledger === 'fg' ? 'FINISHED GOODS' : 'RAW MATERIAL') + ' \u00b7 ENTRY FILES';
+  document.getElementById('attachEyebrow').textContent = uiConfig(ledger).longLabel + ' \u00b7 ENTRY FILES';
   document.getElementById('attachTitle').textContent = 'Files';
   document.getElementById('attachSub').textContent = txnId + (department ? ' · ' + department : '');
   document.getElementById('attachError').textContent = '';
@@ -4456,7 +4657,7 @@ function wireAttachments() {
 function renderLedgerRow(r) {
   const dateStr = (localDayISO(movementDate(r)) || '—') + lateTag(r);
 
-  const txnTypeLower = typeSlug(r.TxnType); const isReceipt = txnTypeLower === 'receipt';
+  const txnTypeLower = typeSlug(r.TxnType); const isReceipt = txnTypeLower === 'receipt' || txnTypeLower === 'purchase';
   const qtyClass = isReceipt && Number(r.Qty) > 0 ? 'qty-bold qty-positive' : 'qty-bold';
 
   let refSuppHtml = escapeHtml(r.Reference || '—');
@@ -4559,7 +4760,7 @@ async function loadLedgerRows(opts) {
 }
 
 async function openLedgerModal(key, code) {
-  const config = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI; activeLedgerConfig = config; activeLedgerCode = code;
+  const config = uiConfig(key); activeLedgerConfig = config; activeLedgerCode = code;
   const master = state[config.masterKey]; const item = master.find(function (m) { return m[config.codeField] === code; }); if (!item) return;
   // Used for ledger rows written before the Unit column existed.
   activeLedgerUnit = item[config.unitField] || '';
@@ -4642,11 +4843,13 @@ function renderField_(f, val) {
     // the field and rewriting the item on the next save.
     const missing = cur && opts.indexOf(cur) === -1;
     const listJson = escapeHtml(JSON.stringify(missing ? [cur].concat(opts) : opts));
+    // allowNew: the list suggests, and a new value can be typed (Trade category).
+    const free = f.allowNew ? ' data-allow-new="1"' : '';
     return '<div class="field"><label for="' + id + '">' + f.label + (f.required ? ' *' : '') + '</label>' +
       '<div class="combo" data-combo>' +
       '<input type="text" class="combo-input" id="' + id + '" data-key="' + f.key + '" value="' + escapeHtml(cur) + '"' +
       (f.required ? ' required' : '') + ' autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"' +
-      ' placeholder="Type to search…" data-options="' + listJson + '">' +
+      ' placeholder="' + (f.allowNew ? 'Pick one, or type a new one' : 'Type to search…') + '" data-options="' + listJson + '"' + free + '>' +
       '<button type="button" class="combo-toggle" tabindex="-1" aria-label="Show options"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
       '<div class="combo-list hidden"></div>' +
       '</div></div>';
@@ -4669,7 +4872,7 @@ function renderComboList_(combo, filter) {
   const q = String(filter || '').trim().toLowerCase();
   const shown = q ? opts.filter(function (o) { return String(o).toLowerCase().indexOf(q) > -1; }) : opts;
   if (shown.length === 0) {
-    list.innerHTML = '<div class="combo-empty">No match</div>';
+    list.innerHTML = '<div class="combo-empty">' + (input.dataset.allowNew === '1' && q ? 'New: \u201c' + escapeHtml(String(filter).trim()) + '\u201d' : 'No match') + '</div>';
   } else {
     list.innerHTML = shown.map(function (o, i) {
       const sel = String(o) === input.value ? ' is-selected' : '';
@@ -4689,6 +4892,7 @@ function closeCombo_(combo) {
 // combobox would quietly reintroduce the typo problem the curated list exists
 // to prevent.
 function enforceComboValue_(input) {
+  if (input.dataset.allowNew === '1') { input.value = input.value.trim(); input.dataset.lastValid = input.value; return; }
   const opts = comboOptions_(input).map(String);
   if (input.value && opts.indexOf(input.value) === -1) {
     const ci = opts.find(function (o) { return o.toLowerCase() === input.value.toLowerCase(); });
@@ -4775,7 +4979,7 @@ document.addEventListener('keydown', function (e) {
   }
 });
 function openItemModal(key, code) {
-  const config = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI; const master = state[config.masterKey];
+  const config = uiConfig(key); const master = state[config.masterKey];
   
   // Select options come from the Dropdowns tab and nothing else — in the
   // tab's own order, unsorted. Values other items happen to use are NOT
@@ -4786,13 +4990,15 @@ function openItemModal(key, code) {
   // older item can't silently rewrite its data.)
   config.itemFields.forEach(function (f) {
     if (f.type !== 'select') return;
-    f.options = (state.dropdowns && state.dropdowns[f.dropdownSource]) || [];
+    f.options = ((state.dropdowns && state.dropdowns[f.dropdownSource]) || []).slice();
+    // A list that takes new values also offers the ones already in use.
+    if (f.allowNew) master.forEach(function (m) { const v = String(m[f.key] || '').trim(); if (v && f.options.indexOf(v) === -1) f.options.push(v); });
   });
 
   const isEdit = !!code; const item = isEdit ? master.find(function (m) { return m[config.codeField] === code; }) : null; if (isEdit && !item) return;
   activeItemConfig = config; activeItemMode = isEdit ? 'edit' : 'add'; activeItemCode = code || null;
 
-  document.getElementById('itemModalEyebrow').textContent = (key === 'rm' ? 'RAW MATERIAL' : 'FINISHED GOODS') + (isEdit && item[config.idField] ? ' · ' + item[config.idField] : '') + ' · ' + (isEdit ? 'EDIT ITEM' : 'NEW ITEM');
+  document.getElementById('itemModalEyebrow').textContent = config.longLabel + (isEdit && item[config.idField] ? ' · ' + item[config.idField] : '') + ' · ' + (isEdit ? 'EDIT ITEM' : 'NEW ITEM');
   document.getElementById('itemModalTitle').textContent = isEdit ? (item[config.nameField] || code) : 'New item';
   document.getElementById('itemCode').value = isEdit ? code : ''; document.getElementById('itemCode').disabled = isEdit;
 
@@ -4801,7 +5007,7 @@ function openItemModal(key, code) {
   document.getElementById('itemFieldsMain').innerHTML = mainHtml; document.getElementById('itemFieldsMore').innerHTML = moreHtml; document.getElementById('itemFieldsMoreWrap').classList.toggle('hidden', !moreHtml);
 
   const deleteBtn = document.getElementById('itemDeleteBtn');
-  if (isEdit && can(activeItemConfig && activeItemConfig.key === 'fg' ? 'stock.fg.retire' : 'stock.rm.retire')) { const active = isActiveValue(item.Active); deleteBtn.classList.remove('hidden'); deleteBtn.textContent = active ? 'Deactivate' : 'Reactivate'; deleteBtn.classList.toggle('positive', !active); deleteBtn.dataset.mode = active ? 'deactivate' : 'reactivate'; } else { deleteBtn.classList.add('hidden'); }
+  if (isEdit && can(config.retirePerm)) { const active = isActiveValue(item.Active); deleteBtn.classList.remove('hidden'); deleteBtn.textContent = active ? 'Deactivate' : 'Reactivate'; deleteBtn.classList.toggle('positive', !active); deleteBtn.dataset.mode = active ? 'deactivate' : 'reactivate'; } else { deleteBtn.classList.add('hidden'); }
   document.getElementById('itemSubmit').textContent = isEdit ? 'Save changes' : 'Create item'; document.getElementById('itemError').textContent = '';
   document.getElementById('itemModal').classList.remove('hidden'); document.getElementById('itemCode').focus();
 }
@@ -4815,7 +5021,7 @@ async function handleItemSubmit(e) {
     if (activeItemMode === 'add') { await api(config.addItemAction, params); const row = Object.assign({}, params); row.Active = true; state[config.masterKey].push(row); toast('Added ' + code); } 
     else { await api(config.updateItemAction, params); const list = state[config.masterKey]; const idx = list.findIndex(function (m) { return m[config.codeField] === code; }); if (idx > -1) Object.assign(list[idx], params); toast('Saved ' + code); }
     invalidateMergeCache();
-    closeItemModal(); populateCategoryFilters(); if (config.key === 'rm') renderRMPage(); else renderFGPage(); renderHome();
+    closeItemModal(); populateCategoryFilters(); renderStockPage(config.key); renderHome();
   } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, activeItemMode === 'add' ? 'Create item' : 'Save changes'); }
 }
 async function handleItemDelete() {
@@ -4827,7 +5033,7 @@ async function handleItemDelete() {
     await api(mode === 'deactivate' ? config.deleteItemAction : config.reactivateItemAction, { code: code });
     const list = state[config.masterKey]; const idx = list.findIndex(function (m) { return m[config.codeField] === code; }); if (idx > -1) list[idx].Active = mode !== 'deactivate';
     invalidateMergeCache();
-    closeItemModal(); toast(code + (mode === 'deactivate' ? ' deactivated.' : ' reactivated.')); if (config.key === 'rm') renderRMPage(); else renderFGPage(); renderHome();
+    closeItemModal(); toast(code + (mode === 'deactivate' ? ' deactivated.' : ' reactivated.')); renderStockPage(config.key); renderHome();
   } catch (err) { toast(err.message, true); clearBtnLoading(btn, originalLabel); }
 }
 
@@ -4842,10 +5048,10 @@ let activeImportConfig = null;
 let importPreviewRows = []; // rows that passed validation — what actually gets sent on confirm
 
 function openImportModal(key) {
-  const config = key === 'rm' ? RM_CONFIG_UI : FG_CONFIG_UI;
+  const config = uiConfig(key);
   activeImportConfig = config; importPreviewRows = [];
   document.getElementById('importModalEyebrow').textContent = 'BULK IMPORT';
-  document.getElementById('importModalTitle').textContent = 'Import ' + (key === 'rm' ? 'RM' : 'FG') + ' items';
+  document.getElementById('importModalTitle').textContent = 'Import ' + config.label + ' items';
   document.getElementById('importStep1').classList.remove('hidden');
   document.getElementById('importStep2').classList.add('hidden');
   document.getElementById('importFileInput').value = '';
@@ -4863,11 +5069,11 @@ async function downloadImportTemplate() {
   try {
     await loadScript('./vendor/xlsx.full.min.js');
     const headers = importTemplateHeaders(config);
-    const exampleRow = headers.map(function (h) { return h === config.codeField ? (config.key === 'rm' ? 'RM-EXAMPLE01' : 'FG-EXAMPLE01') : (h === 'OpeningStock' ? 0 : ''); });
+    const exampleRow = headers.map(function (h) { return h === config.codeField ? (config.label.toUpperCase() + '-EXAMPLE01') : (h === 'OpeningStock' ? 0 : ''); });
     const ws = XLSX.utils.aoa_to_sheet([headers, exampleRow]);
     ws['!cols'] = headers.map(function () { return { wch: 18 }; });
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Import');
-    XLSX.writeFile(wb, (config.key === 'rm' ? 'RM' : 'FG') + '_Import_Template.xlsx');
+    XLSX.writeFile(wb, config.label + '_Import_Template.xlsx');
   } catch (err) { toast('Could not build the template — check your connection.', true); } finally { clearBtnLoading(btn, 'Download template'); }
 }
 
@@ -4957,10 +5163,10 @@ async function confirmBulkImport() {
   const btn = document.getElementById('importConfirmBtn'); const label = 'Import ' + importPreviewRows.length + ' item' + (importPreviewRows.length === 1 ? '' : 's');
   setBtnLoading(btn, 'Importing…');
   try {
-    const action = config.key === 'rm' ? 'bulkAddRMItems' : 'bulkAddFGItems';
+    const action = config.bulkAction;
     const result = await api(action, { rows: importPreviewRows });
     await refreshAllData(); populateCategoryFilters();
-    if (config.key === 'rm') renderRMPage(); else renderFGPage(); renderHome();
+    renderStockPage(config.key); renderHome();
     closeImportModal();
     let msg = 'Imported ' + result.added + ' item' + (result.added === 1 ? '' : 's') + '.';
     if (result.skipped && result.skipped.length) msg += ' ' + result.skipped.length + ' skipped — codes must have changed since the preview.';
@@ -4983,7 +5189,7 @@ const LEDGER_PAGE_SIZE = 50;
 const LEDGER_FETCH_LIMIT = 2000;
 let ledgerPageInited = false;
 
-function ledgerConfig_() { return state.ledgerKind === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI; }
+function ledgerConfig_() { return uiConfig(state.ledgerKind); }
 
 /* =========================================================================
    CORRECTING AN ENTRY
@@ -5044,7 +5250,7 @@ function openFixModal(txnId, key) {
   if (entry.reversalOf) return toast('That entry reverses ' + entry.reversalOf + ', so it stays as it is. Post a new entry instead.', true);
   activeFixTxn = entry;
 
-  const config = key === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
+  const config = uiConfig(key);
   document.getElementById('fixTitle').textContent = entry.code + (entry.name ? ' · ' + entry.name : '');
   document.getElementById('fixTxnId').textContent = entry.txnId;
   document.getElementById('fixType').innerHTML = typeOptions(postableTypes(config, entry.type));
@@ -5082,7 +5288,7 @@ async function saveFix() {
   errEl.classList.add('hidden');
   setBtnLoading(btn, 'Saving…');
   try {
-    const action = activeFixTxn.key === 'fg' ? 'updateFGTransaction' : 'updateRMTransaction';
+    const action = uiConfig(activeFixTxn.key).updateTxnAction;
     const result = await api(action, {
       txnId: activeFixTxn.txnId,
       txnType: document.getElementById('fixType').value,
@@ -5121,7 +5327,7 @@ async function deleteFix() {
   errEl.classList.add('hidden');
   setBtnLoading(btn, 'Reversing…');
   try {
-    const action = entry.key === 'fg' ? 'reverseFGTransaction' : 'reverseRMTransaction';
+    const action = uiConfig(entry.key).reverseTxnAction;
     const result = await api(action, { txnId: entry.txnId, reason: reason });
     closeFixModal();
     toast('Reversed · ' + result.code + ' · balance now ' + formatQty(result.newBalance));
@@ -5147,7 +5353,7 @@ async function afterLedgerFix(key) {
   // Corrected from an item's history, that history is still open behind the
   // form and must show the change — the deleted row gone, the new figure in.
   if (!document.getElementById('ledgerModal').classList.contains('hidden')) await loadLedgerRows();
-  if (key === 'fg') renderFGPage(); else renderRMPage();
+  renderStockPage(key);
   renderHome();
 }
 
@@ -5165,9 +5371,8 @@ function populateLedgerFilters() {
   // while FG is grouped twice — Family and Category — and this filter uses
   // FG's Category, matching the label shown on the RM side.
   const catSel = document.getElementById('ldgCatFilter');
-  const isFg = config.key === 'fg';
-  const catKey = isFg ? config.subCategoryDropdown : 'RM_Category';
-  const catField = isFg ? config.subCategoryField : config.categoryField;
+  const catKey = config.subCategoryField ? config.subCategoryDropdown : config.catDropdown;
+  const catField = config.subCategoryField || config.categoryField;
   const cats = buildFilterOptions_(catKey, state[config.masterKey] || [], catField);
   catSel.innerHTML = '<option value="">All categories</option>' +
     cats.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('');
@@ -5387,7 +5592,7 @@ function restoreLedgerView(kind) {
 }
 
 function switchLedgerKind(kind) {
-  kind = kind === 'fg' ? 'fg' : 'rm';
+  kind = STOCK_KINDS.indexOf(kind) > -1 ? kind : 'rm';
   if (kind !== state.ledgerKind) {
     saveLedgerView();
     state.ledgerKind = kind;
@@ -5395,15 +5600,15 @@ function switchLedgerKind(kind) {
     restoreLedgerView(kind);
   }
   document.getElementById('ldgKind').value = kind;
-  document.getElementById('ldgHeading').textContent = kind === 'fg' ? 'FG Ledger' : 'RM Ledger';
-  document.getElementById('ldgSub').textContent = kind === 'fg' ? 'Every finished-goods transaction, newest first.' : 'Every raw-material transaction, newest first.';
+  document.getElementById('ldgHeading').textContent = uiConfig(kind).ledgerTitle;
+  document.getElementById('ldgSub').textContent = uiConfig(kind).ledgerSub;
 }
 
 // After an entry is posted or corrected, both ledgers are due a refresh on the
 // next look. What's in memory still shows at once meanwhile.
 function markLedgersStale() {
   state.ledgerLoadedAt = 0;
-  ['rm', 'fg'].forEach(function (k) {
+  STOCK_KINDS.forEach(function (k) {
     if (ledgerViews[k]) ledgerViews[k].loadedAt = 0;
     if (ledgerComplete[k]) ledgerComplete[k].at = 0;
   });
@@ -5583,12 +5788,12 @@ let ledgerWarmTimer = null;
 function warmLedgers() {
   clearTimeout(ledgerWarmTimer);
   ledgerWarmTimer = setTimeout(function () {
-    ['rm', 'fg'].forEach(function (kind) {
+    STOCK_KINDS.forEach(function (kind) {
       const full = ledgerComplete[kind];
       if (ledgerWarming[kind] || (full && Date.now() - full.at < LEDGER_STALE_MS)) return;
       // The Ledger page is already loading this one in full.
       if (ledgerRest && ledgerRest.kind === kind && ledgerFiltersAreDefault(currentLedgerPageFilters())) return;
-      const config = kind === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
+      const config = uiConfig(kind);
       const always = function () { return true; };
       const p = api(config.ledgerAction, { limit: LEDGER_CHUNK })
         .then(function (rows) { return rows.length >= LEDGER_CHUNK ? fetchRestOfLedger(config, {}, rows, always) : rows; })
@@ -5700,7 +5905,7 @@ async function exportLedgerPageToExcel() {
       { key: 'enteredBy', label: 'Entered By', width: 110 },
       { key: 'enteredISO', label: 'Entered late on', width: 100 }
     ];
-    const label = state.ledgerKind === 'fg' ? 'FG' : 'RM';
+    const label = ledgerConfig_().label;
     const res = await api('exportStyledWorkbook', {
       filename: label + '_Ledger_' + new Date().toISOString().slice(0, 10),
       sheets: [{
@@ -6129,7 +6334,7 @@ function readPermGrid(container) {
 // What an account RECEIVES rather than what it may DO. Admins hold every
 // power, but get the daily mails only if they tick them — so for an Admin
 // these are the only switches shown.
-const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg'];
+const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg', 'stock.mail.trade'];
 
 // Team & Access shows one app's switches at a time. Anything ticked or
 // unticked is remembered here until saved, across both views, and exactly
@@ -6324,8 +6529,9 @@ function renderUsersPage() {
     const record = accessUser(u.Username);
     const wantsRM = record ? !!record.effective['stock.mail.rm'] : isTruthyFlag(u.DailyMailRM);
     const wantsFG = record ? !!record.effective['stock.mail.fg'] : isTruthyFlag(u.DailyMailFG);
+    const wantsTrade = record ? !!record.effective['stock.mail.trade'] : false;
     const tier = record ? (record.category || 'Default') : '';
-    const mailBadges = '<div class="mail-badges"><span class="mail-badge' + (wantsRM ? ' on' : '') + '">RM</span><span class="mail-badge' + (wantsFG ? ' on' : '') + '">FG</span></div>';
+    const mailBadges = '<div class="mail-badges"><span class="mail-badge' + (wantsRM ? ' on' : '') + '">RM</span><span class="mail-badge' + (wantsFG ? ' on' : '') + '">FG</span><span class="mail-badge' + (wantsTrade ? ' on' : '') + '">TR</span></div>';
     return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + lc(u.Role).replace(/[^a-z0-9]+/g, '-') + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
   }).join('');
 }
@@ -6395,25 +6601,27 @@ async function handleSendTestMail() {
    ADMIN — recalculate & EXPORT
    ========================================================================= */
 async function handleRecalc() {
-  const ok = await confirmDialog('This rebuilds current stock from the full ledger for both RM and FG. It can take a moment on a large ledger.', { title: 'Recalculate stock?', confirmText: 'Recalculate', danger: false });
+  const ok = await confirmDialog('This rebuilds current stock from the full ledger for RM, FG and Trade. It can take a moment on a large ledger.', { title: 'Recalculate stock?', confirmText: 'Recalculate', danger: false });
   if (!ok) return;
   const btn = document.getElementById('adminRecalcBtn'); setBtnLoading(btn, 'Recalculating...');
   try {
-    const rmResult = await api('recalculateRMStock'); const fgResult = await api('recalculateFGStock'); await refreshAllData(); renderHome();
-    if (!document.getElementById('page-rm').classList.contains('hidden')) renderRMPage(); if (!document.getElementById('page-fg').classList.contains('hidden')) renderFGPage();
-    toast('Stock recalculated. ' + ((rmResult.itemsWithNoActivity || 0) + (fgResult.itemsWithNoActivity || 0)) + ' item(s) have no activity yet.');
-    if (rmResult.warning) toast(rmResult.warning, true);
-    if (fgResult.warning) toast(fgResult.warning, true);
+    const results = [];
+    for (const k of STOCK_KINDS) results.push(await api(uiConfig(k).recalcAction));
+    await refreshAllData(); renderHome();
+    STOCK_KINDS.forEach(function (k) { if (!document.getElementById('page-' + k).classList.contains('hidden')) renderStockPage(k); });
+    const idle = results.reduce(function (n, r) { return n + ((r && r.itemsWithNoActivity) || 0); }, 0);
+    toast('Stock recalculated. ' + idle + ' item(s) have no activity yet.');
+    results.forEach(function (r) { if (r && r.warning) toast(r.warning, true); });
   } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); }
 }
 async function exportToExcel(config) {
-  const isRM = config.key === 'rm'; const showInactive = isRM ? state.rmShowInactive : state.fgShowInactive;
+  const showInactive = state[config.key + 'ShowInactive'];
   const rows = applyStockFilters_(config, mergeStock(state[config.masterKey], state[config.stockKey], config, showInactive));
   if (rows.length === 0) { toast('Nothing to export.', true); return; }
 
-  const btn = document.getElementById(isRM ? 'rmExportBtn' : 'fgExportBtn'); setBtnLoading(btn, 'Exporting…');
+  const btn = document.getElementById(config.key + 'ExportBtn'); setBtnLoading(btn, 'Exporting…');
   try {
-    const catLabel = isRM ? 'Category' : 'Family';
+    const catLabel = config.catLabel;
     const columns = [
       { key: 'idNo', label: 'ID No.', width: 90 },
       { key: 'code', label: 'Code', width: 110 },
@@ -6429,10 +6637,10 @@ async function exportToExcel(config) {
     const exportRows = rows.map(function (r) { return Object.assign({}, r, { activeLabel: r.active ? 'Yes' : 'No' }); });
     const today = new Date().toISOString().slice(0, 10);
     const result = await api('exportStyledWorkbook', {
-      filename: isRM ? 'RM_Stock' : 'FG_Stock',
+      filename: config.label + '_Stock',
       sheets: [{
-        name: isRM ? 'RM Stock' : 'FG Stock',
-        title: COMPANY_NAME + ' \u2014 ' + (isRM ? 'RM' : 'FG') + ' Stock',
+        name: config.label + ' Stock',
+        title: COMPANY_NAME + ' \u2014 ' + config.label + ' Stock',
         subtitle: today + ' \u00b7 ' + rows.length + ' item' + (rows.length === 1 ? '' : 's'),
         columns: columns, rows: exportRows, statusColumnKey: 'status'
       }]
@@ -6476,12 +6684,13 @@ function wireStaticEvents() {
   document.getElementById('resendOtpBtn').addEventListener('click', handleResendOtp);
 
   document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page, el.dataset.kind); }); });
+  wireNavGroups();
 
   [['cardRmTotal', 'rm', null], ['cardFgTotal', 'fg', null], ['cardRmAlerts', 'rm', 'NeedsAttention'], ['cardFgAlerts', 'fg', 'NeedsAttention']].forEach(function (c) {
     const el = document.getElementById(c[0]); el.addEventListener('click', function () { goToStockTab(c[1], c[2]); }); el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToStockTab(c[1], c[2]); } });
   });
 
-  wireStockPageEvents('rm'); wireStockPageEvents('fg');
+  STOCK_KINDS.forEach(wireStockPageEvents);
 
   document.getElementById('alertsList').addEventListener('click', function (e) { const card = e.target.closest('.alert-card'); if (card) openTxnModal(card.dataset.key, card.dataset.code); });
   wireAttachments();
@@ -6516,8 +6725,7 @@ function wireStaticEvents() {
 
   document.getElementById('addUserBtn').addEventListener('click', function () { openUserModal(null); });
   document.getElementById('tierDefaultsBtn').addEventListener('click', openTierModal);
-  document.getElementById('rmResetBtn').addEventListener('click', function () { resetStockFilters('rm'); });
-  document.getElementById('fgResetBtn').addEventListener('click', function () { resetStockFilters('fg'); });
+  STOCK_KINDS.forEach(function (k) { document.getElementById(k + 'ResetBtn').addEventListener('click', function () { resetStockFilters(k); }); });
   document.getElementById('userRole').addEventListener('change', function () {
     const isNew = this.value === '__new__';
     document.getElementById('userRoleNew').classList.toggle('hidden', !isNew);
@@ -6561,40 +6769,38 @@ function wireStaticEvents() {
 }
 
 function wireStockPageEvents(kind) {
-  const isRM = kind === 'rm'; const render = isRM ? renderRMPage : renderFGPage;
-  const els = { search: isRM ? 'rmSearch' : 'fgSearch', cat: isRM ? 'rmCategoryFilter' : 'fgCategoryFilter', status: isRM ? 'rmStatusFilter' : 'fgStatusFilter', inactive: isRM ? 'rmShowInactive' : 'fgShowInactive', prev: isRM ? 'rmPrevBtn' : 'fgPrevBtn', next: isRM ? 'rmNextBtn' : 'fgNextBtn', body: isRM ? 'rmTableBody' : 'fgTableBody', refresh: isRM ? 'rmRefreshBtn' : 'fgRefreshBtn', export: isRM ? 'rmExportBtn' : 'fgExportBtn', add: isRM ? 'rmAddItemBtn' : 'fgAddItemBtn', import: isRM ? 'rmImportBtn' : 'fgImportBtn' };
-  
-  document.getElementById(els.search).addEventListener('input', debounce(function (e) { if (isRM) { state.rmSearch = e.target.value; state.rmPage = 1; } else { state.fgSearch = e.target.value; state.fgPage = 1; } render(); }, 150));
-  document.getElementById(els.cat).addEventListener('change', function (e) { if (isRM) { state.rmCategory = selectedValuesOf(e.target); state.rmPage = 1; } else { state.fgCategory = selectedValuesOf(e.target); state.fgPage = 1; } render(); });
-  // FG only — RM has no second grouping axis, so this element doesn't exist there.
-  if (!isRM) document.getElementById('fgSubCategoryFilter').addEventListener('change', function (e) { state.fgSubCategory = selectedValuesOf(e.target); state.fgPage = 1; render(); });
-  document.getElementById(els.status).addEventListener('change', function (e) { if (isRM) { state.rmStatus = selectedValuesOf(e.target); state.rmPage = 1; } else { state.fgStatus = selectedValuesOf(e.target); state.fgPage = 1; } render(); });
-  document.getElementById(els.inactive).addEventListener('change', function (e) { if (isRM) { state.rmShowInactive = e.target.checked; state.rmPage = 1; } else { state.fgShowInactive = e.target.checked; state.fgPage = 1; } render(); });
-  document.getElementById(els.prev).addEventListener('click', function () { if (isRM) state.rmPage--; else state.fgPage--; render(); });
-  document.getElementById(els.next).addEventListener('click', function () { if (isRM) state.rmPage++; else state.fgPage++; render(); });
-  
+  const config = uiConfig(kind); const render = function () { renderStockPage(kind); };
+  const id = function (suffix) { return document.getElementById(kind + suffix); };
+
+  id('Search').addEventListener('input', debounce(function (e) { state[kind + 'Search'] = e.target.value; state[kind + 'Page'] = 1; render(); }, 150));
+  id('CategoryFilter').addEventListener('change', function (e) { state[kind + 'Category'] = selectedValuesOf(e.target); state[kind + 'Page'] = 1; render(); });
+  // FG only — RM and Trade have no second grouping axis.
+  if (config.subCategoryField) id('SubCategoryFilter').addEventListener('change', function (e) { state[kind + 'SubCategory'] = selectedValuesOf(e.target); state[kind + 'Page'] = 1; render(); });
+  id('StatusFilter').addEventListener('change', function (e) { state[kind + 'Status'] = selectedValuesOf(e.target); state[kind + 'Page'] = 1; render(); });
+  id('ShowInactive').addEventListener('change', function (e) { state[kind + 'ShowInactive'] = e.target.checked; state[kind + 'Page'] = 1; render(); });
+  id('PrevBtn').addEventListener('click', function () { state[kind + 'Page']--; render(); });
+  id('NextBtn').addEventListener('click', function () { state[kind + 'Page']++; render(); });
+
   // Wire up column sorting
-  document.querySelectorAll('#' + els.body).forEach(function(body) {
-    body.parentElement.querySelectorAll('th.sortable').forEach(function(th) {
-      th.addEventListener('click', function() {
-        const col = th.dataset.col; const sortState = isRM ? state.rmSort : state.fgSort;
-        if (sortState.col === col) { sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'; } else { sortState.col = col; sortState.dir = 'asc'; }
-        th.parentElement.querySelectorAll('th').forEach(function(el) { el.classList.remove('asc', 'desc'); });
-        th.classList.add(sortState.dir);
-        render();
-      });
+  id('TableBody').parentElement.querySelectorAll('th.sortable').forEach(function (th) {
+    th.addEventListener('click', function () {
+      const col = th.dataset.col; const sortState = state[kind + 'Sort'];
+      if (sortState.col === col) { sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'; } else { sortState.col = col; sortState.dir = 'asc'; }
+      th.parentElement.querySelectorAll('th').forEach(function (el) { el.classList.remove('asc', 'desc'); });
+      th.classList.add(sortState.dir);
+      render();
     });
   });
 
-  document.getElementById(els.body).addEventListener('click', function (e) {
+  id('TableBody').addEventListener('click', function (e) {
     const actionBtn = e.target.closest('.row-action');
     if (actionBtn) { e.stopPropagation(); const tr = actionBtn.closest('tr[data-code]'); if (actionBtn.dataset.action === 'history') openLedgerModal(kind, tr.dataset.code); else openItemModal(kind, tr.dataset.code); return; }
     const tr = e.target.closest('tr[data-code]'); if (tr) openTxnModal(kind, tr.dataset.code);
   });
-  document.getElementById(els.refresh).addEventListener('click', async function () { const btn = this; setBtnLoading(btn, 'Refreshing…', true); try { await refreshAllData(); render(); renderHome(); updateFreshnessLabel(kind); toast('Refreshed.'); } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); } });
-  document.getElementById(els.export).addEventListener('click', function () { exportToExcel(isRM ? RM_CONFIG_UI : FG_CONFIG_UI); });
-  document.getElementById(els.add).addEventListener('click', function () { openItemModal(kind, null); });
-  document.getElementById(els.import).addEventListener('click', function () { openImportModal(kind); });
+  id('RefreshBtn').addEventListener('click', async function () { const btn = this; setBtnLoading(btn, 'Refreshing…', true); try { await refreshAllData(); render(); renderHome(); updateFreshnessLabel(kind); toast('Refreshed.'); } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); } });
+  id('ExportBtn').addEventListener('click', function () { exportToExcel(config); });
+  id('AddItemBtn').addEventListener('click', function () { openItemModal(kind, null); });
+  id('ImportBtn').addEventListener('click', function () { openImportModal(kind); });
 }
 
 function makeTablesResizable() {
