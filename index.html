@@ -762,6 +762,8 @@
   .txn-type-receipt { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(63, 158, 115, 0.2); }
   .txn-type-issue { background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); }
   .txn-type-adjustment, .txn-type-return, .txn-type-production, .txn-type-dispatch { background: var(--paper); color: var(--ink-soft); border: 1px solid var(--line); }
+  .txn-type-scrap { background: var(--critical-soft); color: var(--critical); border: 1px solid rgba(217, 80, 58, 0.25); }
+  .txn-type-return-to-supplier { background: var(--low-soft); color: var(--low); border: 1px solid rgba(201, 154, 62, 0.25); }
   /* Current stock, in the corner where the eye lands before the form: the
      figure the operator is about to change, and what it will become. */
   .txn-head-main { flex: 1 1 auto; min-width: 0; }
@@ -1476,16 +1478,16 @@
         <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any" min="0"><div class="hint" id="txnRateHint"></div></div>
 
         <div id="receiptFields" class="receipt-fields hidden span-2">
-          <div class="receipt-fields-label">Procurement details (Optional)</div>
+          <div class="receipt-fields-label" id="receiptFieldsLabel">Procurement details (Optional)</div>
           <div class="receipt-grid">
             <div class="field"><label for="txnSupplier">Supplier Name</label><select id="txnSupplier"></select></div>
-            <div class="field"><label for="txnInvoiceNo">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
+            <div class="field"><label for="txnInvoiceNo" id="txnInvoiceNoLabel">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
             <div class="field"><label for="txnInvoiceDate">Invoice Date</label><input type="date" id="txnInvoiceDate"></div>
           </div>
         </div>
 
-        <div class="field"><label for="txnReference">Reference (optional)</label><input type="text" id="txnReference" placeholder="PO / work order / invoice #"></div>
-        <div class="field"><label for="txnRemarks">Remarks (optional)</label><input type="text" id="txnRemarks"></div>
+        <div class="field"><label for="txnReference" id="txnReferenceLabel">Reference (optional)</label><input type="text" id="txnReference" placeholder="PO / work order / invoice #"></div>
+        <div class="field"><label for="txnRemarks" id="txnRemarksLabel">Remarks (optional)</label><input type="text" id="txnRemarks"></div>
         <div class="field span-2 attach-field">
           <label>Files (optional)</label>
           <div class="attach-bar">
@@ -1774,7 +1776,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.22.0';
+const APP_VERSION = '3.23.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -1905,8 +1907,8 @@ if ('serviceWorker' in navigator) {
 const RM_CONFIG_UI = {
   key: 'rm', codeField: 'RM_Code', idField: 'ID_No.', nameField: 'RM_Name', categoryField: 'Category',
   unitField: 'Unit', reorderField: 'ReorderLevel',
-  txnTypes: ['Receipt', 'Issue', 'Adjustment', 'Return'],
-  outTypes: ['Issue'],
+  txnTypes: ['Receipt', 'Issue', 'Adjustment', 'Return', 'Return to supplier', 'Scrap'],
+  outTypes: ['Issue', 'Return to supplier', 'Scrap'],
   inTypes: ['Receipt', 'Return'],
   addAction: 'addRMTransaction', ledgerAction: 'getRMLedger', masterKey: 'rmMaster', stockKey: 'rmStock',
   addItemAction: 'addRMItem', updateItemAction: 'updateRMItem',
@@ -1928,8 +1930,8 @@ const FG_CONFIG_UI = {
   // optional — the shared table/filter code skips it when absent.
   subCategoryField: 'Category', subCategoryLabel: 'Category', subCategoryDropdown: 'FG_Category',
   unitField: 'Unit', reorderField: 'ReorderLevel',
-  txnTypes: ['Production', 'Dispatch', 'Adjustment', 'Return'],
-  outTypes: ['Dispatch'],
+  txnTypes: ['Production', 'Dispatch', 'Adjustment', 'Return', 'Scrap'],
+  outTypes: ['Dispatch', 'Scrap'],
   inTypes: ['Production', 'Return'],
   addAction: 'addFGTransaction', ledgerAction: 'getFGLedger', masterKey: 'fgMaster', stockKey: 'fgStock',
   addItemAction: 'addFGItem', updateItemAction: 'updateFGItem',
@@ -2497,6 +2499,21 @@ function lateTag(r) {
   return isLateEntry(r)
     ? '<div class="late-tag" title="Entered ' + escapeHtml(formatDateTime(r.Timestamp)) + '">entered ' + escapeHtml(formatDayShort(r.Timestamp)) + '</div>'
     : '';
+}
+
+// Stock written off rather than moved: limited to "Scrap & supplier returns".
+const WRITE_OFF_TYPES = ['Return to supplier', 'Scrap'];
+// "Return" has always meant material coming back from a department; with
+// returns to a supplier alongside it, the lists say so.
+function typeLabel(t) { return t === 'Return' ? 'Return from department' : t; }
+function pillLabel(t) { return t === 'Return' ? 'Return from dept' : t; }
+function typeSlug(t) { return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+// The types this person may post, plus the one an entry already has.
+function postableTypes(config, current) {
+  return config.txnTypes.filter(function (t) { return t === current || WRITE_OFF_TYPES.indexOf(t) === -1 || can('stock.scrap'); });
+}
+function typeOptions(types) {
+  return types.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(typeLabel(t)) + '</option>'; }).join('');
 }
 
 // A reversed entry, or the entry that reverses one.
@@ -3437,7 +3454,7 @@ function openTxnModal(key, code) {
   document.getElementById('txnModalTitle').textContent = item[activeTxnConfig.nameField] || code;
   document.getElementById('txnModalCode').textContent = code; document.getElementById('txnCode').value = code; document.getElementById('txnKey').value = key;
 
-  document.getElementById('txnType').innerHTML = activeTxnConfig.txnTypes.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+  document.getElementById('txnType').innerHTML = typeOptions(postableTypes(activeTxnConfig));
   const deptSelect = document.getElementById('txnDept');
   // Whoever can't post for other departments is offered only their own —
   // the same rule the backend enforces, so the form never offers a choice
@@ -3533,7 +3550,14 @@ function updateTxnFormVisibility() {
     hintEl.textContent = 'Enter a positive quantity.';
   }
 
-  document.getElementById('receiptFields').classList.toggle('hidden', !(activeTxnConfig && activeTxnConfig.key === 'rm' && type === 'Receipt'));
+  const isRm = activeTxnConfig && activeTxnConfig.key === 'rm';
+  const supplierReturn = isRm && type === 'Return to supplier';
+  document.getElementById('receiptFields').classList.toggle('hidden', !(isRm && (type === 'Receipt' || supplierReturn)));
+  document.getElementById('receiptFieldsLabel').textContent = supplierReturn ? 'Going back to (required)' : 'Procurement details (Optional)';
+  document.getElementById('txnInvoiceNoLabel').textContent = supplierReturn ? 'Original invoice no (optional)' : 'Invoice No';
+  document.getElementById('txnReferenceLabel').textContent = supplierReturn ? 'Debit note / return challan no.' : 'Reference (optional)';
+  document.getElementById('txnReference').placeholder = supplierReturn ? 'e.g. DN-0123' : 'PO / work order / invoice #';
+  document.getElementById('txnRemarksLabel').textContent = type === 'Scrap' ? 'Reason for scrapping' : 'Remarks (optional)';
   if (typeof txnQtyMinSync === 'function') txnQtyMinSync();
   if (activeTxnConfig) renderTxnPrice(priceCache[activeTxnConfig.key + ':' + document.getElementById('txnCode').value]);
   validateTxnQty();
@@ -3850,6 +3874,12 @@ async function handleTxnSubmit(e) {
   if (txnUploadStage) { await runTxnUploads(); return; }
   const entryDate = txnEntryDate();
   if (entryDate === false) { document.getElementById('txnError').textContent = 'The entry date can\u2019t be in the future.'; return; }
+  const typeNow = document.getElementById('txnType').value;
+  const missing = typeNow === 'Scrap' && document.getElementById('txnRemarks').value.trim().length < 3 ? 'Say why it is being scrapped.'
+    : typeNow === 'Return to supplier' && !document.getElementById('txnSupplier').value ? 'Pick the supplier it is going back to.'
+    : typeNow === 'Return to supplier' && !document.getElementById('txnReference').value.trim() ? 'Put the debit note or return challan number in Reference.'
+    : '';
+  if (missing) { document.getElementById('txnError').textContent = missing; return; }
   const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
   errEl.textContent = ''; setBtnLoading(btn, 'Posting…');
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
@@ -3861,7 +3891,7 @@ async function handleTxnSubmit(e) {
   // a dropped connection cannot produce a second row.
   if (!activeTxnClientId) activeTxnClientId = newClientTxnId();
   payload.clientTxnId = activeTxnClientId;
-  if (config.key === 'rm' && txnType === 'Receipt') { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
+  if (config.key === 'rm' && (txnType === 'Receipt' || txnType === 'Return to supplier')) { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
 
   const unit = currentTxnUnit();
   // Written down before the request leaves, so an entry whose outcome is
@@ -4426,17 +4456,17 @@ function wireAttachments() {
 function renderLedgerRow(r) {
   const dateStr = (localDayISO(movementDate(r)) || '—') + lateTag(r);
 
-  const txnTypeLower = (r.TxnType || '').toLowerCase(); const isReceipt = txnTypeLower === 'receipt';
+  const txnTypeLower = typeSlug(r.TxnType); const isReceipt = txnTypeLower === 'receipt';
   const qtyClass = isReceipt && Number(r.Qty) > 0 ? 'qty-bold qty-positive' : 'qty-bold';
 
   let refSuppHtml = escapeHtml(r.Reference || '—');
-  if (isReceipt && (r.Supplier || r.InvoiceNo)) {
+  if ((isReceipt || txnTypeLower === 'return-to-supplier') && (r.Supplier || r.InvoiceNo)) {
      const invDate = r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '';
      refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
   }
 
   const revOf = asText(r.ReversalOf), revBy = asText(r.ReversedBy);
-  return '<tr' + (revBy ? ' class="is-reversed"' : '') + '><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(r.TxnType) + '</span>' + revTag(revOf, revBy) + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
+  return '<tr' + (revBy ? ' class="is-reversed"' : '') + '><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(pillLabel(r.TxnType)) + '</span>' + revTag(revOf, revBy) + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
     ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key, !!(revOf || revBy)) + '</tr>';
 }
 
@@ -5017,8 +5047,7 @@ function openFixModal(txnId, key) {
   const config = key === 'fg' ? FG_CONFIG_UI : RM_CONFIG_UI;
   document.getElementById('fixTitle').textContent = entry.code + (entry.name ? ' · ' + entry.name : '');
   document.getElementById('fixTxnId').textContent = entry.txnId;
-  document.getElementById('fixType').innerHTML = config.txnTypes
-    .map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
+  document.getElementById('fixType').innerHTML = typeOptions(postableTypes(config, entry.type));
   document.getElementById('fixType').value = entry.type;
   document.getElementById('fixQty').value = entry.qty;
   document.getElementById('fixType').dispatchEvent(new Event('change'));
@@ -5129,7 +5158,7 @@ function populateLedgerFilters() {
   const config = ledgerConfig_();
   const typeSel = document.getElementById('ldgTypeFilter');
   typeSel.innerHTML = '<option value="">All types</option>' +
-    config.txnTypes.map(function (t) { return '<option value="' + escapeHtml(t) + '">' + escapeHtml(t) + '</option>'; }).join('');
+    typeOptions(config.txnTypes);
   setSelectedValues(typeSel, state.ledgerType);
 
   // Category list follows the RM/FG toggle. RM has a single axis (Category),
@@ -5624,12 +5653,12 @@ function renderLedgerPage() {
   const start = (state.ledgerPage - 1) * LEDGER_PAGE_SIZE;
 
   tbody.innerHTML = rows.slice(start, start + LEDGER_PAGE_SIZE).map(function (r) {
-    const cls = 'txn-type-' + String(r.type || '').toLowerCase();
+    const cls = 'txn-type-' + typeSlug(r.type);
     return '<tr' + (r.reversedBy ? ' class="is-reversed"' : '') + '>' +
       '<td class="mono" data-label="Date">' + escapeHtml(r.dateText) + (r.lateTag || '') + '</td>' +
       '<td class="mono" data-label="Code">' + escapeHtml(r.code) + '</td>' +
       '<td data-label="Name">' + escapeHtml(r.name || '—') + '</td>' +
-      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(r.type) + '</span>' + revTag(r.reversalOf, r.reversedBy) + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
+      '<td data-label="Type"><span class="txn-pill ' + cls + '">' + escapeHtml(pillLabel(r.type)) + '</span>' + revTag(r.reversalOf, r.reversedBy) + attachChip(state.ledgerKind, r.txnId, r.attachCount, r.department) + '</td>' +
       '<td class="mono num" data-label="Qty">' + qtyWithUnit(r.qty, r.unit) + '</td>' +
       '<td data-label="Department">' + escapeHtml(r.department || '—') + '</td>' +
       '<td data-label="Reference">' + escapeHtml(r.reference || '—') + '</td>' +
