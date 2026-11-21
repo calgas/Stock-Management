@@ -457,6 +457,128 @@
   .page-head h2 { font-size: 26px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.02em; background: linear-gradient(90deg, var(--ink), var(--ink-soft)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .page-head p { font-size: 14.5px; color: var(--ink-soft); margin: 0; font-weight: 500; }
 
+  /* ---------------------------------------------------------------------
+     Overview dashboard (3.25)
+     Ledger identity uses three validated categorical hues (RM blue, FG
+     orange, Trade aqua), stepped separately for the dark surface. Health
+     keeps the app's status colors; text always wears ink, never a series hue.
+     --------------------------------------------------------------------- */
+  #page-home { --series-rm: #2a78d6; --series-fg: #eb6834; --series-trade: #1baf7a; --db-bar: #8a93a0; --db-grid: #ece8df; }
+  [data-theme="dark"] #page-home { --series-rm: #3987e5; --series-fg: #d95926; --series-trade: #199e70; --db-bar: #7d8796; --db-grid: #2a3039; }
+  .db-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 22px; }
+  .db-head .page-head { margin: 0; }
+  .db-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .seg { display: inline-flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; box-shadow: var(--shadow-sm); }
+  .seg button { background: none; padding: 7px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 7px; transition: background 0.15s, color 0.15s; }
+  .seg button:hover { color: var(--ink); background: var(--hover-surface); }
+  .seg button.is-on { background: var(--ink); color: var(--panel); }
+  .seg button i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .db-refresh { width: 38px; height: 38px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-soft); display: inline-grid; place-items: center; box-shadow: var(--shadow-sm); }
+  .db-refresh:hover { color: var(--copper); }
+  .db-refresh.is-busy svg { animation: dbSpin 0.9s linear infinite; }
+  @keyframes dbSpin { to { transform: rotate(360deg); } }
+
+  .db-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 16px; box-shadow: var(--shadow-sm); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 132px; animation: slideUpFade 0.45s var(--spring) backwards; }
+  .kpi:nth-child(2) { animation-delay: 0.04s; } .kpi:nth-child(3) { animation-delay: 0.08s; } .kpi:nth-child(4) { animation-delay: 0.12s; }
+  .kpi.clickable { cursor: pointer; transition: transform 0.2s var(--spring), box-shadow 0.2s, border-color 0.2s; }
+  .kpi.clickable:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--copper-soft); }
+  .kpi-label { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); display: flex; align-items: center; gap: 9px; }
+  .kpi-icon { width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; display: grid; place-items: center; background: var(--line-soft); color: var(--ink-soft); }
+  .kpi-icon.is-warn { background: var(--critical-soft); color: var(--critical); }
+  .kpi-icon.is-ok { background: var(--ok-soft); color: var(--ok); }
+  .kpi-value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 4px; }
+  .kpi-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+  .kpi-sub .sub-zero { color: var(--ink-faint); }
+  .kpi-sub .sub-ok { color: var(--ok); font-weight: 600; } .kpi-sub .sub-low { color: var(--low); font-weight: 600; } .kpi-sub .sub-critical { color: var(--critical); font-weight: 600; }
+  .kpi-delta { display: inline-block; font-size: 12px; color: var(--ink-faint); }
+  .kpi-spark { position: absolute; right: 18px; top: 58px; width: 96px; height: 30px; }
+  .kpi-mix { display: flex; gap: 2px; height: 6px; margin-top: auto; padding-top: 0; }
+  .kpi-mix span { display: block; height: 6px; border-radius: 2px; min-width: 3px; }
+  .kpi-mix-legend { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 11.5px; color: var(--ink-soft); }
+  .kpi-mix-legend i, .db-legend i, .db-chip i, .db-ledger-name i, .db-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+  .db-skel { display: inline-block; width: 72px; height: 26px; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), var(--hover-surface), var(--line-soft)); background-size: 200% 100%; animation: dbShimmer 1.2s ease-in-out infinite; }
+  @keyframes dbShimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+  .db-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .db-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 18px 20px; min-width: 0; display: flex; flex-direction: column; scroll-margin-top: 16px; }
+  .span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-12 { grid-column: span 12; }
+  .db-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .db-card-title { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0; letter-spacing: -0.01em; }
+  .db-card-sub { font-size: 12.5px; color: var(--ink-soft); margin: 3px 0 0; }
+  .db-legend { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); padding-top: 2px; }
+  .db-chip { display: inline-flex; align-items: center; font-size: 11.5px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+  .db-chart { position: relative; width: 100%; height: 250px; flex: 1 1 auto; min-height: 250px; }
+  .db-chart svg { display: block; overflow: visible; }
+  .db-grid-line { stroke: var(--db-grid); stroke-width: 1; shape-rendering: crispEdges; }
+  .db-axis { fill: var(--ink-faint); font-size: 11px; font-family: var(--font-ui); font-variant-numeric: tabular-nums; }
+  .db-hover { fill: var(--hover-surface); transition: opacity 0.1s; }
+  .db-tip { position: absolute; pointer-events: none; transform: translate(-50%, -100%); background: var(--ink); color: var(--panel); font-size: 12px; line-height: 1.55; padding: 8px 11px; border-radius: 8px; box-shadow: var(--shadow); white-space: nowrap; z-index: 5; min-width: 120px; }
+  .db-tip b { display: block; font-weight: 600; margin-bottom: 2px; }
+  .db-tip div { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .db-tip div span { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .db-tip .tt-total { border-top: 1px solid rgba(127,127,127,0.35); margin-top: 3px; padding-top: 3px; }
+  .db-loading, .db-allclear { color: var(--ink-faint); font-size: 13px; padding: 28px 0; text-align: center; margin: auto 0; }
+  .db-allclear { color: var(--ok); font-weight: 600; }
+  .db-note { font-size: 12px; color: var(--ink-faint); margin-top: 10px; }
+
+  .db-ledger { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; padding: 13px 4px; border: 0; border-top: 1px solid var(--line-soft); background: none; text-align: left; width: 100%; color: inherit; border-radius: 8px; transition: background 0.15s; }
+  .db-ledger:first-child { border-top: none; }
+  .db-ledger:hover { background: var(--hover-surface); }
+  .db-ledger-name { font-weight: 600; font-size: 14px; color: var(--ink); display: flex; align-items: center; }
+  .db-ledger-name small { font-weight: 500; color: var(--ink-faint); font-size: 12px; margin-left: 8px; }
+  .db-ledger-val { font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .health-bar { grid-column: 1 / -1; display: flex; gap: 2px; height: 8px; }
+  .health-bar span { border-radius: 2px; min-width: 3px; }
+  .hb-ok { background: var(--ok); } .hb-low { background: var(--low); } .hb-critical { background: var(--critical); } .hb-none { background: var(--line); }
+  .db-ledger-counts, .db-ledger-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--ink-soft); }
+  .db-ledger-counts b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .db-ledger-counts i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; }
+  .db-ledger-foot { color: var(--ink-faint); }
+
+  .hbars { display: flex; flex-direction: column; gap: 10px; }
+  .hbar { display: grid; grid-template-columns: minmax(90px, 32%) 1fr 44px; gap: 10px; align-items: center; font-size: 13px; }
+  .hbar-label { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hbar-track { height: 12px; display: block; }
+  .hbar-fill { display: block; height: 12px; background: var(--db-bar); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .hbar:hover .hbar-fill { filter: brightness(0.9); }
+  .hbar-val { text-align: right; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .db-list { display: flex; flex-direction: column; }
+  .db-row { display: grid; align-items: center; gap: 4px 14px; padding: 10px 6px; border-top: 1px solid var(--line-soft); font-size: 13px; color: var(--ink); border-radius: 8px; }
+  .db-row:first-child { border-top: none; }
+  .db-row[data-code] { cursor: pointer; transition: background 0.15s; }
+  .db-row[data-code]:hover { background: var(--hover-surface); }
+  .db-row.db-row-head { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); padding-top: 0; cursor: default; }
+  .db-row.db-row-head:hover { background: none; }
+  .db-row .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .db-row small { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; font-family: var(--font-mono); }
+  .db-row .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .db-row .nm > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .movers-grid { grid-template-columns: minmax(0, 2.2fr) 70px minmax(0, 1.3fr) minmax(0, 1.1fr) 90px; }
+  .idle-grid { grid-template-columns: minmax(0, 2.4fr) 70px minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); }
+  .att-grid { grid-template-columns: 96px minmax(0, 2fr) minmax(0, 1.6fr) auto; grid-template-areas: "status name meter post"; }
+  .att-grid .a-status { grid-area: status; } .att-grid .a-name { grid-area: name; } .att-grid .a-meter { grid-area: meter; } .att-grid .a-post { grid-area: post; }
+  .recent-grid { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .recent-grid .txn-pill { font-size: 11.5px; padding: 3px 10px; min-width: 76px; }
+  .recent-grid .meta { grid-column: 2 / -1; font-size: 11.5px; color: var(--ink-faint); margin-top: -2px; }
+  .cover-low { color: var(--low); font-weight: 600; }
+  .meter { display: block; height: 6px; border-radius: 3px; background: var(--line-soft); margin-bottom: 4px; }
+  .meter-fill { display: block; height: 6px; border-radius: 3px; min-width: 3px; }
+  .meter-low { background: var(--low); } .meter-critical { background: var(--critical); }
+  .meter + small { font-family: var(--font-ui); }
+  .att-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .att-links button { background: var(--line-soft); color: var(--ink-soft); border-radius: 14px; padding: 4px 10px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; }
+  .att-links button:hover { color: var(--ink); background: var(--hover-surface); }
+  .db-row .btn-compact { padding: 6px 12px; font-size: 12.5px; }
+  .db-total { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-soft); border-top: 1px solid var(--line); padding: 10px 6px 0; margin-top: 4px; }
+  .db-total b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 1180px) {
+    .db-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .span-4, .span-5, .span-7, .span-8 { grid-column: span 12; }
+  }
+
   /* Stat & Chart Cards */
   .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 36px; }
   .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 36px; }
@@ -1066,6 +1188,26 @@
     @keyframes navMenuIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     .stat-grid, .chart-grid { grid-template-columns: 1fr; gap: 16px; }
+
+    /* Overview on a phone (3.25) */
+    .db-head { align-items: stretch; margin-bottom: 16px; }
+    .db-controls { width: 100%; }
+    .seg { flex: 1 1 auto; }
+    .seg button { flex: 1; justify-content: center; padding: 8px 6px; }
+    .db-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .kpi { padding: 14px 14px 12px; min-height: 0; }
+    .kpi-label { font-size: 12px; gap: 7px; }
+    .kpi-icon { width: 24px; height: 24px; }
+    .kpi-value { font-size: 23px; }
+    .kpi-spark { display: none; }
+    .db-grid { gap: 12px; margin-bottom: 12px; }
+    .db-card { padding: 16px 14px; }
+    .db-chart { height: 210px; min-height: 210px; flex: 0 0 auto; }
+    .hide-sm { display: none !important; }
+    .movers-grid { grid-template-columns: minmax(0, 1fr) auto 76px; }
+    .idle-grid { grid-template-columns: minmax(0, 1fr) auto auto; }
+    .att-grid { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name post" "meter post"; }
+    .att-grid.db-row-head { display: none; }
     .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
     .toolbar input[type="search"], .toolbar select { width: 100%; min-width: 0; }
     .toolbar .add-btn-spacer { margin-left: 0; }
@@ -1319,42 +1461,70 @@
     </div>
 
     <section class="page" id="page-home">
-      <div class="page-head"><h2>Overview</h2><p>Stock overview and health analytics.</p></div>
-      <div class="stat-grid">
-        <div class="stat-card clickable" id="cardRmTotal" role="button" tabindex="0">
-          <div class="label-row"><span class="label">RM item codes</span><span class="icon-wrap wrap-blue"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="4" width="11" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/></svg></span></div>
-          <div class="value" id="statRmTotal">—</div>
-          <div class="stat-sub" id="statRmSub"></div>
+      <div class="db-head">
+        <div class="page-head"><h2>Overview</h2><p id="dbSubtitle">Stock, movement and health across RM, FG and Trade.</p></div>
+        <div class="db-controls">
+          <div class="seg" id="dbScope" role="group" aria-label="Ledgers shown">
+            <button type="button" data-scope="all">All</button>
+            <button type="button" data-scope="rm"><i style="background:var(--series-rm)"></i>RM</button>
+            <button type="button" data-scope="fg"><i style="background:var(--series-fg)"></i>FG</button>
+            <button type="button" data-scope="trade"><i style="background:var(--series-trade)"></i>Trade</button>
+          </div>
+          <div class="seg" id="dbPeriod" role="group" aria-label="Period">
+            <button type="button" data-days="7">7 days</button>
+            <button type="button" data-days="30">30 days</button>
+            <button type="button" data-days="90">90 days</button>
+          </div>
+          <button type="button" class="db-refresh" id="dbRefreshBtn" title="Refresh" aria-label="Refresh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
         </div>
-        <div class="stat-card clickable" id="cardFgTotal" role="button" tabindex="0">
-          <div class="label-row"><span class="label">FG item codes</span><span class="icon-wrap wrap-copper"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><line x1="3" y1="8" x2="6.5" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="6.5" y1="3.5" x2="6.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="3.5" x2="9.5" y2="12.5" stroke="currentColor" stroke-width="2"/><line x1="9.5" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="1.6"/></svg></span></div>
-          <div class="value" id="statFgTotal">—</div>
-          <div class="stat-sub" id="statFgSub"></div>
-        </div>
-        <div class="stat-card clickable alert" id="cardRmAlerts" role="button" tabindex="0">
-          <div class="label-row"><span class="label">RM low / critical</span><span class="icon-wrap wrap-low"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2.5L14.5 13.5H1.5L8 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="11.3" r="1" fill="currentColor"/></svg></span></div>
-          <div class="value" id="statRmAlerts">—</div>
-          <div class="stat-sub" id="statRmAlertsSub"></div>
-        </div>
-        <div class="stat-card clickable alert" id="cardFgAlerts" role="button" tabindex="0">
-          <div class="label-row"><span class="label">FG low / critical</span><span class="icon-wrap wrap-low"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 2.5L14.5 13.5H1.5L8 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="11.3" r="1" fill="currentColor"/></svg></span></div>
-          <div class="value" id="statFgAlerts">—</div>
-          <div class="stat-sub" id="statFgAlertsSub"></div>
-        </div>
-      </div>
-      
-      <!-- Mini Dashboard Charts -->
-      <div class="chart-grid hidden" id="dashboardCharts">
-        <div class="stat-card"><div class="chart-title">RM Stock Health</div><div class="chart-wrapper"><canvas id="rmChart"></canvas></div></div>
-        <div class="stat-card"><div class="chart-title">FG Stock Health</div><div class="chart-wrapper"><canvas id="fgChart"></canvas></div></div>
       </div>
 
-      <div class="panel">
-        <button type="button" class="panel-head panel-head-toggle" id="alertsPanelToggle" aria-expanded="true" aria-controls="alertsPanelBody">
-          <span>Needs attention</span>
-          <svg class="panel-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <div class="panel-collapsible" id="alertsPanelBody"><div id="alertsList"></div></div>
+      <div class="db-kpis" id="dbKpis"></div>
+
+      <div class="db-grid">
+        <div class="db-card span-8">
+          <div class="db-card-head">
+            <div><h3 class="db-card-title">Activity</h3><p class="db-card-sub" id="dbActivitySub"></p></div>
+            <div class="db-legend" id="dbActivityLegend"></div>
+          </div>
+          <div class="db-chart" id="dbActivity"></div>
+        </div>
+        <div class="db-card span-4">
+          <div class="db-card-head"><div><h3 class="db-card-title">Stock health</h3><p class="db-card-sub">Active items by status, in each ledger</p></div></div>
+          <div id="dbLedgers"></div>
+        </div>
+      </div>
+
+      <div class="db-grid">
+        <div class="db-card span-5">
+          <div class="db-card-head"><div><h3 class="db-card-title">Where stock goes</h3><p class="db-card-sub" id="dbDeptsSub"></p></div></div>
+          <div id="dbDepts"></div>
+        </div>
+        <div class="db-card span-7">
+          <div class="db-card-head"><div><h3 class="db-card-title">Fastest-moving items</h3><p class="db-card-sub" id="dbMoversSub"></p></div></div>
+          <div id="dbMovers"></div>
+        </div>
+      </div>
+
+      <div class="db-grid">
+        <div class="db-card span-7" id="dbAttentionCard">
+          <div class="db-card-head">
+            <div><h3 class="db-card-title">Needs attention</h3><p class="db-card-sub">At or below the minimum quantity, most urgent first</p></div>
+            <div class="att-links" id="dbAttentionLinks"></div>
+          </div>
+          <div id="dbAttention"></div>
+        </div>
+        <div class="db-card span-5">
+          <div class="db-card-head"><div><h3 class="db-card-title">Recent activity</h3><p class="db-card-sub">The latest entries in these ledgers</p></div></div>
+          <div id="dbRecent"></div>
+        </div>
+      </div>
+
+      <div class="db-grid">
+        <div class="db-card span-12" id="dbIdleCard">
+          <div class="db-card-head"><div><h3 class="db-card-title">Slow &amp; dead stock</h3><p class="db-card-sub" id="dbIdleSub"></p></div></div>
+          <div id="dbIdle"></div>
+        </div>
       </div>
     </section>
 
@@ -1864,7 +2034,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.24.0';
+const APP_VERSION = '3.25.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2426,19 +2596,21 @@ function clearSession() {
   state.session = null; localStorage.removeItem('stock_session');
   // The entries kept for instant opening go too — a shared device shouldn't
   // show the last person's ledger.
-  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_hist_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
-  ledgerComplete.rm = ledgerComplete.fg = null;
-  ledgerViews.rm = ledgerViews.fg = null;
+  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  ledgerComplete.rm = ledgerComplete.fg = ledgerComplete.trade = null;
+  ledgerViews.rm = ledgerViews.fg = ledgerViews.trade = null;
   ledgerSeq++;  // a load still on its way belongs to the last person
 }
 
 function toggleAlertsPanel() {
   const btn = document.getElementById('alertsPanelToggle'); const body = document.getElementById('alertsPanelBody');
+  if (!btn || !body) return;
   const collapsed = body.classList.toggle('collapsed');
   btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
   localStorage.setItem('stock_alerts_collapsed', collapsed ? '1' : '0');
 }
 function initAlertsPanelState() {
+  if (!document.getElementById('alertsPanelBody')) return;
   if (localStorage.getItem('stock_alerts_collapsed') !== '1') return;
   document.getElementById('alertsPanelBody').classList.add('collapsed');
   document.getElementById('alertsPanelToggle').setAttribute('aria-expanded', 'false');
@@ -3392,9 +3564,6 @@ function renderTableSkeleton(bodyId, cols, rows) {
   for (let i = 0; i < rows; i++) html += '<tr>' + new Array(cols).fill('<td><div class="skeleton-bar"></div></td>').join('') + '</tr>';
   document.getElementById(bodyId).innerHTML = html;
 }
-function setStatsLoading() {
-  ['statRmTotal', 'statFgTotal', 'statRmAlerts', 'statFgAlerts'].forEach(function (id) { const el = document.getElementById(id); if (!el) return; el.classList.add('pulse'); el.textContent = '—'; });
-}
 
 /* =========================================================================
    RM / FG PAGE RENDERING
@@ -3518,125 +3687,598 @@ function renderStockTable(config) {
 }
 
 /* =========================================================================
-   HOME PAGE (Analytics & Dashboard)
+   OVERVIEW DASHBOARD (3.25)
+
+   Stock figures (items, value, health, idle stock, what needs attention)
+   come from the item and stock lists already loaded, so they show at once.
+   Movement figures (activity, where stock goes, fast movers, recent entries)
+   come from the full ledgers the app loads in the background after sign-in;
+   until those arrive the cards say so, and they fill in when the history
+   lands.
+
+   Quantities are never added across items: units differ (KG, NOS, MTR), so
+   a total would mean nothing. Activity counts entries, money is shown only
+   to people who can see costs, and quantities stay per item with their unit.
+   A reversed entry and the entry reversing it cancel out, so neither counts.
    ========================================================================= */
-function renderHome() {
-  const rmRows = mergeStock(state.rmMaster, state.rmStock, RM_CONFIG_UI, false);
-  const fgRows = mergeStock(state.fgMaster, state.fgStock, FG_CONFIG_UI, false);
+const DASH_KEY = 'stock_dash';
+const IDLE_DAYS = 90;
+const DAY_MS = 86400000;
+const dash = readDashPrefs();
 
-  animateCount(document.getElementById('statRmTotal'), rmRows.length); animateCount(document.getElementById('statFgTotal'), fgRows.length);
+function readDashPrefs() {
+  try {
+    const v = JSON.parse(localStorage.getItem(DASH_KEY) || '{}') || {};
+    return { scope: STOCK_KINDS.indexOf(v.scope) > -1 ? v.scope : 'all', days: [7, 30, 90].indexOf(v.days) > -1 ? v.days : 30 };
+  } catch (e) { return { scope: 'all', days: 30 }; }
+}
+function saveDashPrefs() { try { localStorage.setItem(DASH_KEY, JSON.stringify(dash)); } catch (e) {} }
+function dashKinds() { return dash.scope === 'all' ? STOCK_KINDS.slice() : [dash.scope]; }
+function seriesColor(kind) { return 'var(--series-' + kind + ')'; }
+function ledgerChip(kind) { return '<span class="db-chip"><i style="background:' + seriesColor(kind) + '"></i>' + escapeHtml(uiConfig(kind).label) + '</span>'; }
+function dayStart(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function plural(n, one, many) { return formatNum(n) + ' ' + (n === 1 ? one : (many || one + 's')); }
 
-  const rmAlerts = rmRows.filter(function (r) { return r.status === 'Critical' || r.status === 'Low'; });
-  const fgAlerts = fgRows.filter(function (r) { return r.status === 'Critical' || r.status === 'Low'; });
-  animateCount(document.getElementById('statRmAlerts'), rmAlerts.length); animateCount(document.getElementById('statFgAlerts'), fgAlerts.length);
+// ₹ in lakh and crore, the way the business reads money.
+function compactINR(n) {
+  n = Number(n) || 0;
+  const a = Math.abs(n);
+  const trim = function (x, d) { return x.toFixed(d).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1'); };
+  if (a >= 1e7) return '₹' + trim(n / 1e7, 2) + ' Cr';
+  if (a >= 1e5) return '₹' + trim(n / 1e5, 2) + ' L';
+  return '₹' + Math.round(n).toLocaleString('en-IN');
+}
+function compactNum(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 10000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + 'K';
+  return formatNum(n);
+}
+function daysAgoText(t) {
+  if (!t) return 'never';
+  const d = Math.round((dayStart(Date.now()) - dayStart(t)) / DAY_MS);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 60) return d + ' days ago';
+  if (d < 730) return Math.round(d / 30.4) + ' months ago';
+  return Math.round(d / 365) + ' years ago';
+}
+function shortDay(t) { return new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
 
-  // Sub-lines under each headline number. The item-code cards get a health
-  // breakdown; the alert cards split Critical from Low, since "27 alerts"
-  // reads very differently depending on how many are actually at zero.
-  const countOf = function (rows, st) { return rows.filter(function (r) { return r.status === st; }).length; };
-  const inactiveCount = function (master, config) {
-    return (master || []).filter(function (m) { return !isActiveValue(m.Active); }).length;
-  };
-  const healthSub = function (rows, master, config) {
-    const parts = [
-      '<span class="sub-ok">' + countOf(rows, 'OK') + ' OK</span>',
-      '<span class="sub-low">' + countOf(rows, 'Low') + ' low</span>',
-      '<span class="sub-critical">' + countOf(rows, 'Critical') + ' critical</span>'
-    ];
-    const na = countOf(rows, 'No Activity');
-    if (na) parts.push('<span class="sub-muted">' + na + ' no activity</span>');
-    const inact = inactiveCount(master, config);
-    if (inact) parts.push('<span class="sub-muted">' + inact + ' inactive</span>');
-    return parts.join('<span class="sub-sep">·</span>');
-  };
-  const alertSub = function (rows) {
-    const crit = countOf(rows, 'Critical'); const low = countOf(rows, 'Low');
-    if (crit + low === 0) return '<span class="sub-ok">All items above minimum</span>';
-    return '<span class="sub-critical">' + crit + ' critical</span><span class="sub-sep">·</span><span class="sub-low">' + low + ' low</span>';
-  };
-  document.getElementById('statRmSub').innerHTML = healthSub(rmRows, state.rmMaster, RM_CONFIG_UI);
-  document.getElementById('statFgSub').innerHTML = healthSub(fgRows, state.fgMaster, FG_CONFIG_UI);
-  document.getElementById('statRmAlertsSub').innerHTML = alertSub(rmRows);
-  document.getElementById('statFgAlertsSub').innerHTML = alertSub(fgRows);
+// ---- the data -------------------------------------------------------------
 
-  // Render Charts (lazy-loaded — only fetched when Overview is shown)
-  ensureChartJs().then(function () {
-    document.getElementById('dashboardCharts').classList.remove('hidden');
-    renderCharts(rmRows, fgRows);
-  }).catch(function () { /* charts are optional */ });
-
-  // Render Alert Cards
-  const tradeAlerts = mergeStock(state.tradeMaster, state.tradeStock, TRADE_CONFIG_UI, false).filter(function (r) { return r.status === 'Critical' || r.status === 'Low'; });
-  const all = rmAlerts.map(function (r) { return Object.assign({}, r, { type: 'RM', key: 'rm' }); }).concat(fgAlerts.map(function (r) { return Object.assign({}, r, { type: 'FG', key: 'fg' }); })).concat(tradeAlerts.map(function (r) { return Object.assign({}, r, { type: 'Trade', key: 'trade' }); })).sort(function (a, b) { return (a.status === 'Critical' ? 0 : 1) - (b.status === 'Critical' ? 0 : 1); }).slice(0, 25);
-  const listEl = document.getElementById('alertsList');
-  
-  if (all.length === 0) {
-    listEl.className = ''; listEl.innerHTML = '<div class="empty-state"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 12.5l2.2 2.2L15.5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>No low-stock alerts right now.</div>';
-  } else {
-    listEl.className = 'alerts-grid';
-    listEl.innerHTML = all.slice(0, ALERT_CARD_LIMIT).map(function (r) {
-      const pctRaw = r.reorder > 0 ? (r.balance / r.reorder) * 100 : 0;
-      const pct = Math.round(pctRaw); const barWidth = Math.min(Math.max(pct, 2), 100);
-      const cardClass = r.status === 'Critical' ? 'alert-card-critical' : 'alert-card-low';
-      
-      return '<div class="alert-card ' + cardClass + '" data-code="' + escapeHtml(r.code) + '" data-key="' + r.key + '">' +
-        '<div class="alert-card-header"><div class="alert-card-name">' + escapeHtml(r.name || r.code) + '</div><span class="status status-' + statusClass(r.status) + '">' + statusIcon(statusClass(r.status)) + escapeHtml(r.status) + '</span></div>' +
-        '<div class="alert-card-sub"><span class="tag">' + r.type + '</span> <span class="mono">' + escapeHtml(r.code) + '</span></div>' +
-        '<div class="alert-card-metrics"><div><span class="alert-card-val">' + formatQty(r.balance) + '</span> <span class="alert-card-unit">' + escapeHtml(r.unit) + '</span></div><div class="alert-card-pct">' + pct + '% of Min</div></div>' +
-        '<div class="alert-card-bar-bg"><div class="alert-card-bar-fill" style="width: ' + barWidth + '%;"></div></div>' +
-      '</div>';
-    }).join('') + (all.length > ALERT_CARD_LIMIT
-      ? '<div class="muted" style="grid-column:1/-1;padding:8px 2px">Showing the ' + ALERT_CARD_LIMIT + ' most urgent of ' + all.length +
-        '. Filter a stock page by status to see the rest.</div>'
-      : '');
-  }
+function dashMoves(kind) {
+  const full = ledgerComplete[kind];
+  return full && Array.isArray(full.rows) ? full.rows : null;
+}
+function realMove(m) { return !m.reversalOf && !m.reversedBy && m.ts > 0; }
+function moveIsOut(config, m) {
+  if ((config.outTypes || []).indexOf(m.type) > -1) return m.qty > 0;
+  return m.qty < 0; // an adjustment down, or a negative correction
 }
 
-function renderCharts(rmRows, fgRows) {
-  const textColor = state.isDarkMode ? '#a9afba' : '#5c6570';
-  Chart.defaults.color = textColor;
-  Chart.defaults.font.family = "'IBM Plex Sans', system-ui, sans-serif";
+// The last day each item actually moved, from its history.
+const _lastMoveCache = {};
+function dashLastMoves(kind) {
+  const rows = dashMoves(kind);
+  if (!rows) return null;
+  const c = _lastMoveCache[kind];
+  if (c && c.rows === rows && c.n === rows.length) return c.map;
+  const map = {};
+  rows.forEach(function (m) { if (realMove(m) && (!map[m.code] || m.ts > map[m.code])) map[m.code] = m.ts; });
+  _lastMoveCache[kind] = { rows: rows, n: rows.length, map: map };
+  return map;
+}
 
-  const STATUS_LABELS = ['OK', 'Low', 'Critical', 'No Activity'];
-  const countByStatus = (rows) => {
-    let counts = { 'OK': 0, 'Low': 0, 'Critical': 0, 'No Activity': 0 };
-    rows.forEach(r => { if(counts[r.status] !== undefined) counts[r.status]++; });
-    return [counts['OK'], counts['Low'], counts['Critical'], counts['No Activity']];
+// Active items of one ledger, with cost, value and last movement beside the balance.
+function dashItems(kind) {
+  const config = uiConfig(kind);
+  const master = state[config.masterKey] || [], stock = state[config.stockKey] || [];
+  const cost = {}, last = {};
+  master.forEach(function (m) {
+    const c = Number(m.StandardCost);
+    if (m.StandardCost !== '' && m.StandardCost !== null && m.StandardCost !== undefined && c > 0) cost[m[config.codeField]] = c;
+  });
+  stock.forEach(function (s) { const t = s.LastUpdated ? new Date(s.LastUpdated).getTime() : 0; if (t > 0) last[s[config.codeField]] = t; });
+  const moved = dashLastMoves(kind);
+  return mergeStock(master, stock, config, false).map(function (r) {
+    const c = cost[r.code];
+    return Object.assign({}, r, {
+      kind: kind, cost: c === undefined ? null : c,
+      value: c === undefined ? null : Math.max(0, r.balance) * c,
+      lastMove: (moved ? moved[r.code] : 0) || last[r.code] || 0
+    });
+  });
+}
+function dashIdleItems(all) {
+  const cut = Date.now() - IDLE_DAYS * DAY_MS;
+  return all.filter(function (r) { return r.balance > 0 && (!r.lastMove || r.lastMove < cut); });
+}
+
+// Everything the period needs, in one pass over each ledger.
+function dashMoveStats(kinds, moves) {
+  const step = dash.days > 30 ? 7 : 1;
+  const nb = Math.ceil(dash.days / step);
+  const end = dayStart(Date.now()) + DAY_MS;
+  const start = end - nb * step * DAY_MS;
+  const prevStart = start - nb * step * DAY_MS;
+  const buckets = [];
+  for (let i = 0; i < nb; i++) buckets.push({ start: start + i * step * DAY_MS, end: start + (i + 1) * step * DAY_MS, counts: {} });
+  const out = { buckets: buckets, step: step, entries: 0, prevEntries: 0, ins: 0, outs: 0, perKind: {}, depts: {}, items: {} };
+  kinds.forEach(function (k) {
+    const config = uiConfig(k);
+    const pk = out.perKind[k] = { entries: 0, ins: 0, outs: 0, last: 0 };
+    (moves[k] || []).forEach(function (m) {
+      if (!realMove(m)) return;
+      if (m.ts > pk.last && m.ts < end) pk.last = m.ts;
+      if (m.ts >= prevStart && m.ts < start) { out.prevEntries++; return; }
+      if (m.ts < start || m.ts >= end) return;
+      const isOut = moveIsOut(config, m);
+      out.entries++; pk.entries++;
+      if (isOut) { out.outs++; pk.outs++; } else { out.ins++; pk.ins++; }
+      const b = buckets[Math.floor((m.ts - start) / (step * DAY_MS))];
+      if (b) b.counts[k] = (b.counts[k] || 0) + 1;
+      if (!isOut) return;
+      const dn = m.department || 'No department';
+      const d = out.depts[dn] || (out.depts[dn] = { name: dn, entries: 0 });
+      d.entries++;
+      const key = k + '|' + m.code;
+      const it = out.items[key] || (out.items[key] = { kind: k, code: m.code, name: m.name, unit: m.unit, entries: 0, qty: 0 });
+      it.entries++; it.qty += Math.abs(m.qty);
+    });
+  });
+  return out;
+}
+
+// ---- rendering ------------------------------------------------------------
+
+function renderHome() {
+  if (!document.getElementById('dbKpis')) return;
+  syncDashControls();
+  const kinds = dashKinds();
+  const items = {}, moves = {};
+  let ready = true;
+  kinds.forEach(function (k) {
+    items[k] = dashItems(k);
+    const m = dashMoves(k);
+    if (!m) ready = false;
+    moves[k] = m || [];
+  });
+  const all = kinds.reduce(function (a, k) { return a.concat(items[k]); }, []);
+  const stats = dashMoveStats(kinds, moves);
+  const subtitle = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
+    ' · stock updated ' + timeAgo(state.rmLastUpdated);
+  document.getElementById('dbSubtitle').textContent = subtitle;
+  renderDashKpis(kinds, items, all, stats, ready);
+  renderDashLedgers(kinds, items, stats, ready);
+  renderDashActivity(kinds, stats, ready);
+  renderDashDepts(stats, ready);
+  renderDashMovers(kinds, items, stats, ready);
+  renderDashAttention(kinds, all);
+  renderDashRecent(kinds, moves, ready);
+  renderDashIdle(all, ready);
+}
+
+function syncDashControls() {
+  document.querySelectorAll('#dbScope [data-scope]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.scope === dash.scope); b.setAttribute('aria-pressed', b.dataset.scope === dash.scope ? 'true' : 'false'); });
+  document.querySelectorAll('#dbPeriod [data-days]').forEach(function (b) { const on = Number(b.dataset.days) === dash.days; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+}
+
+// While the first load is on its way.
+function setStatsLoading() {
+  const el = document.getElementById('dbKpis');
+  if (!el) return;
+  el.innerHTML = [0, 1, 2, 3].map(function () { return '<div class="kpi"><div class="kpi-label"><span class="kpi-icon"></span><span class="db-skel" style="width:110px;height:12px"></span></div><div class="kpi-value"><span class="db-skel"></span></div></div>'; }).join('');
+}
+
+const DB_ICONS = {
+  value: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 3h8M4 6h8M9.5 13 5 8.5h1.5a3 3 0 0 0 0-5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  items: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1.8 14 4.8v6.4L8 14.2 2 11.2V4.8L8 1.8Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2.3 5 8 7.9 13.7 5M8 7.9v6.1" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+  alert: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2.5 14.5 13.5H1.5L8 2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="11.4" r="0.9" fill="currentColor"/></svg>',
+  activity: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M1.5 8.5h3l2-5 3 9 2-4h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  idle: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5.5v3l2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+function kpiHtml(o) {
+  return '<div class="kpi' + (o.go ? ' clickable' : '') + '"' + (o.go ? ' role="button" tabindex="0" data-go="' + o.go + '"' : '') + (o.title ? ' title="' + escapeHtml(o.title) + '"' : '') + '>' +
+    '<div class="kpi-label"><span class="kpi-icon' + (o.tone ? ' is-' + o.tone : '') + '">' + o.icon + '</span>' + escapeHtml(o.label) + '</div>' +
+    '<div class="kpi-value">' + o.value + '</div>' +
+    '<div class="kpi-sub">' + (o.sub || '') + '</div>' + (o.extra || '') + '</div>';
+}
+
+// One whole split by ledger: a thin bar, with the shares written out beside it.
+function mixBar(parts) {
+  const total = parts.reduce(function (s, p) { return s + p.v; }, 0);
+  if (!total) return '';
+  const pct = function (p) { return Math.round(p.v / total * 100); };
+  return '<div class="kpi-mix" aria-hidden="true">' + parts.filter(function (p) { return p.v > 0; }).map(function (p) {
+    return '<span style="flex:' + p.v + ';background:' + seriesColor(p.kind) + '" title="' + uiConfig(p.kind).label + ' ' + pct(p) + '%"></span>';
+  }).join('') + '</div><div class="kpi-mix-legend">' + parts.map(function (p) {
+    return '<span><i style="background:' + seriesColor(p.kind) + '"></i>' + uiConfig(p.kind).label + ' ' + pct(p) + '%</span>';
+  }).join('') + '</div>';
+}
+
+function sparkline(vals) {
+  if (vals.length < 2) return '';
+  const w = 96, h = 30, max = Math.max.apply(null, vals) || 1;
+  const pts = vals.map(function (v, i) { return [2 + (i / (vals.length - 1)) * (w - 6), h - 4 - (v / max) * (h - 9)]; });
+  const d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+  const last = pts[pts.length - 1];
+  return '<svg class="kpi-spark" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><path d="' + d + '" fill="none" style="stroke:var(--ink-faint)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+    '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="4" style="fill:var(--copper);stroke:var(--panel)" stroke-width="2"/></svg>';
+}
+
+function renderDashKpis(kinds, items, all, stats, ready) {
+  const costs = canSeeCosts();
+  const cards = [];
+  if (costs) {
+    const total = all.reduce(function (s, r) { return s + (r.value || 0); }, 0);
+    const missing = all.filter(function (r) { return r.cost === null && r.balance > 0; }).length;
+    cards.push(kpiHtml({
+      icon: DB_ICONS.value, label: 'Stock value', value: compactINR(total), title: '₹' + Math.round(total).toLocaleString('en-IN') + ' at standard cost', go: 'stock',
+      sub: missing ? plural(missing, 'item') + ' in stock with no standard cost' : 'At standard cost',
+      extra: kinds.length > 1 ? mixBar(kinds.map(function (k) { return { kind: k, v: items[k].reduce(function (s, r) { return s + (r.value || 0); }, 0) }; })) : ''
+    }));
+  } else {
+    cards.push(kpiHtml({
+      icon: DB_ICONS.items, label: 'Active items', value: formatNum(all.length), go: 'stock',
+      sub: kinds.length > 1 ? kinds.map(function (k) { return formatNum(items[k].length) + ' ' + uiConfig(k).label; }).join(' · ') : 'In ' + uiConfig(kinds[0]).label,
+      extra: kinds.length > 1 ? mixBar(kinds.map(function (k) { return { kind: k, v: items[k].length }; })) : ''
+    }));
+  }
+
+  const attention = all.filter(function (r) { return r.status === 'Low' || r.status === 'Critical'; });
+  const crit = attention.filter(function (r) { return r.status === 'Critical'; }).length;
+  cards.push(kpiHtml({
+    icon: DB_ICONS.alert, tone: attention.length ? 'warn' : 'ok', label: 'Needs attention', value: formatNum(attention.length), go: 'attention',
+    sub: attention.length
+      ? '<span class="' + (crit ? 'sub-critical' : 'sub-zero') + '">' + formatNum(crit) + ' critical</span> · <span class="' + (attention.length - crit ? 'sub-low' : 'sub-zero') + '">' + formatNum(attention.length - crit) + ' low</span>'
+      : '<span class="sub-ok">Every item is above its minimum</span>'
+  }));
+
+  if (ready) {
+    const delta = stats.prevEntries ? Math.round((stats.entries - stats.prevEntries) / stats.prevEntries * 100) : null;
+    cards.push(kpiHtml({
+      icon: DB_ICONS.activity, label: 'Entries, last ' + dash.days + ' days', value: formatNum(stats.entries), go: 'activity',
+      sub: formatNum(stats.ins) + ' in · ' + formatNum(stats.outs) + ' out' +
+        (delta === null ? '' : '<br><span class="kpi-delta">' + (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta) + '% on the previous ' + dash.days + ' days</span>'),
+      extra: sparkline(stats.buckets.map(function (b) { return kinds.reduce(function (s, k) { return s + (b.counts[k] || 0); }, 0); }))
+    }));
+  } else {
+    cards.push(kpiHtml({ icon: DB_ICONS.activity, label: 'Entries, last ' + dash.days + ' days', value: '<span class="db-skel"></span>', sub: 'Loading history…' }));
+  }
+
+  const idle = dashIdleItems(all);
+  const idleValue = idle.reduce(function (s, r) { return s + (r.value || 0); }, 0);
+  cards.push(kpiHtml({
+    icon: DB_ICONS.idle, label: 'No movement in ' + IDLE_DAYS + '+ days', value: formatNum(idle.length), go: 'idle',
+    sub: costs && idleValue ? compactINR(idleValue) + ' tied up in stock' : (idle.length === 1 ? 'item still in stock' : 'items still in stock')
+  }));
+  document.getElementById('dbKpis').innerHTML = cards.join('');
+}
+
+function renderDashLedgers(kinds, items, stats, ready) {
+  const costs = canSeeCosts();
+  const STATES = [['OK', 'ok', 'OK'], ['Low', 'low', 'low'], ['Critical', 'critical', 'critical'], ['No Activity', 'none', 'no activity']];
+  document.getElementById('dbLedgers').innerHTML = kinds.map(function (k) {
+    const rows = items[k];
+    const n = { OK: 0, Low: 0, Critical: 0, 'No Activity': 0 };
+    rows.forEach(function (r) { if (n[r.status] !== undefined) n[r.status]++; });
+    const value = rows.reduce(function (s, r) { return s + (r.value || 0); }, 0);
+    const bar = STATES.filter(function (s) { return n[s[0]] > 0; }).map(function (s) {
+      return '<span class="hb-' + s[1] + '" style="flex:' + n[s[0]] + '" title="' + s[0] + ': ' + n[s[0]] + '"></span>';
+    }).join('') || '<span class="hb-none" style="flex:1"></span>';
+    const counts = STATES.filter(function (s) { return n[s[0]] > 0 || s[0] !== 'No Activity'; }).map(function (s) {
+      return '<span><i class="hb-' + s[1] + '"></i><b>' + formatNum(n[s[0]]) + '</b> ' + s[2] + '</span>';
+    }).join('');
+    const pk = stats.perKind[k];
+    const foot = ready && pk
+      ? formatNum(pk.ins) + ' in · ' + formatNum(pk.outs) + ' out in ' + dash.days + ' days · last entry ' + daysAgoText(pk.last)
+      : 'Loading history…';
+    return '<button type="button" class="db-ledger" data-go-kind="' + k + '">' +
+      '<span class="db-ledger-name"><i style="background:' + seriesColor(k) + '"></i>' + escapeHtml(uiConfig(k).label) + '<small>' + plural(rows.length, 'item') + '</small></span>' +
+      '<span class="db-ledger-val">' + (costs ? compactINR(value) : '') + '</span>' +
+      '<span class="health-bar" aria-hidden="true">' + bar + '</span>' +
+      '<span class="db-ledger-counts">' + counts + '</span>' +
+      '<span class="db-ledger-foot">' + foot + '</span></button>';
+  }).join('');
+}
+
+function niceTicks(max, count) {
+  const raw = max / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 5, 10].map(function (f) { return f * mag; }).find(function (s) { return s >= raw; }) || mag * 10;
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const ticks = [];
+  for (let v = 0; v <= top + step / 2; v += step) ticks.push(Math.round(v));
+  return ticks;
+}
+function roundTopPath(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h));
+  return 'M' + x + ',' + (y + h) + 'V' + (y + r) + 'Q' + x + ',' + y + ' ' + (x + r) + ',' + y + 'H' + (x + w - r) +
+    'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h) + 'Z';
+}
+function bucketLabel(b, step) {
+  return step > 1 ? shortDay(b.start) + ' – ' + shortDay(b.end - DAY_MS) : new Date(b.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function renderDashActivity(kinds, stats, ready) {
+  const multi = kinds.length > 1;
+  document.getElementById('dbActivitySub').textContent = 'Entries per ' + (stats.step > 1 ? 'week' : 'day') + ', last ' + dash.days + ' days' +
+    (multi ? ', by ledger' : ' · ' + uiConfig(kinds[0]).label);
+  document.getElementById('dbActivityLegend').innerHTML = multi
+    ? kinds.map(function (k) { return '<span><i style="background:' + seriesColor(k) + '"></i>' + escapeHtml(uiConfig(k).label) + '</span>'; }).join('')
+    : '';
+  const el = document.getElementById('dbActivity');
+  if (!ready) { el.innerHTML = dashLoadingHtml(); return; }
+  drawStackedColumns(el, stats.buckets, kinds, stats.step);
+}
+
+// Columns stacked by ledger: thin marks, a 2px surface gap between segments,
+// a rounded data end, hairline grid, and a tooltip per column.
+function drawStackedColumns(el, buckets, kinds, step) {
+  const W = Math.round(el.clientWidth), H = Math.round(el.clientHeight) || 250;
+  if (!W) return;
+  const totals = buckets.map(function (b) { return kinds.reduce(function (s, k) { return s + (b.counts[k] || 0); }, 0); });
+  const maxT = Math.max.apply(null, totals.concat([0]));
+  if (!maxT) { el.innerHTML = '<div class="db-loading">No entries in this period.</div>'; return; }
+  const ticks = niceTicks(maxT, 4), top = ticks[ticks.length - 1];
+  const m = { l: 36, r: 6, t: 10, b: 26 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const band = iw / buckets.length;
+  const bw = Math.max(3, Math.min(24, band * 0.62));
+  const y = function (v) { return m.t + ih - (v / top) * ih; };
+  let s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Entries per ' + (step > 1 ? 'week' : 'day') + '">';
+  s += '<rect class="db-hover" x="0" y="' + m.t + '" width="' + band.toFixed(1) + '" height="' + ih + '" rx="6" style="opacity:0"/>';
+  ticks.forEach(function (t) {
+    const yy = Math.round(y(t)) + 0.5;
+    s += '<line class="db-grid-line" x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + yy + '" y2="' + yy + '"/>' +
+      '<text class="db-axis" x="' + (m.l - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + compactNum(t) + '</text>';
+  });
+  buckets.forEach(function (b, i) {
+    const x = m.l + band * i + (band - bw) / 2;
+    const segs = kinds.filter(function (k) { return b.counts[k]; });
+    let base = 0;
+    segs.forEach(function (k, j) {
+      const v = b.counts[k];
+      const y1 = y(base + v), y0 = y(base);
+      const gap = j > 0 ? 2 : 0;
+      const hh = Math.max(1, y0 - y1 - gap);
+      const style = ' style="fill:' + seriesColor(k) + '"';
+      s += j === segs.length - 1
+        ? '<path d="' + roundTopPath(+x.toFixed(1), +y1.toFixed(1), +bw.toFixed(1), +hh.toFixed(1), 4) + '"' + style + '/>'
+        : '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '"' + style + '/>';
+      base += v;
+    });
+  });
+  const every = Math.max(1, Math.ceil(buckets.length / Math.max(2, Math.floor(iw / 64))));
+  buckets.forEach(function (b, i) {
+    if ((buckets.length - 1 - i) % every) return; // count back from today, so today is always labelled
+    s += '<text class="db-axis" x="' + (m.l + band * i + band / 2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + shortDay(b.start) + '</text>';
+  });
+  s += '</svg><div class="db-tip hidden"></div>';
+  el.innerHTML = s;
+
+  const svg = el.querySelector('svg'), tip = el.querySelector('.db-tip'), hl = el.querySelector('.db-hover');
+  const hide = function () { tip.classList.add('hidden'); hl.style.opacity = 0; };
+  const show = function (clientX) {
+    const i = Math.floor((clientX - svg.getBoundingClientRect().left - m.l) / band);
+    if (i < 0 || i >= buckets.length) return hide();
+    const b = buckets[i];
+    hl.setAttribute('x', (m.l + band * i).toFixed(1));
+    hl.style.opacity = 1;
+    tip.innerHTML = '<b>' + bucketLabel(b, step) + '</b>' + kinds.map(function (k) {
+      return '<div><span style="font-weight:500"><i style="background:' + seriesColor(k) + '"></i>' + escapeHtml(uiConfig(k).label) + '</span><span>' + formatNum(b.counts[k] || 0) + '</span></div>';
+    }).join('') + (kinds.length > 1 ? '<div class="tt-total"><span style="font-weight:500">Total</span><span>' + formatNum(totals[i]) + '</span></div>' : '');
+    tip.classList.remove('hidden');
+    const cx = m.l + band * i + band / 2;
+    tip.style.left = Math.min(Math.max(cx, 80), W - 80) + 'px';
+    tip.style.top = Math.max(y(totals[i]) - 10, 40) + 'px';
   };
+  svg.addEventListener('mousemove', function (e) { show(e.clientX); });
+  svg.addEventListener('mouseleave', hide);
+  svg.addEventListener('touchstart', function (e) { if (e.touches[0]) show(e.touches[0].clientX); }, { passive: true });
+}
 
-  const rmData = countByStatus(rmRows); const fgData = countByStatus(fgRows);
-  const chartConfig = (dataArr) => {
-    const total = dataArr.reduce(function (a, b) { return a + b; }, 0);
-    return {
-      type: 'doughnut',
-      data: {
-        // Counts live in the legend label itself rather than only in the
-        // hover tooltip — the donut is read at a glance and on a touch
-        // screen there is no hover to reveal them.
-        labels: STATUS_LABELS.map(function (l, i) { return l + '  ' + dataArr[i]; }),
-        datasets: [{
-          data: dataArr,
-          backgroundColor: ['rgba(63, 158, 115, 0.85)', 'rgba(201, 154, 62, 0.85)', 'rgba(217, 80, 58, 0.85)', 'rgba(107, 114, 128, 0.3)'],
-          borderWidth: 0, hoverOffset: 4
-        }]
-      },
-      options: {
-        maintainAspectRatio: false, cutout: '75%',
-        plugins: {
-          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11, weight: '600' } } },
-          tooltip: { callbacks: { label: function (ctx) {
-            const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
-            return ' ' + STATUS_LABELS[ctx.dataIndex] + ': ' + ctx.parsed + ' item' + (ctx.parsed === 1 ? '' : 's') + ' (' + pct + '%)';
-          } } }
-        }
-      }
-    };
-  };
+function renderDashDepts(stats, ready) {
+  document.getElementById('dbDeptsSub').textContent = 'Out entries by department, last ' + dash.days + ' days';
+  const el = document.getElementById('dbDepts');
+  if (!ready) { el.innerHTML = dashLoadingHtml(); return; }
+  const list = Object.keys(stats.depts).map(function (k) { return stats.depts[k]; }).sort(function (a, b) { return b.entries - a.entries; });
+  if (!list.length) { el.innerHTML = '<div class="db-loading">Nothing went out in this period.</div>'; return; }
+  const top = list.slice(0, 8), max = top[0].entries;
+  el.innerHTML = '<div class="hbars">' + top.map(function (d) {
+    return '<div class="hbar" title="' + escapeHtml(d.name) + ': ' + plural(d.entries, 'entry', 'entries') + '">' +
+      '<span class="hbar-label">' + escapeHtml(d.name) + '</span>' +
+      '<span class="hbar-track"><span class="hbar-fill" style="width:' + Math.max(1.5, d.entries / max * 100).toFixed(1) + '%"></span></span>' +
+      '<span class="hbar-val">' + formatNum(d.entries) + '</span></div>';
+  }).join('') + '</div>' + (list.length > top.length ? '<div class="db-note">and ' + (list.length - top.length) + ' more</div>' : '');
+}
 
-  if (rmChartInstance) rmChartInstance.destroy();
-  if (fgChartInstance) fgChartInstance.destroy();
-  rmChartInstance = new Chart(document.getElementById('rmChart'), chartConfig(rmData));
-  fgChartInstance = new Chart(document.getElementById('fgChart'), chartConfig(fgData));
+function coverText(days) {
+  if (days === null) return '—';
+  if (days < 1) return '< 1 day';
+  if (days > 365) return '1 year +';
+  return Math.round(days) + ' days';
+}
+
+function renderDashMovers(kinds, items, stats, ready) {
+  document.getElementById('dbMoversSub').textContent = 'Most out entries in the last ' + dash.days + ' days, and how long the stock on hand lasts at that rate';
+  const el = document.getElementById('dbMovers');
+  if (!ready) { el.innerHTML = dashLoadingHtml(); return; }
+  const byKey = {};
+  kinds.forEach(function (k) { items[k].forEach(function (r) { byKey[k + '|' + r.code] = r; }); });
+  const list = Object.keys(stats.items).map(function (k) { return stats.items[k]; })
+    .sort(function (a, b) { return b.entries - a.entries || b.qty - a.qty; }).slice(0, 8);
+  if (!list.length) { el.innerHTML = '<div class="db-loading">Nothing went out in this period.</div>'; return; }
+  el.innerHTML = '<div class="db-list">' +
+    '<div class="db-row db-row-head movers-grid"><span>Item</span><span class="hide-sm">Ledger</span><span class="num">Out</span><span class="num hide-sm">On hand</span><span class="num">Lasts</span></div>' +
+    list.map(function (m) {
+      const it = byKey[m.kind + '|' + m.code];
+      const unit = (it && it.unit) || m.unit || '';
+      const perDay = m.qty / dash.days;
+      const cover = it && perDay > 0 ? Math.max(0, it.balance) / perDay : null;
+      return '<div class="db-row movers-grid" data-kind="' + m.kind + '" data-code="' + escapeHtml(m.code) + '" data-open="history" title="Open history">' +
+        '<span class="nm"><span>' + escapeHtml(m.name || (it && it.name) || m.code) + '</span><small>' + escapeHtml(m.code) + '</small></span>' +
+        '<span class="hide-sm">' + ledgerChip(m.kind) + '</span>' +
+        '<span class="num">' + qtyWithUnit(m.qty, unit) + '<small>' + plural(m.entries, 'entry', 'entries') + '</small></span>' +
+        '<span class="num hide-sm">' + (it ? qtyWithUnit(it.balance, unit) : '—') + '</span>' +
+        '<span class="num' + (cover !== null && cover < 7 ? ' cover-low' : '') + '">' + coverText(cover) + '</span></div>';
+    }).join('') + '</div>';
+}
+
+function renderDashAttention(kinds, all) {
+  const list = all.filter(function (r) { return r.status === 'Critical' || r.status === 'Low'; })
+    .sort(function (a, b) { return healthSortKey_(a) - healthSortKey_(b); });
+  document.getElementById('dbAttentionLinks').innerHTML = kinds.map(function (k) {
+    const n = list.filter(function (r) { return r.kind === k; }).length;
+    return n ? '<button type="button" data-att-kind="' + k + '" title="Show them on the ' + uiConfig(k).label + ' stock page"><i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:' + seriesColor(k) + '"></i>' + uiConfig(k).label + ' ' + formatNum(n) + '</button>' : '';
+  }).join('');
+  const el = document.getElementById('dbAttention');
+  if (!list.length) { el.innerHTML = '<div class="db-allclear">✓ Every item is above its minimum quantity.</div>'; return; }
+  const shown = list.slice(0, 8);
+  el.innerHTML = '<div class="db-list">' +
+    '<div class="db-row db-row-head att-grid"><span class="a-status">Status</span><span class="a-name">Item</span><span class="a-meter">On hand vs minimum</span><span class="a-post"></span></div>' +
+    shown.map(function (r) {
+      const sc = statusClass(r.status);
+      const pct = r.reorder > 0 ? Math.max(0, Math.min(100, r.balance / r.reorder * 100)) : 0;
+      const canPost = can(uiConfig(r.kind).postPerm);
+      return '<div class="db-row att-grid" data-kind="' + r.kind + '" data-code="' + escapeHtml(r.code) + '" data-open="' + (canPost ? 'post' : 'history') + '">' +
+        '<span class="a-status hide-sm"><span class="status status-' + sc + '">' + statusIcon(sc) + escapeHtml(r.status) + '</span></span>' +
+        '<span class="a-name nm"><span>' + escapeHtml(r.name || r.code) + '</span><small>' + escapeHtml(r.code) + ' · ' + escapeHtml(uiConfig(r.kind).label) + '</small></span>' +
+        '<span class="a-meter"><span class="meter"><span class="meter-fill meter-' + sc + '" style="width:' + pct.toFixed(1) + '%"></span></span>' +
+        '<small>' + qtyWithUnit(r.balance, r.unit) + ' of ' + formatQty(r.reorder) + ' minimum</small></span>' +
+        '<span class="a-post">' + (canPost ? '<button type="button" class="btn-ghost btn-compact" data-open="post">Post</button>' : '') + '</span></div>';
+    }).join('') + '</div>' +
+    (list.length > shown.length ? '<div class="db-note">Showing the ' + shown.length + ' most urgent of ' + formatNum(list.length) + '. Use the buttons above to see each ledger’s list.</div>' : '');
+}
+
+function renderDashRecent(kinds, moves, ready) {
+  const el = document.getElementById('dbRecent');
+  if (!ready) { el.innerHTML = dashLoadingHtml(); return; }
+  const list = [];
+  kinds.forEach(function (k) { (moves[k] || []).forEach(function (m) { if (m.ts > 0) list.push({ k: k, m: m }); }); });
+  list.sort(function (a, b) { return b.m.ts - a.m.ts || (b.m.row || 0) - (a.m.row || 0); });
+  if (!list.length) { el.innerHTML = '<div class="db-loading">No entries yet.</div>'; return; }
+  el.innerHTML = '<div class="db-list">' + list.slice(0, 8).map(function (x) {
+    const m = x.m, config = uiConfig(x.k);
+    const out = moveIsOut(config, m);
+    const tag = m.reversalOf ? ' · reversal' : (m.reversedBy ? ' · reversed' : '');
+    return '<div class="db-row recent-grid" data-kind="' + x.k + '" data-code="' + escapeHtml(m.code) + '" data-open="history" title="Open history">' +
+      '<span class="txn-pill txn-type-' + escapeHtml(typeSlug(m.type)) + '">' + escapeHtml(pillLabel(m.type)) + '</span>' +
+      '<span class="nm"><span>' + escapeHtml(m.name || m.code) + '</span></span>' +
+      '<span class="num" style="font-weight:600">' + (out ? '−' : '+') + qtyWithUnit(Math.abs(m.qty), m.unit) + '</span>' +
+      '<span class="meta">' + escapeHtml(config.label) + ' · ' + escapeHtml(m.department || '—') + ' · ' + escapeHtml(m.enteredBy || '—') + ' · ' + escapeHtml(m.dateText || '') + tag + '</span></div>';
+  }).join('') + '</div>';
+}
+
+function renderDashIdle(all, ready) {
+  const costs = canSeeCosts();
+  document.getElementById('dbIdleSub').textContent = 'Items with stock on hand and no movement in ' + IDLE_DAYS + ' days or more' +
+    (costs ? ', highest value first' : ', longest idle first') + (ready ? '' : ' (from the stock sheet until the history loads)');
+  const el = document.getElementById('dbIdle');
+  const list = dashIdleItems(all).sort(function (a, b) {
+    return costs ? ((b.value || 0) - (a.value || 0) || (a.lastMove || 0) - (b.lastMove || 0)) : ((a.lastMove || 0) - (b.lastMove || 0));
+  });
+  if (!list.length) { el.innerHTML = '<div class="db-allclear">✓ Everything in stock has moved in the last ' + IDLE_DAYS + ' days.</div>'; return; }
+  const shown = list.slice(0, 10);
+  const value = list.reduce(function (s, r) { return s + (r.value || 0); }, 0);
+  el.innerHTML = '<div class="db-list">' +
+    '<div class="db-row db-row-head idle-grid"><span>Item</span><span class="hide-sm">Ledger</span><span class="num">On hand</span><span class="num">Last movement</span><span class="num hide-sm">' + (costs ? 'Value' : 'Minimum') + '</span></div>' +
+    shown.map(function (r) {
+      return '<div class="db-row idle-grid" data-kind="' + r.kind + '" data-code="' + escapeHtml(r.code) + '" data-open="history" title="Open history">' +
+        '<span class="nm"><span>' + escapeHtml(r.name || r.code) + '</span><small>' + escapeHtml(r.code) + '</small></span>' +
+        '<span class="hide-sm">' + ledgerChip(r.kind) + '</span>' +
+        '<span class="num">' + qtyWithUnit(r.balance, r.unit) + '</span>' +
+        '<span class="num">' + (r.lastMove ? shortDay(r.lastMove) + '<small>' + daysAgoText(r.lastMove) + '</small>' : 'Never<small>opening stock only</small>') + '</span>' +
+        '<span class="num hide-sm">' + (costs ? (r.value !== null ? compactINR(r.value) : '—') : (r.reorder ? formatQty(r.reorder) : '—')) + '</span></div>';
+    }).join('') + '</div>' +
+    '<div class="db-total"><span>' + plural(list.length, 'item') + ' idle' + (list.length > shown.length ? ' · showing ' + shown.length : '') + '</span>' +
+    (costs ? '<span>Tied up: <b>' + compactINR(value) + '</b></span>' : '') + '</div>';
+}
+
+// ---- events ---------------------------------------------------------------
+
+function dashGo(where) {
+  const kinds = dashKinds();
+  if (where === 'stock') return navigateTo(kinds[0]);
+  if (where === 'attention') return kinds.length === 1 ? goToStockTab(kinds[0], 'NeedsAttention') : scrollToDashCard('dbAttentionCard');
+  if (where === 'idle') return scrollToDashCard('dbIdleCard');
+  if (where === 'activity') return navigateTo('ledger', kinds.length === 1 ? kinds[0] : state.ledgerKind);
+}
+function scrollToDashCard(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: REDUCE_MOTION ? 'auto' : 'smooth', block: 'start' });
+}
+
+// While the history loads, or after it failed to (the refresh button retries).
+const dashHistoryFailed = {};
+function dashLoadingHtml() {
+  const failed = dashKinds().some(function (k) { return dashHistoryFailed[k] && !dashMoves(k); });
+  return '<div class="db-loading">' + (failed ? 'Couldn\u2019t load the movement history. Press \u21bb above to try again.' : 'Loading movement history\u2026') + '</div>';
+}
+function dashLedgerFailed(kind) { dashHistoryFailed[kind] = true; dashLedgerArrived(); }
+
+// The history behind the movement cards has arrived (or been refreshed).
+let _dashRedrawTimer = null;
+function dashLedgerArrived() {
+  clearTimeout(_dashRedrawTimer);
+  _dashRedrawTimer = setTimeout(function () {
+    const page = document.getElementById('page-home');
+    if (page && !page.classList.contains('hidden')) renderHome();
+  }, 150);
+}
+
+// A just-posted entry joins the history at once, so the dashboard counts it
+// without reloading the whole ledger.
+function noteLocalEntry(config, code, txnType, qty, department, txnId, day) {
+  const full = ledgerComplete[config.key];
+  if (!full || !Array.isArray(full.rows) || !txnId) return;
+  if (full.rows.some(function (r) { return r.txnId === txnId; })) return;
+  const master = (state[config.masterKey] || []).find(function (m) { return m[config.codeField] === code; }) || {};
+  const when = day ? new Date(day + 'T00:00:00').getTime() : Date.now();
+  full.rows.unshift({
+    ts: when, dateText: day ? formatDayShort(day) : formatDateTime(new Date()), dateISO: localDayISO(new Date(when)),
+    code: code, name: master[config.nameField] || '', category: master[config.subCategoryField || config.categoryField] || '',
+    txnId: txnId, attachCount: 0, row: 0, type: txnType, qty: Number(qty) || 0, unit: master[config.unitField] || '',
+    department: department || '', reference: '', supplier: '', invoiceNo: '', invoiceDate: '', remarks: '',
+    enteredBy: (state.session && state.session.username) || '', reversalOf: '', reversedBy: '', value: 0
+  });
+}
+
+function wireDashboard() {
+  document.getElementById('dbScope').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-scope]'); if (!b) return;
+    dash.scope = b.dataset.scope; saveDashPrefs(); renderHome();
+  });
+  document.getElementById('dbPeriod').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-days]'); if (!b) return;
+    dash.days = Number(b.dataset.days); saveDashPrefs(); renderHome();
+  });
+  document.getElementById('dbRefreshBtn').addEventListener('click', async function () {
+    const btn = this;
+    if (btn.classList.contains('is-busy')) return;
+    btn.classList.add('is-busy');
+    try { markLedgersStale(); await refreshAllData(); renderHome(); toast('Refreshed.'); }
+    catch (err) { toast(err.message, true); }
+    finally { btn.classList.remove('is-busy'); }
+  });
+  const page = document.getElementById('page-home');
+  page.addEventListener('click', function (e) {
+    const go = e.target.closest('[data-go]'); if (go) return dashGo(go.dataset.go);
+    const kindBtn = e.target.closest('[data-go-kind]'); if (kindBtn) return navigateTo(kindBtn.dataset.goKind);
+    const att = e.target.closest('[data-att-kind]'); if (att) return goToStockTab(att.dataset.attKind, 'NeedsAttention');
+    const row = e.target.closest('.db-row[data-code]'); if (!row) return;
+    const btn = e.target.closest('button[data-open]');
+    const how = btn ? btn.dataset.open : row.dataset.open;
+    if (how === 'post') openTxnModal(row.dataset.kind, row.dataset.code);
+    else openLedgerModal(row.dataset.kind, row.dataset.code);
+  });
+  page.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-go]')) { e.preventDefault(); dashGo(e.target.dataset.go); }
+  });
+  window.addEventListener('resize', debounce(function () {
+    if (!page.classList.contains('hidden')) renderHome();
+  }, 200));
 }
 
 /* =========================================================================
@@ -4102,6 +4744,7 @@ async function handleTxnSubmit(e) {
   try {
     const result = await api(config.addAction, payload); applyLocalStockUpdate(config, code, result.newBalance);
     clearPendingTxn();
+    if (!result.duplicate) noteLocalEntry(config, code, txnType, payload.qty, payload.department, result.txnId, entryDate);
     // A receipt at a stated rate is now the last price paid.
     if (payload.rate !== '' && payload.rate !== undefined && Number(payload.rate) > 0 &&
         config.inTypes && config.inTypes.indexOf(txnType) > -1) {
@@ -5465,12 +6108,12 @@ const LEDGER_CHUNK = 1000;      // fetched per request while the rest loads
 const LEDGER_STALE_MS = 60000;  // older than this, a revisit refreshes quietly
 const SLOW_NOTICE_MS = 15000;
 let ledgerSeq = 0;
-const ledgerViews = { rm: null, fg: null };
+const ledgerViews = { rm: null, fg: null, trade: null };
 // Every entry of each ledger, no filters, mapped for the table. at = when it
 // was loaded; 0 = shown as it is but due a quiet refresh.
-const ledgerComplete = { rm: null, fg: null };
+const ledgerComplete = { rm: null, fg: null, trade: null };
 // The sign-in load of each ledger while it's on its way.
-const ledgerWarming = { rm: null, fg: null };
+const ledgerWarming = { rm: null, fg: null, trade: null };
 
 // Past this long, a load says so and offers to try again — rather than
 // leaving skeletons up while Google takes its time.
@@ -5537,7 +6180,9 @@ function mapLedgerRows(config, rows) {
       supplier: asText(r.Supplier), invoiceNo: asText(r.InvoiceNo),
       invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
       remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy),
-      reversalOf: asText(r.ReversalOf), reversedBy: asText(r.ReversedBy)
+      reversalOf: asText(r.ReversalOf), reversedBy: asText(r.ReversedBy),
+      // Only sent to people who can see costs.
+      value: Number(r.Value) || 0
     };
   });
 }
@@ -5563,6 +6208,7 @@ async function fetchRestOfLedger(config, filters, rows, stillWanted) {
 
 function rememberCompleteLedger(kind, rows) {
   ledgerComplete[kind] = { rows: rows, at: Date.now() };
+  dashLedgerArrived();
 }
 
 // ---- RM and FG, each with its own entries and filters ----
@@ -5803,7 +6449,7 @@ function warmLedgers() {
           return true;
         })
         .catch(function () { return false; })
-        .then(function (ok) { ledgerWarming[kind] = null; return ok; });
+        .then(function (ok) { ledgerWarming[kind] = null; if (!ok) dashLedgerFailed(kind); return ok; });
       ledgerWarming[kind] = p;
     });
   }, 4000);
@@ -6686,13 +7332,10 @@ function wireStaticEvents() {
   document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page, el.dataset.kind); }); });
   wireNavGroups();
 
-  [['cardRmTotal', 'rm', null], ['cardFgTotal', 'fg', null], ['cardRmAlerts', 'rm', 'NeedsAttention'], ['cardFgAlerts', 'fg', 'NeedsAttention']].forEach(function (c) {
-    const el = document.getElementById(c[0]); el.addEventListener('click', function () { goToStockTab(c[1], c[2]); }); el.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToStockTab(c[1], c[2]); } });
-  });
+  wireDashboard();
 
   STOCK_KINDS.forEach(wireStockPageEvents);
 
-  document.getElementById('alertsList').addEventListener('click', function (e) { const card = e.target.closest('.alert-card'); if (card) openTxnModal(card.dataset.key, card.dataset.code); });
   wireAttachments();
   document.getElementById('txnDate').addEventListener('change', updateTxnDateHint);
   document.getElementById('txnForm').addEventListener('submit', handleTxnSubmit); document.getElementById('txnType').addEventListener('change', updateTxnFormVisibility);
@@ -6757,7 +7400,6 @@ function wireStaticEvents() {
   ['userCloseBtn', 'userCancelBtn', 'userModal'].forEach(id => document.getElementById(id).addEventListener('click', function(e) { if (e.target.id === id || id !== 'userModal') closeUserModal(); }));
 
   document.getElementById('adminRecalcBtn').addEventListener('click', handleRecalc);
-  document.getElementById('alertsPanelToggle').addEventListener('click', toggleAlertsPanel);
   setupScrollToTop();
   document.getElementById('confirmOkBtn').addEventListener('click', function () { _settleConfirm(true); });
   ['confirmCancelBtn', 'confirmModal'].forEach(id => document.getElementById(id).addEventListener('click', function (e) { if (e.target.id === id) _settleConfirm(false); }));
