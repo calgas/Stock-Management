@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.19.2">
+<meta name="app-version" content="3.26.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -161,7 +161,7 @@
   #appProgressBar { position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, var(--copper), var(--azure)); z-index: 10000; opacity: 0; transition: opacity 0.2s, width 0.3s var(--ease); pointer-events: none; }
   #appProgressBar.active { opacity: 1; }
 
-  .center-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; position: relative; }
+  .center-screen { min-height: calc(100vh / var(--app-zoom, 1)); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; position: relative; }
 
   .auth-card {
     width: 100%; max-width: 400px;
@@ -286,7 +286,7 @@
 
   .setup-card code { display: block; background: var(--ink); color: var(--paper); border-radius: 8px; padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; margin: 16px 0; word-break: break-all; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
 
-  #appShell { display: flex; height: 100vh; overflow: hidden; }
+  #appShell { display: flex; height: calc(100vh / var(--app-zoom, 1)); overflow: hidden; }
 
   /* Sidebar */
   .rail {
@@ -324,7 +324,7 @@
   .nav-group-head.has-active > svg.nav-icon { color: var(--copper); opacity: 1; }
   .nav-group-head .nav-caret { margin-left: auto; opacity: 0.55; transition: transform 0.25s var(--spring); }
   .nav-group.is-closed .nav-caret { transform: rotate(-90deg); }
-  .nav-sub { overflow: hidden; max-height: 160px; opacity: 1; transition: max-height 0.25s ease, opacity 0.2s ease; padding: 0 0 2px; background: linear-gradient(90deg, transparent 23px, rgba(255,255,255,0.09) 23px, rgba(255,255,255,0.09) 24px, transparent 24px); }
+  .nav-sub { overflow: hidden; max-height: 210px; opacity: 1; transition: max-height 0.25s ease, opacity 0.2s ease; padding: 0 0 2px; background: linear-gradient(90deg, transparent 23px, rgba(255,255,255,0.09) 23px, rgba(255,255,255,0.09) 24px, transparent 24px); }
   .nav-group.is-closed .nav-sub { max-height: 0; opacity: 0; }
   .nav-link.nav-sub-link { padding: 8px 14px 8px 46px; font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
   .nav-sub-link .nav-dot { position: absolute; left: 21px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: var(--rail); border: 1.5px solid rgba(255,255,255,0.35); transition: all 0.2s; }
@@ -351,7 +351,7 @@
   .rail.collapsed .version { display: none; }
 
   /* Main Layout & Topbar */
-  .main { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  .main { flex: 1; min-width: 0; height: calc(100vh / var(--app-zoom, 1)); display: flex; flex-direction: column; overflow: hidden; position: relative; }
   .topbar {
     height: 70px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     padding: 0 32px; z-index: 40;
@@ -1125,8 +1125,8 @@
   .hidden-desktop { display: none !important; }
   @media (max-width: 780px) {
     body, #appShell, .main { overflow-x: hidden; width: 100%; }
-    #appShell { display: block; height: auto; min-height: 100vh; overflow-y: auto; }
-    .main { height: auto; min-height: 100vh; padding-bottom: calc(96px + env(safe-area-inset-bottom)); display: block; }
+    #appShell { display: block; height: auto; min-height: calc(100vh / var(--app-zoom, 1)); overflow-y: auto; }
+    .main { height: auto; min-height: calc(100vh / var(--app-zoom, 1)); padding-bottom: calc(96px + env(safe-area-inset-bottom)); display: block; }
     .page { height: auto; overflow: visible; animation: none; padding: 20px 16px; }
 
     #page-rm > div:last-child, #page-fg > div:last-child, #page-trade > div:last-child, #page-users > div:last-child {
@@ -1300,6 +1300,80 @@
     .modal-actions-split .btn-danger { order: 2; min-height: 44px; }
   }
   @keyframes sheetSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  /* ---- 3.26: show / hide password ---- */
+  .pw-wrap { position: relative; }
+  .field .pw-wrap input { padding-right: 50px; }
+  .pw-eye { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--ink-faint); background: none; transition: color 0.15s, background 0.15s; }
+  .pw-eye:hover { color: var(--ink); background: var(--hover-surface); }
+  .pw-eye:focus-visible { outline: 2px solid var(--copper); outline-offset: 0; color: var(--ink); }
+  .pw-eye .eye-off, .pw-eye[aria-pressed="true"] .eye-on { display: none; }
+  .pw-eye[aria-pressed="true"] .eye-off { display: block; }
+  .pw-eye[aria-pressed="true"] { color: var(--copper); }
+
+  /* ---- 3.26: zoom, beside the theme button ---- */
+  .zoom-ctl { display: flex; align-items: center; height: 38px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); overflow: hidden; }
+  .zoom-ctl button { height: 100%; background: none; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; }
+  .zoom-ctl .zoom-btn { width: 32px; }
+  .zoom-ctl .zoom-level { min-width: 50px; padding: 0 4px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; border-left: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft); }
+  .zoom-ctl button:hover:not(:disabled) { background: var(--hover-surface); color: var(--ink); }
+  .zoom-ctl button:disabled { opacity: 0.35; cursor: default; }
+  .zoom-ctl button:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
+
+  /* ---- 3.26: loading percentage ---- */
+  .splash-pct { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--copper); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; margin: -14px 0 10px; min-height: 20px; }
+  .splash-progress-bar { transition: width 0.12s linear; }
+
+  /* ---- 3.26: Apps, About, Feedback ---- */
+  .page-doc .page-head { margin-bottom: 24px; }
+  .page-doc-body { max-width: 1080px; }
+  .app-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .app-card { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 18px; display: flex; flex-direction: column; gap: 12px; color: inherit; text-decoration: none; transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s; }
+  a.app-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--copper); }
+  a.app-card:focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+  .app-card-top { display: flex; align-items: center; gap: 12px; }
+  .app-icon { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15); }
+  .app-icon svg { width: 22px; height: 22px; }
+  .app-name { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .app-tag { display: inline-block; margin-top: 3px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); }
+  .app-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0; flex: 1; }
+  .app-open { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--copper); }
+  .app-card.is-here { border-style: dashed; }
+  .app-card.is-here .app-open { color: var(--ink-faint); }
+  .about-hero { display: flex; flex-direction: row; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+  .about-hero img { width: 64px; height: 64px; border-radius: 16px; box-shadow: var(--shadow-sm); }
+  .about-hero h3 { margin: 0; font-size: 20px; letter-spacing: -0.02em; color: var(--ink); }
+  .about-hero p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+  .about-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .about-chip { font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 99px; background: var(--line-soft); color: var(--ink-soft); white-space: nowrap; }
+  .about-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+  .about-grid ul { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.7; }
+  .about-grid p { margin: 0 0 8px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.6; }
+  .about-kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: 13.5px; margin: 0; }
+  .about-kv dt { color: var(--ink-faint); font-weight: 600; }
+  .about-kv dd { margin: 0; color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+  .about-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  .dev-tag { margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; text-align: center; font-size: 13px; color: var(--ink-soft); }
+  .dev-tag strong { color: var(--ink); }
+  .dev-tag .dev-mark { width: 26px; height: 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--copper), var(--azure)); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+  .fb-card { max-width: 680px; }
+  .fb-card .seg { margin-bottom: 18px; align-self: flex-start; }
+  .field textarea { width: 100%; min-height: 150px; resize: vertical; padding: 12px 16px; border: 1px solid transparent; border-radius: var(--radius-sm); font: inherit; font-size: 14px; font-weight: 500; line-height: 1.55; background: var(--line-soft); color: var(--ink); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s var(--ease); }
+  .field textarea:focus { background-color: var(--panel); border-color: var(--copper); box-shadow: 0 0 0 4px var(--copper-soft); outline: none; }
+  .fb-meta { font-size: 12px; color: var(--ink-faint); margin: -8px 0 16px; line-height: 1.5; }
+  .fb-done { text-align: center; padding: 28px 12px 8px; }
+  .fb-done-icon { width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); display: flex; align-items: center; justify-content: center; }
+  .fb-done h3 { margin: 0 0 6px; color: var(--ink); }
+  .fb-done p { margin: 0 0 18px; color: var(--ink-soft); font-size: 14px; }
+  .version { cursor: pointer; }
+  .version:hover { color: rgba(255,255,255,0.6); }
+
+  @media (max-width: 780px) {
+    .zoom-ctl { display: none; }
+    .rail .nav-group[data-group="more"] .nav-sub { flex-wrap: wrap; }
+    .rail .nav-group[data-group="more"] .nav-sub .nav-link.nav-sub-link { flex: 1 1 calc(50% - 4px); }
+    .about-chips { margin-left: 0; }
+    .page-doc .page-head h2 { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
@@ -1323,6 +1397,7 @@
     </div>
     <h2 class="splash-title js-company-name"></h2>
     <p class="splash-sub">Stock Management</p>
+    <div class="splash-pct" id="splashPct" aria-hidden="true">0%</div>
     <div class="splash-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="splashProgress">
       <div class="splash-progress-bar" id="splashProgressBar"></div>
     </div>
@@ -1421,6 +1496,15 @@
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M1.5 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.3c1.8.2 3 1.4 3 3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <span class="label">Team &amp; Access</span>
     </a>
+    <div class="nav-group" data-group="more">
+      <button type="button" class="nav-group-head" aria-expanded="true"><svg class="nav-icon" width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><circle cx="11.5" cy="11.5" r="2.6" stroke="currentColor" stroke-width="1.5"/></svg><span class="label">More</span><svg class="nav-caret" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="nav-sub">
+      <a href="#" class="nav-link nav-sub-link" data-page="apps"><span class="nav-dot" aria-hidden="true"></span><span class="label">Apps</span><span class="nav-abbr" aria-hidden="true">APP</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="feedback"><span class="nav-dot" aria-hidden="true"></span><span class="label">Feedback</span><span class="nav-abbr" aria-hidden="true">FB</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="bug"><span class="nav-dot" aria-hidden="true"></span><span class="label">Report a bug</span><span class="nav-abbr" aria-hidden="true">BUG</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="about"><span class="nav-dot" aria-hidden="true"></span><span class="label">About</span><span class="nav-abbr" aria-hidden="true">i</span></a>
+      </div>
+    </div>
 
     <div class="rail-footer">
       <button id="railToggleBtn" class="rail-btn rail-toggle" title="Collapse sidebar">
@@ -1443,6 +1527,11 @@
       </div>
       <div class="user-badge">
         <span class="conn-badge conn-online" id="connBadge"></span>
+        <div class="zoom-ctl" role="group" aria-label="Zoom">
+          <button type="button" class="zoom-btn" id="zoomOutBtn" title="Zoom out" aria-label="Zoom out"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <button type="button" class="zoom-level" id="zoomResetBtn" title="Back to 100%" aria-label="Zoom 100%, press to reset">100%</button>
+          <button type="button" class="zoom-btn" id="zoomInBtn" title="Zoom in" aria-label="Zoom in"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8h9M8 3.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
         <button id="themeToggleBtn" class="btn-ghost theme-btn" title="Toggle Dark Mode">
           <!-- Sun Icon (shows in dark mode) -->
           <svg class="sun-icon hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -1708,6 +1797,76 @@
           <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Department</th><th>Email</th><th>Mail</th><th>Status</th><th class="actions-head" style="text-align:center">Actions</th></tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
+      </div>
+    </section>
+    <section class="page page-doc hidden" id="page-apps">
+      <div class="page-head"><h2>Apps</h2><p>The other CALGAS apps. Each one opens in a new tab.</p></div>
+      <div class="page-doc-body"><div class="app-gallery" id="appGallery"></div></div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-about">
+      <div class="page-head"><h2>About</h2><p>What this app does, what it runs on, and who made it.</p></div>
+      <div class="page-doc-body">
+        <div class="db-card about-hero">
+          <img class="js-company-logo-icon" alt="">
+          <div><h3>Stock Management</h3><p class="js-company-name"></p></div>
+          <div class="about-chips"><span class="about-chip" id="aboutAppVersion"></span><span class="about-chip" id="aboutServerVersion">server …</span><span class="about-chip" id="aboutMode"></span></div>
+        </div>
+        <div class="about-grid">
+          <div class="db-card">
+            <div class="db-card-head"><div><h3 class="db-card-title">What it does</h3></div></div>
+            <ul>
+              <li>Keeps raw material (RM), finished goods (FG) and Trade stock, item by item, with live balances and Low / Critical alerts.</li>
+              <li>Records every receipt, issue, production, dispatch, purchase, return, scrap and adjustment in a ledger that is never edited away: mistakes are reversed, not deleted.</li>
+              <li>Shows each item’s full history, with invoices and photos attached to entries.</li>
+              <li>Sends a daily stock workbook by email, and closes the books each financial year into an archive.</li>
+              <li>Gives each person the access their job needs, set in Team &amp; Access.</li>
+            </ul>
+          </div>
+          <div class="db-card">
+            <div class="db-card-head"><div><h3 class="db-card-title">How it works</h3></div></div>
+            <p>The data lives in the company’s own Google Sheet, and a Google Apps Script backend checks and records every change. This app is a web app you can install on a computer or phone; it remembers recent figures, so it opens quickly.</p>
+            <p>Production Tracker and ELE Tracker use the same sign-in.</p>
+          </div>
+          <div class="db-card">
+            <div class="db-card-head"><div><h3 class="db-card-title">You</h3></div></div>
+            <dl class="about-kv" id="aboutYou"></dl>
+          </div>
+          <div class="db-card">
+            <div class="db-card-head"><div><h3 class="db-card-title">Help</h3><p class="db-card-sub">Something to suggest, or something not working?</p></div></div>
+            <div class="about-actions">
+              <button type="button" class="btn-ghost" data-go-fb="feedback">Send feedback</button>
+              <button type="button" class="btn-ghost" data-go-fb="bug">Report a bug</button>
+              <button type="button" class="btn-ghost" id="aboutAppsBtn">Other apps</button>
+            </div>
+          </div>
+        </div>
+        <div class="dev-tag"><span class="dev-mark" aria-hidden="true">VP</span><span>Designed &amp; developed by <strong>Vanga Prasanna Kumar</strong></span><span aria-hidden="true">·</span><span class="js-company-name"></span><span aria-hidden="true">·</span><span id="aboutYear"></span></div>
+      </div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-feedback">
+      <div class="page-head"><h2 id="fbTitle">Feedback</h2><p id="fbLede">Ideas, requests, anything that would make this app better.</p></div>
+      <div class="page-doc-body">
+        <div class="db-card fb-card">
+          <div class="seg" id="fbKind" role="group" aria-label="What are you sending?">
+            <button type="button" data-fb="feedback">Feedback</button>
+            <button type="button" data-fb="bug">Report a bug</button>
+          </div>
+          <form id="feedbackForm" novalidate>
+            <div class="field"><label for="fbSubject">Subject <span style="text-transform:none;letter-spacing:0;font-weight:500">(optional)</span></label><input type="text" id="fbSubject" maxlength="120" autocomplete="off"></div>
+            <div class="field"><label for="fbMessage" id="fbMessageLabel">Your message</label><textarea id="fbMessage" maxlength="4000" rows="7"></textarea><div class="hint" id="fbHint"></div></div>
+            <p class="fb-meta" id="fbMeta"></p>
+            <div class="form-error" id="fbError"></div>
+            <div class="modal-actions"><button type="submit" class="btn-primary btn-compact" id="fbSendBtn">Send</button></div>
+          </form>
+          <div class="fb-done hidden" id="fbDone">
+            <div class="fb-done-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h3 id="fbDoneTitle">Thank you</h3>
+            <p id="fbDoneText"></p>
+            <button type="button" class="btn-ghost" id="fbAnotherBtn">Send another</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -2034,7 +2193,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.25.0';
+const APP_VERSION = '3.26.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2952,14 +3111,39 @@ function clearBtnLoading(btn, finalText) {
   btn.disabled = false;
   btn.innerHTML = finalText !== undefined ? finalText : (btn.dataset.restoreHtml || btn.innerHTML);
 }
+// The loading figure (3.26). Each step of start-up sets where it has got to;
+// the number counts up to that, then keeps edging on while the next step is
+// awaited (never past where that step will take it), so a slow connection
+// still shows something moving. It reads 100% only when the app is ready.
+const splashMeter = { shown: 0, target: 0, cap: 0, raf: 0 };
 function setLoaderProgress(pct, message) {
-  const bar = document.getElementById('splashProgressBar');
   const status = document.getElementById('splashStatus');
-  const progress = document.getElementById('splashProgress');
   const clamped = Math.min(100, Math.max(0, pct));
-  if (bar) bar.style.width = clamped + '%';
-  if (progress) progress.setAttribute('aria-valuenow', String(Math.round(clamped)));
+  const m = splashMeter;
+  if (clamped < m.shown) m.shown = clamped;   // a fresh run: signing out, then in again
+  m.target = clamped;
+  m.cap = clamped >= 100 ? 100 : Math.min(clamped + 14, 97);
   if (message && status) status.textContent = message;
+  if (REDUCE_MOTION) m.shown = clamped;
+  paintSplashMeter(m.shown);
+  if (!REDUCE_MOTION && !m.raf) m.raf = requestAnimationFrame(stepSplashMeter);
+}
+function stepSplashMeter() {
+  const m = splashMeter;
+  if (m.shown < m.target) m.shown = Math.min(m.target, m.shown + Math.max(0.7, (m.target - m.shown) * 0.16));
+  else if (m.shown < m.cap) m.shown = Math.min(m.cap, m.shown + Math.max(0.01, (m.cap - m.shown) * 0.012));
+  paintSplashMeter(m.shown);
+  const loader = document.getElementById('initialLoader');
+  const visible = loader && !loader.classList.contains('hidden');
+  m.raf = visible && (m.shown < m.target || m.shown < m.cap - 0.05) ? requestAnimationFrame(stepSplashMeter) : 0;
+}
+function paintSplashMeter(v) {
+  const bar = document.getElementById('splashProgressBar');
+  const pctEl = document.getElementById('splashPct');
+  const progress = document.getElementById('splashProgress');
+  if (bar) bar.style.width = v + '%';
+  if (pctEl) pctEl.textContent = Math.floor(v) + '%';
+  if (progress) progress.setAttribute('aria-valuenow', String(Math.floor(v)));
 }
 function hideInitialLoader(finalMessage) {
   return new Promise(function (resolve) {
@@ -2990,7 +3174,7 @@ function startFreshnessInterval() {
 function stopFreshnessInterval() {
   if (freshnessIntervalId) { clearInterval(freshnessIntervalId); freshnessIntervalId = null; }
 }
-function hideAllAuthScreens() { ['setupScreen', 'loginScreen', 'forgotScreen', 'resetScreen'].forEach(function (id) { document.getElementById(id).classList.add('hidden'); }); }
+function hideAllAuthScreens() { hideAllPasswords(); ['setupScreen', 'loginScreen', 'forgotScreen', 'resetScreen'].forEach(function (id) { document.getElementById(id).classList.add('hidden'); }); }
 function applyBranding() {
   document.querySelectorAll('.js-company-name').forEach(function (el) { el.textContent = COMPANY_NAME; });
   document.querySelectorAll('.js-company-logo-icon').forEach(function (el) { el.src = COMPANY_LOGO_ICON_URL; el.alt = COMPANY_NAME; });
@@ -3003,8 +3187,10 @@ function applyBranding() {
 window.addEventListener('DOMContentLoaded', init);
 
 async function init() {
+  initZoom();
   setLoaderProgress(10, 'Initializing…');
   initTheme();
+  enhancePasswordFields();
   applyBranding();
   initAlertsPanelState();
   document.getElementById('appVersion').textContent = 'v' + APP_VERSION;
@@ -3130,6 +3316,8 @@ async function refreshAllData() {
   // An older backend sends no Trade lists; the Trade pages are then simply empty.
   state.tradeMaster = data.tradeMaster || []; state.tradeStock = data.tradeStock || [];
   state.dropdowns = data.dropdowns || {};
+  // The last day of the newest closed financial year, '' while none is (3.26).
+  state.ledgerClosedThrough = data.ledgerClosedThrough || '';
   // Refreshed on every load: an Admin may have changed this person's access
   // while they were signed in.
   if (data.permissions) { state.permissions = data.permissions; if (state.session) syncItemButtons(); }
@@ -3304,11 +3492,22 @@ function syncTopbarTitle(pageEl) {
 
 function navigateTo(page, kind) {
   if (page === 'users' && state.session.role !== 'Admin') page = 'home';
+  // Feedback remembers the screen it was opened from, for the report.
+  const shown = document.querySelector('.page:not(.hidden)');
+  if (page === 'feedback') {
+    if (shown && shown.id !== 'page-feedback') state.feedbackFrom = shown.id.replace(/^page-/, '') + (shown.id === 'page-ledger' ? ' ' + state.ledgerKind : '');
+    // Opened again after sending one: the form, not the thank-you.
+    document.getElementById('feedbackForm').classList.remove('hidden');
+    document.getElementById('fbKind').classList.remove('hidden');
+    document.getElementById('fbDone').classList.add('hidden');
+    state.feedbackKind = kind === 'bug' ? 'bug' : 'feedback';
+  }
   // RM Ledger and FG Ledger share one screen. Which ledger it shows is
   // settled first, so the heading the top bar copies is the right one.
   if (page === 'ledger') switchLedgerKind(kind || state.ledgerKind);
   document.querySelectorAll('.nav-link').forEach(function (el) {
-    el.classList.toggle('active', el.dataset.page === page && (!el.dataset.kind || el.dataset.kind === state.ledgerKind));
+    el.classList.toggle('active', el.dataset.page === page && (!el.dataset.kind || el.dataset.kind === state.ledgerKind) &&
+      (!el.dataset.fb || el.dataset.fb === state.feedbackKind));
   });
   syncNavGroups();
   closeMobileNavMenus(null);
@@ -3317,6 +3516,9 @@ function navigateTo(page, kind) {
   if (page === 'home') renderHome();
   if (STOCK_KINDS.indexOf(page) > -1) { renderStockPage(page); updateFreshnessLabel(page); refreshStockData(page); }
   if (page === 'users') renderUsersPage();
+  if (page === 'apps') renderAppsPage();
+  if (page === 'about') renderAboutPage();
+  if (page === 'feedback') renderFeedbackPage();
   // Loads on first visit rather than at boot — the ledger can be large and
   // most sessions never open it.
   if (page === 'ledger') {
@@ -3342,7 +3544,9 @@ function updateNavIndicator() {
   if (group && group.classList.contains('is-closed')) target = group.querySelector('.nav-group-head');
   if (!target || isMobileNav()) { indicator.style.opacity = '0'; return; }
   // Measured against the rail, so it holds for links nested in a group.
-  const top = target.getBoundingClientRect().top - rail.getBoundingClientRect().top + rail.scrollTop;
+  // Screen distances, turned back into the rail's own units when zoomed (3.26).
+  const scale = (rail.getBoundingClientRect().height / rail.offsetHeight) || 1;
+  const top = (target.getBoundingClientRect().top - rail.getBoundingClientRect().top) / scale + rail.scrollTop;
   indicator.style.top = top + 'px'; indicator.style.height = target.offsetHeight + 'px'; indicator.style.opacity = '1';
 }
 
@@ -4061,7 +4265,8 @@ function drawStackedColumns(el, buckets, kinds, step) {
   const svg = el.querySelector('svg'), tip = el.querySelector('.db-tip'), hl = el.querySelector('.db-hover');
   const hide = function () { tip.classList.add('hidden'); hl.style.opacity = 0; };
   const show = function (clientX) {
-    const i = Math.floor((clientX - svg.getBoundingClientRect().left - m.l) / band);
+    const r = svg.getBoundingClientRect();
+    const i = Math.floor(((clientX - r.left) / ((r.width / W) || 1) - m.l) / band);
     if (i < 0 || i >= buckets.length) return hide();
     const b = buckets[i];
     hl.setAttribute('x', (m.l + band * i).toFixed(1));
@@ -4323,6 +4528,8 @@ function openTxnModal(key, code) {
 
   const dateInput = document.getElementById('txnDate');
   dateInput.max = localDayISO(new Date()); dateInput.value = localDayISO(new Date());
+  // Nothing can be dated in a closed financial year (3.26).
+  dateInput.min = state.ledgerClosedThrough ? localDayISO(new Date(state.ledgerClosedThrough + 'T12:00:00').getTime() + 86400000) : '';
   document.getElementById('txnDateField').classList.toggle('hidden', !can('stock.backdate'));
   updateTxnDateHint();
 
@@ -5343,6 +5550,31 @@ function writeHistCache(key, rows, stock) {
   }
 }
 
+// An item's newest 100 entries from the full ledger already in memory, in the
+// shape and order the backend sends, or null while that hasn't loaded. Shown
+// at once and replaced by the fresh answer, which also checks the balance.
+function historyFromLoadedLedger(config, code) {
+  const full = ledgerComplete[config.key];
+  if (!full || !Array.isArray(full.rows)) return null;
+  const timeOf = function (v) { const t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
+  return full.rows.filter(function (m) { return m.code === code; })
+    .map(function (m) { return m.raw || rawFromMapped(config, m); })
+    .sort(function (a, b) {
+      return (timeOf(b.Date || b.Timestamp) - timeOf(a.Date || a.Timestamp)) || (timeOf(b.Timestamp) - timeOf(a.Timestamp));
+    })
+    .slice(0, 100);
+}
+// For an entry noted on this device that has no row from the server yet.
+function rawFromMapped(config, m) {
+  const when = m.ts ? new Date(m.ts).toISOString() : '';
+  const r = { TxnID: m.txnId, Date: when, Timestamp: m.late && m.enteredISO ? m.enteredISO : when, TxnType: m.type, Qty: m.qty,
+              Unit: m.unit, Department: m.department, Reference: m.reference, Supplier: m.supplier, InvoiceNo: m.invoiceNo,
+              InvoiceDate: m.invoiceDate, Remarks: m.remarks, EnteredBy: m.enteredBy, ReversalOf: m.reversalOf,
+              ReversedBy: m.reversedBy, AttachmentCount: m.attachCount, _row: m.row };
+  r[config.codeField] = m.code;
+  return r;
+}
+
 async function loadLedgerRows(opts) {
   opts = opts || {};
   const config = activeLedgerConfig; const code = activeLedgerCode; if (!config || !code) return;
@@ -5358,9 +5590,12 @@ async function loadLedgerRows(opts) {
   let showingOld = false;
   if (plain && !opts.retry) {
     const hit = readHistCache()[key];
-    if (hit && hit.rows && hit.rows.length) {
-      state.ledgerModalRows = hit.rows;
-      tbody.innerHTML = hit.rows.map(renderLedgerRow).join('');
+    // Not looked at on this device before: the ledger loaded in the
+    // background after sign-in already holds it (3.26).
+    const rows = hit && hit.rows && hit.rows.length ? hit.rows : historyFromLoadedLedger(config, code);
+    if (rows && rows.length) {
+      state.ledgerModalRows = rows;
+      tbody.innerHTML = rows.map(renderLedgerRow).join('');
       syncLedgerActionColumns();
       renderLedgerStock();
       showingOld = true;
@@ -6165,7 +6400,7 @@ function mapLedgerRows(config, rows) {
     unitByCode[m[config.codeField]] = m[config.unitField] || '';
   });
   return (rows || []).map(function (r) {
-    return {
+    const m = {
       ts: movementDate(r) ? new Date(movementDate(r)).getTime() : 0,
       // A late entry is shown on the day the stock moved; its time is when it was typed in, so it's left off.
       dateText: !movementDate(r) ? '—' : (isLateEntry(r) ? formatDayShort(r.Date) : formatDateTime(movementDate(r))),
@@ -6184,6 +6419,10 @@ function mapLedgerRows(config, rows) {
       // Only sent to people who can see costs.
       value: Number(r.Value) || 0
     };
+    // The row as the server sent it, for an item's history (3.26). Not
+    // enumerable, so nothing that copies or stores these rows carries it.
+    Object.defineProperty(m, 'raw', { value: r, enumerable: false });
+    return m;
   });
 }
 
@@ -6570,6 +6809,7 @@ async function exportLedgerPageToExcel() {
    CHANGE PASSWORD (self-service, from the profile name in the topbar)
    ========================================================================= */
 function openPasswordModal() {
+  hideAllPasswords();
   document.getElementById('pwdModalUser').textContent = state.session ? state.session.username : '';
   ['pwdCurrent', 'pwdNew', 'pwdConfirm'].forEach(function (id) { document.getElementById(id).value = ''; });
   document.getElementById('pwdError').textContent = '';
@@ -7295,6 +7535,225 @@ async function exportToExcel(config) {
   } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn, 'Export'); }
 }
 
+
+/* =========================================================================
+   3.26: SHOW PASSWORD, ZOOM, AND THE MORE PAGES (Apps, About, Feedback)
+   ========================================================================= */
+
+// ---- Show / hide password ----
+// Every password box gets an eye. It goes back to dots whenever a form is
+// sent or a screen changes, so a password is never left on show, and a
+// password manager still sees a password field when it's saved.
+const EYE_ICONS =
+  '<svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>' +
+  '<svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.6 3.5M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>';
+function enhancePasswordFields() {
+  document.querySelectorAll('input[type="password"]').forEach(function (input) {
+    if (input.parentElement.classList.contains('pw-wrap')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'pw-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pw-eye';
+    btn.setAttribute('aria-controls', input.id);
+    btn.innerHTML = EYE_ICONS;
+    setPasswordShown(input, btn, false);
+    btn.addEventListener('mousedown', function (e) { e.preventDefault(); }); // keeps the cursor in the box
+    btn.addEventListener('click', function () { setPasswordShown(input, btn, input.type === 'password'); input.focus(); });
+    wrap.appendChild(btn);
+  });
+  document.addEventListener('submit', function () { hideAllPasswords(); }, true);
+}
+function setPasswordShown(input, btn, show) {
+  input.type = show ? 'text' : 'password';
+  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  btn.title = show ? 'Hide password' : 'Show password';
+}
+function hideAllPasswords() {
+  document.querySelectorAll('.pw-wrap').forEach(function (w) {
+    const input = w.querySelector('input'), btn = w.querySelector('.pw-eye');
+    if (input && btn) setPasswordShown(input, btn, false);
+  });
+}
+
+// ---- Zoom ----
+// Beside the theme button on a computer: the whole app larger or smaller,
+// remembered on this device. Phones have pinch-zoom, so they don't get it.
+const ZOOM_KEY = 'stock_zoom';
+const ZOOM_STEPS = [0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.5];
+let appZoom = 1;
+function initZoom() {
+  let z = 1;
+  try { z = Number(localStorage.getItem(ZOOM_KEY)) || 1; } catch (e) {}
+  applyZoom(ZOOM_STEPS.indexOf(z) > -1 ? z : 1, false);
+}
+function applyZoom(z, remember) {
+  appZoom = z;
+  const root = document.documentElement;
+  if (z === 1) { root.style.removeProperty('zoom'); root.style.removeProperty('--app-zoom'); }
+  else { root.style.zoom = String(z); root.style.setProperty('--app-zoom', String(z)); }
+  const label = document.getElementById('zoomResetBtn');
+  if (label) {
+    label.textContent = Math.round(z * 100) + '%';
+    label.setAttribute('aria-label', 'Zoom ' + Math.round(z * 100) + '%' + (z === 1 ? '' : ', press for 100%'));
+  }
+  const out = document.getElementById('zoomOutBtn'), inn = document.getElementById('zoomInBtn');
+  if (out) out.disabled = z <= ZOOM_STEPS[0];
+  if (inn) inn.disabled = z >= ZOOM_STEPS[ZOOM_STEPS.length - 1];
+  if (remember) {
+    try { if (z === 1) localStorage.removeItem(ZOOM_KEY); else localStorage.setItem(ZOOM_KEY, String(z)); } catch (e) {}
+    // Charts and the sidebar marker measure themselves on resize.
+    window.dispatchEvent(new Event('resize'));
+  }
+}
+function stepZoom(dir) {
+  let i = ZOOM_STEPS.indexOf(appZoom);
+  if (i < 0) i = ZOOM_STEPS.indexOf(1);
+  applyZoom(ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, i + dir))], true);
+}
+
+// ---- Apps ----
+// The other CALGAS apps. To add, change or drop one, edit this list.
+const APP_GALLERY = [
+  { name: 'Stock Management', tag: 'You are here', here: true, color: '#b5652e',
+    desc: 'RM, FG and Trade stock, every movement in the ledger, and balances that add up.',
+    icon: '<path d="M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="M3.8 7.7 12 12l8.2-4.3M12 12v9"/>' },
+  { name: 'Production Tracker', tag: 'Same sign-in', color: '#3e6e97', url: 'https://calgas.github.io/Production-Tracker/',
+    desc: 'Material moving through the factory, one department to the next: handovers, receipts and work in progress.',
+    icon: '<path d="M3 17h4l3-10 4 14 3-8h4"/>' },
+  { name: 'ELE Tracker', tag: 'Same sign-in', color: '#5a57a6', url: 'https://calgas.github.io/Ele-Tracker/',
+    desc: 'The winding-to-final-QA batch card, stage by stage, for every capacitor element batch.',
+    icon: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
+  { name: 'Batch Card Tracker', tag: 'AppSheet', color: '#2f8a6a', url: 'https://www.appsheet.com/start/170ed4b4-a703-4e0c-9f32-7e154f097f84',
+    desc: 'Batch cards on the shop floor, in the AppSheet app.',
+    icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h3"/>' },
+  { name: 'CALGAS Workforce', tag: 'HR', color: '#a2733b', url: 'https://calgas.github.io/Workforce/',
+    desc: 'Attendance, payroll and HR for the factory team.',
+    icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 4.5a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.7 3 2.5 3 5.2"/>' },
+  { name: 'Calgas Tasks', tag: 'Tasks', color: '#7a6a58', url: 'https://calgas.github.io/Tasks/',
+    desc: 'Tasks with who does them and who follows up, tracked until they are closed.',
+    icon: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/>' },
+  { name: 'CapHub', tag: 'Engineering', color: '#3b7f9a', url: 'https://vangaprasannakumar.github.io/CapHub/',
+    desc: 'Capacitor design calculations: winding, potting and zinc spray.',
+    icon: '<path d="M9 3v18M15 3v18"/><path d="M3 12h6M15 12h6"/>' },
+  { name: 'calgascapacitors.com', tag: 'Website', color: '#55606c', url: 'https://calgascapacitors.com',
+    desc: 'The company website: products, applications and contact details.',
+    icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>' }
+];
+function renderAppsPage() {
+  const el = document.getElementById('appGallery');
+  if (el.dataset.ready) return;
+  el.innerHTML = APP_GALLERY.map(function (a) {
+    const inner = '<div class="app-card-top"><span class="app-icon" style="background:' + a.color + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + a.icon + '</svg></span>' +
+      '<div><div class="app-name">' + escapeHtml(a.name) + '</div><span class="app-tag">' + escapeHtml(a.tag) + '</span></div></div>' +
+      '<p class="app-desc">' + escapeHtml(a.desc) + '</p>' +
+      '<span class="app-open">' + (a.here ? 'Open now' : 'Open <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3h7v7M13 3 4 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') + '</span>';
+    return a.here ? '<div class="app-card is-here">' + inner + '</div>'
+                  : '<a class="app-card" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener">' + inner + '</a>';
+  }).join('');
+  el.dataset.ready = '1';
+}
+
+// ---- About ----
+let serverVersion = '';
+function renderAboutPage() {
+  document.getElementById('aboutAppVersion').textContent = 'app v' + APP_VERSION;
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  document.getElementById('aboutMode').textContent = standalone ? 'installed' : 'in the browser';
+  document.getElementById('aboutYear').textContent = '© ' + new Date().getFullYear();
+  const s = state.session || {};
+  const rows = [['Name', s.name || s.username || '—'], ['Username', s.username || '—'], ['Role', s.role || '—'], ['Department', s.department || '—']];
+  if (state.ledgerClosedThrough) rows.push(['Books closed to', formatDay(state.ledgerClosedThrough)]);
+  document.getElementById('aboutYou').innerHTML = rows.map(function (r) { return '<dt>' + escapeHtml(r[0]) + '</dt><dd>' + escapeHtml(r[1]) + '</dd>'; }).join('');
+  const sv = document.getElementById('aboutServerVersion');
+  if (serverVersion) { sv.textContent = 'server v' + serverVersion; return; }
+  api('version').then(function (d) { serverVersion = d && d.version ? d.version : '?'; sv.textContent = 'server v' + serverVersion; })
+    .catch(function () { sv.textContent = 'server: offline'; });
+}
+
+// ---- Feedback and bug reports ----
+function renderFeedbackPage() {
+  const bug = state.feedbackKind === 'bug';
+  document.getElementById('fbTitle').textContent = bug ? 'Report a bug' : 'Feedback';
+  document.getElementById('fbLede').textContent = bug
+    ? 'Something not working as it should? Tell us what happened and we’ll look into it.'
+    : 'Ideas, requests, anything that would make this app better.';
+  syncTopbarTitle(document.getElementById('page-feedback'));
+  document.querySelectorAll('#fbKind button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.fb === state.feedbackKind); });
+  document.getElementById('fbMessageLabel').textContent = bug ? 'What happened?' : 'Your message';
+  const msg = document.getElementById('fbMessage');
+  msg.placeholder = bug
+    ? 'What you did, what you expected, and what happened instead. An item code or entry ID helps.'
+    : 'What would you like to see, or change?';
+  document.getElementById('fbHint').textContent = (msg.value.length ? formatNum(msg.value.length) + ' / 4,000 · ' : '') + 'Goes to the app’s Admins, who can reply to you by email.';
+  document.getElementById('fbMeta').textContent = 'Sent with it: your name, the screen you came from (' + (state.feedbackFrom || 'overview') +
+    '), the app version and your device, so a problem can be found quickly.';
+  document.getElementById('fbError').textContent = '';
+}
+function feedbackDevice() {
+  const ua = navigator.userAgent || '';
+  const browser = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  const os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : '';
+  const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  return browser + (os ? ' on ' + os : '') + ' · ' + window.innerWidth + '×' + window.innerHeight +
+    (appZoom !== 1 ? ' · zoom ' + Math.round(appZoom * 100) + '%' : '') + ' · ' + (standalone ? 'installed' : 'browser') +
+    (state.isDarkMode ? ' · dark' : '') + ' · ' + ua.slice(0, 160);
+}
+async function sendFeedbackForm(e) {
+  e.preventDefault();
+  const msg = document.getElementById('fbMessage').value.trim();
+  const errEl = document.getElementById('fbError');
+  errEl.textContent = '';
+  if (msg.length < 5) { errEl.textContent = state.feedbackKind === 'bug' ? 'Say what went wrong, in a few words.' : 'Write a few words first.'; document.getElementById('fbMessage').focus(); return; }
+  const btn = document.getElementById('fbSendBtn');
+  setBtnLoading(btn, 'Sending…');
+  try {
+    await api('sendFeedback', {
+      kind: state.feedbackKind, subject: document.getElementById('fbSubject').value.trim(), message: msg,
+      page: state.feedbackFrom || 'home', appVersion: APP_VERSION, device: feedbackDevice()
+    });
+    const bug = state.feedbackKind === 'bug';
+    document.getElementById('fbDoneTitle').textContent = bug ? 'Bug reported' : 'Thank you';
+    document.getElementById('fbDoneText').textContent = bug
+      ? 'It’s with the app’s Admins, with the details needed to look into it.'
+      : 'Your feedback is with the app’s Admins.';
+    document.getElementById('feedbackForm').classList.add('hidden');
+    document.getElementById('fbKind').classList.add('hidden');
+    document.getElementById('fbDone').classList.remove('hidden');
+    document.getElementById('fbSubject').value = '';
+    document.getElementById('fbMessage').value = '';
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    clearBtnLoading(btn, 'Send');
+  }
+}
+function resetFeedbackForm() {
+  document.getElementById('feedbackForm').classList.remove('hidden');
+  document.getElementById('fbKind').classList.remove('hidden');
+  document.getElementById('fbDone').classList.add('hidden');
+  renderFeedbackPage();
+  document.getElementById('fbMessage').focus();
+}
+function wireMorePages() {
+  document.getElementById('feedbackForm').addEventListener('submit', sendFeedbackForm);
+  document.getElementById('fbAnotherBtn').addEventListener('click', resetFeedbackForm);
+  document.getElementById('fbMessage').addEventListener('input', debounce(renderFeedbackPage, 150));
+  document.querySelectorAll('#fbKind button').forEach(function (b) {
+    b.addEventListener('click', function () { navigateTo('feedback', b.dataset.fb); });
+  });
+  document.querySelectorAll('[data-go-fb]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!document.getElementById('fbDone').classList.contains('hidden')) resetFeedbackForm();
+      navigateTo('feedback', b.dataset.goFb);
+    });
+  });
+  document.getElementById('aboutAppsBtn').addEventListener('click', function () { navigateTo('apps'); });
+}
+
 /* =========================================================================
    EVENT WIRING
    ========================================================================= */
@@ -7303,6 +7762,11 @@ function wireStaticEvents() {
   document.getElementById('logoutBtn').addEventListener('click', handleLogout);
   document.getElementById('railToggleBtn').addEventListener('click', toggleRailCollapse);
   document.getElementById('themeToggleBtn').addEventListener('click', function() { toggleTheme(); });
+  document.getElementById('zoomOutBtn').addEventListener('click', function () { stepZoom(-1); });
+  document.getElementById('zoomInBtn').addEventListener('click', function () { stepZoom(1); });
+  document.getElementById('zoomResetBtn').addEventListener('click', function () { applyZoom(1, true); });
+  document.getElementById('appVersion').addEventListener('click', function () { if (state.session) navigateTo('about'); });
+  wireMorePages();
   window.addEventListener('resize', debounce(updateNavIndicator, 100));
 
   document.getElementById('profileBtn').addEventListener('click', openPasswordModal);
@@ -7329,7 +7793,7 @@ function wireStaticEvents() {
   document.getElementById('resetForm').addEventListener('submit', handleResetSubmit);
   document.getElementById('resendOtpBtn').addEventListener('click', handleResendOtp);
 
-  document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page, el.dataset.kind); }); });
+  document.querySelectorAll('.nav-link').forEach(function (el) { el.addEventListener('click', function (e) { e.preventDefault(); navigateTo(el.dataset.page, el.dataset.kind || el.dataset.fb); }); });
   wireNavGroups();
 
   wireDashboard();
@@ -7451,9 +7915,10 @@ function makeTablesResizable() {
       if (th.classList.contains('actions-head')) return;
       const resizer = document.createElement('div'); resizer.classList.add('resizer'); th.appendChild(resizer);
       let x = 0; let w = 0;
-      const mouseMoveHandler = function(e) { th.style.minWidth = (w + (e.clientX - x)) + 'px'; th.style.width = (w + (e.clientX - x)) + 'px'; };
+      let sc = 1;
+      const mouseMoveHandler = function(e) { const nw = w + (e.clientX - x) / sc; th.style.minWidth = nw + 'px'; th.style.width = nw + 'px'; };
       const mouseUpHandler = function() { resizer.classList.remove('resizing'); document.removeEventListener('mousemove', mouseMoveHandler); document.removeEventListener('mouseup', mouseUpHandler); };
-      resizer.addEventListener('mousedown', function(e) { x = e.clientX; w = parseInt(window.getComputedStyle(th).width, 10); document.addEventListener('mousemove', mouseMoveHandler); document.addEventListener('mouseup', mouseUpHandler); resizer.classList.add('resizing'); });
+      resizer.addEventListener('mousedown', function(e) { x = e.clientX; w = parseInt(window.getComputedStyle(th).width, 10); sc = (th.getBoundingClientRect().width / th.offsetWidth) || 1; document.addEventListener('mousemove', mouseMoveHandler); document.addEventListener('mouseup', mouseUpHandler); resizer.classList.add('resizing'); });
     });
   });
 }
