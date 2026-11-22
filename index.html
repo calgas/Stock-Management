@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.26.0">
+<meta name="app-version" content="3.27.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -16,7 +16,8 @@
 <link rel="dns-prefetch" href="https://script.google.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"></noscript>
 <style>
   :root {
     /* Light — warm datasheet paper, graphite ink */
@@ -189,17 +190,17 @@
   }
   /* Selects get a custom chevron so the item modal's dropdowns match the
      toolbar filters exactly, instead of each browser drawing its own. */
-  .field select, .toolbar select {
+  .field select, .toolbar select, .tool-bar select {
     -webkit-appearance: none; -moz-appearance: none; appearance: none;
     padding-right: 40px; cursor: pointer;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5L8 10.5L12 6.5' stroke='%23949ca6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
   }
-  .field select:focus, .toolbar select:focus { border-color: var(--copper); }
+  .field select:focus, .toolbar select:focus, .tool-bar select:focus { border-color: var(--copper); }
   /* The native option list is drawn by the OS, so it can't be styled — but
      these two properties let it follow the app's own light/dark theme
      instead of always rendering light. */
-  .field select, .toolbar select, .field select option, .toolbar select option { color-scheme: light dark; background-color: var(--panel); }
+  .field select, .toolbar select, .tool-bar select, .field select option, .toolbar select option, .tool-bar select option { color-scheme: light dark; background-color: var(--panel); }
   [data-theme="dark"] .field select, [data-theme="dark"] .toolbar select { background-color: var(--line-soft); }
   [data-theme="dark"] .field input, [data-theme="dark"] .field select { border: 1px solid var(--line); }
   .field input:hover, .field select:hover { filter: brightness(0.97); }
@@ -1374,6 +1375,132 @@
     .about-chips { margin-left: 0; }
     .page-doc .page-head h2 { font-size: 22px; }
   }
+  /* ---- 3.27: tools, dropdowns, phone fixes ---- */
+  .lbl-short { display: none; }
+  .nav-phone-only { display: none !important; }
+  .nav-zoom { align-items: center; gap: 6px; }
+  .page-doc .tool-page { max-width: 1180px; }
+  .tool-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .tool-bar select { padding-right: 36px !important; }
+  .tool-bar select, .tool-bar input[type="search"] { height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--panel); color: var(--ink); font: inherit; font-size: 13.5px; }
+  .tool-bar input[type="search"] { flex: 1 1 200px; min-width: 160px; }
+  .tool-spacer { flex: 1; }
+  .tool-actions { display: flex; gap: 8px; margin-left: auto; }
+  .tool-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+  .tool-sticky { position: sticky; top: -32px; z-index: 5; background: var(--paper); padding: 10px 0 8px; margin-bottom: 8px; }
+  .tool-sum { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13.5px; color: var(--ink-soft); margin-bottom: 10px; }
+  .tool-sum b { color: var(--ink); }
+  .tool-sum-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tool-note { font-size: 12px; color: var(--ink-faint); margin: 0 0 12px; line-height: 1.5; }
+  .tool-progress { height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+  .tool-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--copper), var(--azure)); transition: width 0.25s var(--ease); }
+  .tool-empty { padding: 28px 16px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  .tool-more { text-align: center; font-size: 12.5px; color: var(--ink-faint); padding: 14px; }
+  .count-list { display: flex; flex-direction: column; gap: 6px; }
+  .count-row, .cost-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 170px 110px; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .cost-row { grid-template-columns: minmax(0, 1fr) 130px minmax(0, 1fr) 160px; }
+  .count-row.is-counted, .cost-row.is-edited { border-color: color-mix(in srgb, var(--copper) 45%, var(--line)); }
+  .count-row.is-moved { border-color: var(--critical); }
+  .cr-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+  .cr-code { font-weight: 600; font-size: 13px; color: var(--ink); }
+  .cr-name { font-size: 13.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+  .cr-cat { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .cr-sys, .ro-fig { display: flex; flex-direction: column; align-items: flex-end; font-size: 13.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cr-lab { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+  .cr-count { display: flex; align-items: center; gap: 6px; }
+  .cr-count input { width: 100%; min-width: 0; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--line-soft); color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .cr-count input:focus { outline: none; border-color: var(--copper); background: var(--panel); box-shadow: 0 0 0 3px var(--copper-soft); }
+  .cr-unit { font-size: 12px; color: var(--ink-faint); font-weight: 600; min-width: 26px; }
+  .cr-diff { text-align: right; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .cr-diff.is-zero { color: var(--ok); font-weight: 600; font-size: 12.5px; }
+  .cr-diff.is-up { color: var(--azure); }
+  .cr-diff.is-down { color: var(--critical); }
+  .cr-moved { grid-column: 1 / -1; font-size: 12.5px; color: var(--critical); }
+  .cost-sug { min-width: 0; font-size: 12.5px; }
+  .chip-btn { background: var(--copper-soft); color: var(--copper); border-radius: 99px; padding: 5px 10px; font-size: 12px; font-weight: 600; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip-btn:hover { background: var(--copper); color: #fff; }
+  .tool-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tool-table th, .tool-table td { padding: 8px 6px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+  .tool-table th { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .count-review { max-height: 46vh; overflow: auto; margin-bottom: 8px; }
+  .ro-group { margin-bottom: 14px; padding: 14px 16px; }
+  .ro-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ro-head h3 { margin: 0; font-size: 15px; color: var(--ink); }
+  .ro-head span { font-size: 12.5px; color: var(--ink-soft); }
+  .ro-row { display: grid; grid-template-columns: minmax(0, 1fr) 120px 90px 150px 100px; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line-soft); }
+  .ro-item { min-width: 0; font-size: 13.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ro-name { color: var(--ink); }
+  .ro-kind { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; }
+  .ro-status { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: 0 0 8px; }
+  .ro-status.is-critical { background: var(--critical); }
+  .ro-status.is-low { background: var(--low); }
+  .ro-mail { margin-bottom: 14px; }
+  .dd-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .dd-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 99px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-soft); font-size: 13px; font-weight: 600; }
+  .dd-chip span { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .dd-chip.is-on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .dd-chip.is-on span { color: inherit; opacity: 0.7; }
+  .dd-card { max-width: 760px; }
+  .dd-add { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .dd-add input, .dd-row input[type="text"], .dd-row input[type="date"] { flex: 1 1 180px; height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--line-soft); color: var(--ink); font: inherit; font-size: 14px; }
+  .dd-list { display: flex; flex-direction: column; }
+  .dd-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .dd-row.is-editing { background: var(--hover-surface); padding: 10px; border-radius: 10px; }
+  .dd-val { display: flex; flex-direction: column; min-width: 0; font-size: 14px; color: var(--ink); font-weight: 500; }
+  .dd-val small { font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+  .dd-val .dd-used { color: var(--ink-faint); }
+  .dd-actions { display: flex; gap: 6px; align-items: center; }
+  .dd-btn { width: 34px; height: 34px; padding: 0; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; }
+  .dd-btn:hover { transform: none; color: var(--ink); background: var(--hover-surface); }
+  .dd-btn.dd-del:hover { color: var(--critical); background: var(--critical-soft); }
+  .dd-btn:disabled { opacity: 0.3; cursor: default; }
+  .dd-also { flex-basis: 100%; font-size: 12.5px; color: var(--ink-soft); display: flex; gap: 6px; align-items: center; }
+  .lot-tag { font-size: 11px; color: var(--ink-soft); margin-top: 3px; font-weight: 500; }
+  .lot-hint { color: var(--azure); font-weight: 600; }
+  tr.is-archived td { opacity: 0.78; }
+  tr.ledger-sep td { background: var(--line-soft); color: var(--ink-soft); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; }
+  .shelf-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 110px 110px; gap: 10px; align-items: center; cursor: pointer; }
+  .shelf-badge { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 99px; text-align: center; }
+  .shelf-badge.is-expired { background: var(--critical-soft); color: var(--critical); }
+  .shelf-badge.is-soon { background: color-mix(in srgb, var(--low) 18%, transparent); color: var(--low); }
+  .shelf-qty, .shelf-date { text-align: right; font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .kpi-link { background: none; padding: 0; color: inherit; font: inherit; text-align: left; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 3px; }
+  .kpi-link:hover { color: var(--copper); }
+  .att-reorder { font-size: 12.5px; font-weight: 700; color: var(--copper); }
+  .db-card-head .att-reorder { margin-left: auto; }
+
+  @media (max-width: 780px) {
+    .nav-phone-only { display: flex !important; }
+    .nav-phone-only.hidden { display: none !important; }
+    .rail .nav-group[data-group="tools"], .rail #navDropdowns { display: none !important; }
+    .lbl-full { display: none; }
+    .lbl-short { display: inline; }
+    .rail .nav-zoom { flex: 1 1 100%; justify-content: center; padding: 6px 4px 2px; color: rgba(255,255,255,0.8); }
+    .nav-zoom-label { font-size: 13px; font-weight: 600; margin-right: auto; padding-left: 6px; }
+    .nav-zoom button { min-width: 48px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.08); color: #fff; font-size: 18px; font-weight: 700; }
+    .nav-zoom button.zoom-level { min-width: 70px; font-size: 13px; font-family: var(--font-mono); }
+    .nav-zoom button:disabled { opacity: 0.35; }
+    .db-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+    .db-controls #dbScope { grid-column: 1 / -1; }
+    .db-controls .seg { width: 100%; }
+    .seg button { white-space: nowrap; }
+    .count-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "item item" "sys diff" "count count"; gap: 6px 10px; }
+    .count-row .cr-item { grid-area: item; } .count-row .cr-sys { grid-area: sys; align-items: flex-start; flex-direction: row; gap: 6px; align-items: baseline; }
+    .count-row .cr-diff { grid-area: diff; } .count-row .cr-count { grid-area: count; }
+    .cost-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+    .cost-row .cr-item, .cost-row .cost-sug { grid-column: 1 / -1; }
+    .ro-row { grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+    .ro-row .ro-item { grid-column: 1 / -1; }
+    .ro-row .ro-fig { align-items: flex-start; }
+    .tool-sticky { top: 0; }
+    .shelf-row { grid-template-columns: 60px minmax(0, 1fr); }
+    .shelf-qty, .shelf-date { grid-column: 2; text-align: left; }
+    .tool-bar select { flex: 1 1 calc(50% - 5px); min-width: 0; }
+    .tool-bar input[type="search"] { flex: 1 1 100%; }
+    .tool-bar > .seg { flex: 1 1 100%; }
+    .tool-bar > .seg#reorderCover { flex: 0 1 auto; }
+    .tool-spacer { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -1492,17 +1619,39 @@
       <a href="#" class="nav-link nav-sub-link" data-page="ledger" data-kind="trade"><span class="nav-dot" aria-hidden="true"></span><span class="label">Trade</span><span class="nav-abbr" aria-hidden="true">TR</span></a>
       </div>
     </div>
+    <div class="nav-group" data-group="tools">
+      <button type="button" class="nav-group-head" aria-expanded="true"><svg class="nav-icon" width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 3.5h10M3 8h10M3 12.5h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11.5 11l1.3 1.3 2.2-2.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Tools</span><svg class="nav-caret" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="nav-sub">
+      <a href="#" class="nav-link nav-sub-link" data-page="count" data-perm="stock.count"><span class="nav-dot" aria-hidden="true"></span><span class="label">Stock count</span><span class="nav-abbr" aria-hidden="true">CNT</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
+      </div>
+    </div>
     <a href="#" class="nav-link hidden" id="navUsers" data-page="users">
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5.5" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M1.5 14c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.3c1.8.2 3 1.4 3 3.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span class="label">Team &amp; Access</span>
+      <span class="label"><span class="lbl-full">Team &amp; Access</span><span class="lbl-short">Team</span></span>
+    </a>
+    <a href="#" class="nav-link hidden" id="navDropdowns" data-page="dropdowns" data-perm="stock.dropdowns">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="3.5" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.6l.9.9.9-.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9h10M3 11.5h10M3 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="label">Dropdowns</span>
     </a>
     <div class="nav-group" data-group="more">
       <button type="button" class="nav-group-head" aria-expanded="true"><svg class="nav-icon" width="18" height="18" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.3" stroke="currentColor" stroke-width="1.5"/><circle cx="11.5" cy="11.5" r="2.6" stroke="currentColor" stroke-width="1.5"/></svg><span class="label">More</span><svg class="nav-caret" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="nav-sub">
+      <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="count" data-perm="stock.count"><span class="nav-dot" aria-hidden="true"></span><span class="label">Stock count</span><span class="nav-abbr" aria-hidden="true">CNT</span></a>
+      <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
+      <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
+      <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="dropdowns" data-perm="stock.dropdowns"><span class="nav-dot" aria-hidden="true"></span><span class="label">Dropdowns</span><span class="nav-abbr" aria-hidden="true">DD</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="apps"><span class="nav-dot" aria-hidden="true"></span><span class="label">Apps</span><span class="nav-abbr" aria-hidden="true">APP</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="feedback"><span class="nav-dot" aria-hidden="true"></span><span class="label">Feedback</span><span class="nav-abbr" aria-hidden="true">FB</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="bug"><span class="nav-dot" aria-hidden="true"></span><span class="label">Report a bug</span><span class="nav-abbr" aria-hidden="true">BUG</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="about"><span class="nav-dot" aria-hidden="true"></span><span class="label">About</span><span class="nav-abbr" aria-hidden="true">i</span></a>
+      <div class="nav-zoom nav-phone-only" role="group" aria-label="Zoom">
+        <span class="nav-zoom-label">Zoom</span>
+        <button type="button" data-zoom="-1" aria-label="Zoom out">&minus;</button>
+        <button type="button" data-zoom="0" class="zoom-level" aria-label="Zoom 100%">100%</button>
+        <button type="button" data-zoom="1" aria-label="Zoom in">+</button>
+      </div>
       </div>
     </div>
 
@@ -1600,12 +1749,20 @@
           <div class="db-card-head">
             <div><h3 class="db-card-title">Needs attention</h3><p class="db-card-sub">At or below the minimum quantity, most urgent first</p></div>
             <div class="att-links" id="dbAttentionLinks"></div>
+            <button type="button" class="link-btn att-reorder" data-go="reorder">Reorder list &rarr;</button>
           </div>
           <div id="dbAttention"></div>
         </div>
         <div class="db-card span-5">
           <div class="db-card-head"><div><h3 class="db-card-title">Recent activity</h3><p class="db-card-sub">The latest entries in these ledgers</p></div></div>
           <div id="dbRecent"></div>
+        </div>
+      </div>
+
+      <div class="db-grid">
+        <div class="db-card span-12 hidden" id="dbShelfCard">
+          <div class="db-card-head"><div><h3 class="db-card-title">Shelf life</h3><p class="db-card-sub" id="dbShelfSub"></p></div></div>
+          <div id="dbShelf"></div>
         </div>
       </div>
 
@@ -1799,6 +1956,73 @@
         </table>
       </div>
     </section>
+    <section class="page page-doc hidden" id="page-count">
+      <div class="page-head"><h2>Stock count</h2><p>Count what is on the shelf. Items that differ are adjusted to your count, in one go.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="tool-bar">
+          <div class="seg" id="countKind" role="group" aria-label="Ledger"></div>
+          <select id="countDept" class="no-combo" aria-label="Department"></select>
+          <select id="countCat" class="no-combo" aria-label="Category"></select>
+          <input type="search" id="countSearch" placeholder="Search code or name" aria-label="Search">
+          <label class="tool-check"><input type="checkbox" id="countOnlyLeft"> Not counted yet</label>
+        </div>
+        <div class="tool-sticky">
+          <div class="tool-progress"><span id="countMeter"></span></div>
+          <div class="tool-sum"><span id="countSummaryText"></span>
+            <span class="tool-sum-actions"><button type="button" class="btn-ghost btn-compact" id="countClearBtn">Clear</button><button type="button" class="btn-primary btn-compact" id="countPostBtn">Review &amp; post</button></span></div>
+          <p class="tool-note">Your figures are kept on this device until you post them, so a count can be finished later.</p>
+        </div>
+        <div id="countBody"><div class="count-list" id="countList"></div></div>
+      </div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-reorder">
+      <div class="page-head"><h2>Reorder list</h2><p>Everything at or below its minimum quantity, grouped by supplier, with how much to order.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="tool-bar">
+          <div class="seg" id="reorderKind" role="group" aria-label="Ledgers"></div>
+          <div class="seg" id="reorderCover" role="group" aria-label="Order enough for">
+            <button type="button" data-cover="15">15 days</button><button type="button" data-cover="30">30 days</button><button type="button" data-cover="60">60 days</button>
+          </div>
+          <span class="tool-spacer"></span>
+          <span class="tool-actions"><button type="button" class="btn-ghost btn-compact" id="reorderExportBtn">Export</button><button type="button" class="btn-primary btn-compact" id="reorderEmailBtn">Email&hellip;</button></span>
+        </div>
+        <div class="db-card ro-mail hidden" id="reorderMail">
+          <div class="field"><label for="reorderTo">Send to</label><input type="text" id="reorderTo" placeholder="purchase@calgas.in" autocomplete="email"><div class="hint">Company addresses only; separate several with commas.</div></div>
+          <div class="field"><label for="reorderNote">Note (optional)</label><textarea id="reorderNote" rows="2" maxlength="1000"></textarea></div>
+          <div class="form-error" id="reorderMailError"></div>
+          <div class="modal-actions"><button type="button" class="btn-primary btn-compact" id="reorderSendBtn">Send</button></div>
+        </div>
+        <p class="tool-note">Suggested quantity: enough for the chosen days at the last 90 days&rsquo; use, and at least twice the minimum, less what is on hand. Change any figure before you send it.</p>
+        <div class="tool-sum" id="reorderSummary"></div>
+        <div id="reorderList"></div>
+      </div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-costs">
+      <div class="page-head"><h2>Standard costs</h2><p>Items without a standard cost are left out of the stock value. Fill them in here, from the last price paid where there is one.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="tool-bar">
+          <div class="seg" id="costKind" role="group" aria-label="Ledger"></div>
+          <div class="seg" id="costMode" role="group" aria-label="Which items"><button type="button" data-mode="stock">In stock</button><button type="button" data-mode="all">All without a cost</button></div>
+          <input type="search" id="costSearch" placeholder="Search code or name" aria-label="Search">
+        </div>
+        <div class="tool-sticky">
+          <div class="tool-sum"><span id="costSummary"></span>
+            <span class="tool-sum-actions"><button type="button" class="btn-ghost btn-compact" id="costFillBtn">Fill in every last price</button><button type="button" class="btn-primary btn-compact" id="costSaveBtn">Save</button></span></div>
+        </div>
+        <div class="count-list" id="costList"></div>
+      </div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-dropdowns">
+      <div class="page-head"><h2>Dropdowns</h2><p>The lists the app&rsquo;s forms offer: categories, units, suppliers, holidays. Changes show the next time a form opens.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="dd-picker" id="ddPicker"></div>
+        <div id="ddBody"></div>
+      </div>
+    </section>
+
     <section class="page page-doc hidden" id="page-apps">
       <div class="page-head"><h2>Apps</h2><p>The other CALGAS apps. Each one opens in a new tab.</p></div>
       <div class="page-doc-body"><div class="app-gallery" id="appGallery"></div></div>
@@ -1872,6 +2096,20 @@
   </div>
 </div>
 
+<div id="countModal" class="modal-backdrop hidden">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-drag-handle" aria-hidden="true"></div>
+    <div class="modal-head">
+      <div><div class="modal-eyebrow">STOCK COUNT</div><h3>Post the count</h3><div class="muted" id="countReviewSub"></div></div>
+      <button class="icon-btn" id="countCloseBtn" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="field"><label for="countReason">What is this count?</label><input type="text" id="countReason" maxlength="200"></div>
+    <div class="count-review" id="countReviewList"></div>
+    <div class="modal-error" id="countReviewError"></div>
+    <div class="modal-actions"><button type="button" class="btn-ghost" id="countCancelBtn">Back to the count</button><button type="button" class="btn-primary" id="countPostConfirmBtn">Post</button></div>
+  </div>
+</div>
+
 <div id="txnModal" class="modal-backdrop hidden">
   <div class="modal modal-form">
     <div class="modal-drag-handle" aria-hidden="true"></div>
@@ -1888,7 +2126,7 @@
     <form id="txnForm">
       <input type="hidden" id="txnCode"><input type="hidden" id="txnKey">
       <div class="form-grid">
-        <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select></div>
+        <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select><div class="hint lot-hint hidden" id="txnLotHint"></div></div>
         <div class="field"><label for="txnQty">Quantity</label><div class="input-with-unit"><input type="number" id="txnQty" step="any" required><span class="input-unit hidden" id="txnQtyUnit"></span></div><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
         <div class="field hidden" id="txnDateField"><label for="txnDate">Entry date</label><input type="date" id="txnDate"><div class="hint" id="txnDateHint">Today. Pick an earlier day only when the paperwork is late.</div></div>
@@ -1900,6 +2138,10 @@
             <div class="field"><label for="txnSupplier">Supplier Name</label><select id="txnSupplier"></select></div>
             <div class="field"><label for="txnInvoiceNo" id="txnInvoiceNoLabel">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
             <div class="field"><label for="txnInvoiceDate">Invoice Date</label><input type="date" id="txnInvoiceDate"></div>
+          </div>
+          <div class="receipt-grid hidden" id="lotFields">
+            <div class="field"><label for="txnLotNo">Lot / batch no.</label><input type="text" id="txnLotNo" maxlength="60" autocomplete="off"></div>
+            <div class="field"><label for="txnExpiry">Expiry date</label><input type="date" id="txnExpiry"><div class="hint" id="txnExpiryHint"></div></div>
           </div>
         </div>
 
@@ -2035,6 +2277,7 @@
       <input type="date" id="ledgerDateTo">
       <input type="text" id="ledgerUserFilter" placeholder="Filter by user…" style="flex:1;min-width:160px">
       <button class="btn-ghost" id="ledgerClearFiltersBtn">Clear</button>
+      <button class="btn-ghost hidden" id="ledgerEarlierBtn" title="Entries from closed financial years">Earlier years</button>
       <button class="btn-ghost" id="ledgerExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
     </div>
     <div class="load-note" id="ledgerRefreshNote" aria-live="polite"></div>
@@ -2193,7 +2436,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.26.0';
+const APP_VERSION = '3.27.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2203,7 +2446,7 @@ const PAGE_SIZE = 50;
 const ALERT_CARD_LIMIT = 30;
 const API_TIMEOUT_MS = 30000;
 // A file is far bigger than an entry, and a phone may be on a weak signal.
-const ACTION_TIMEOUT_MS = { uploadAttachment: 180000, getAttachmentFile: 120000 };
+const ACTION_TIMEOUT_MS = { uploadAttachment: 180000, getAttachmentFile: 120000, postStockCount: 120000, sendReorderList: 90000, getArchivedLedger: 60000, saveDropdownList: 60000 };
 const REDUCE_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const _scriptCache = {};
@@ -2343,7 +2586,8 @@ const RM_CONFIG_UI = {
     { key: 'HSN_Code', label: 'HSN code', type: 'text' },
     { key: 'GST_Percent', label: 'GST %', type: 'number' },
     { key: 'ReorderLevel', label: 'Minimum quantity', type: 'number' },
-    { key: 'StandardCost', label: 'Standard cost', type: 'number' }
+    { key: 'StandardCost', label: 'Standard cost', type: 'number' },
+    { key: 'ShelfLifeDays', label: 'Shelf life (days)', type: 'number', section: 'more' }
   ]
 };
 const FG_CONFIG_UI = {
@@ -2492,7 +2736,11 @@ const MUTATING_ACTIONS = {
   // was quietly re-sent and then reported "Entry not found" as a failure.
   updateRMTransaction: true, updateFGTransaction: true, deleteRMTransaction: true, deleteFGTransaction: true,
   setUserAccess: true, setAccessTemplate: true, login: true, logout: true,
-  uploadAttachment: true, removeAttachment: true
+  uploadAttachment: true, removeAttachment: true,
+  // 3.22-3.27: Trade, reversals, feedback and the tools
+  addTradeTransaction: true, updateTradeTransaction: true, reverseTradeTransaction: true, reverseRMTransaction: true, reverseFGTransaction: true,
+  recalculateTradeStock: true, addTradeItem: true, updateTradeItem: true, deleteTradeItem: true, reactivateTradeItem: true, bulkAddTradeItems: true,
+  sendFeedback: true, postStockCount: true, setStandardCosts: true, sendReorderList: true, saveDropdownList: true
 };
 
 // Writes that are safe to send again when a reply is lost, because a second
@@ -2506,7 +2754,9 @@ const REPEATABLE_WRITES = {
   updateUser: true, setUserAccess: true, setAccessTemplate: true, login: true, logout: true,
   // A second copy finds the file already removed and says so. (An upload
   // carries its own duplicate-safe ID, which already makes it safe.)
-  removeAttachment: true
+  removeAttachment: true,
+  // A count carries its own ID, and costs are absolute values.
+  postStockCount: true, setStandardCosts: true
 };
 
 // Waits before each retry when Google's reply isn't ours. Its hiccups tend
@@ -2755,7 +3005,7 @@ function clearSession() {
   state.session = null; localStorage.removeItem('stock_session');
   // The entries kept for instant opening go too — a shared device shouldn't
   // show the last person's ledger.
-  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache', 'stock_boot_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
   ledgerComplete.rm = ledgerComplete.fg = ledgerComplete.trade = null;
   ledgerViews.rm = ledgerViews.fg = ledgerViews.trade = null;
   ledgerSeq++;  // a load still on its way belongs to the last person
@@ -3211,14 +3461,21 @@ async function init() {
   const session = loadSession();
   if (session) {
     state.session = session;
+    // The figures this device saw last, shown at once and brought up to date
+    // behind them (3.27). One request at start-up instead of two: the
+    // bootstrap now says who is signed in, so whoAmI isn't asked first.
+    const cached = readBootCache();
+    if (cached) {
+      try {
+        state.permissions = cached.data.permissions || {};
+        applyBootstrap(cached.data, cached.at);
+        await boot({ cached: true });
+        return;
+      } catch (err) { /* fall through to a normal start */ }
+    }
     try {
-      setLoaderProgress(52, 'Verifying credentials…');
-      const who = await api('whoAmI');
-      state.session.role = who.role;
-      state.session.department = who.department;
-      // Before boot(), because boot() decides which buttons exist from these.
-      state.permissions = who.permissions || {};
-      await boot();
+      setLoaderProgress(52, 'Loading your figures…');
+      await boot({ strict: true });
       return;
     } catch (err) {
       // Only a session the backend actually refused is thrown away. A reply
@@ -3253,35 +3510,52 @@ async function init() {
   }
 }
 
-async function boot() {
+async function boot(opts) {
+  opts = opts || {};
   setLoaderProgress(62, 'Loading workspace…');
   hideAllAuthScreens();
   document.getElementById('appShell').classList.remove('hidden');
-  document.getElementById('userName').textContent = state.session.name || state.session.username;
-  document.getElementById('userRoleDept').textContent = state.session.role + (state.session.department ? ' · ' + state.session.department : '');
-  // Gated on the resolved permission, not the role name — that's what the
-  // backend checks, and a button that only fails on click is worse than no
-  // button. Team & Access stays keyed to Admin because managing accounts
-  // isn't a grantable feature.
-  document.getElementById('adminRecalcBtn').classList.toggle('hidden', !can('stock.recalculate'));
-  document.getElementById('navUsers').classList.toggle('hidden', state.session.role !== 'Admin');
-
-  state.canEditMaster = STOCK_KINDS.some(function (k) { return canEditItems(uiConfig(k)); });
-  syncItemButtons();
+  syncAccessUi();
 
   renderTableSkeleton('rmTableBody', 7, 6);
   renderTableSkeleton('fgTableBody', 8, 6);
   renderTableSkeleton('tradeTableBody', 7, 6);
   setStatsLoading();
 
+  if (opts.cached) {
+    populateCategoryFilters();
+    navigateTo('home');
+    warmLedgers();
+    startFreshnessInterval();
+    setLoaderProgress(100, 'Ready');
+    await hideInitialLoader();
+    showAppProgress(40);
+    refreshAllData().then(function () {
+      populateCategoryFilters();
+      syncAccessUi();
+      resolvePendingTxn();
+      const shown = document.querySelector('.page:not(.hidden)');
+      const id = shown ? shown.id.replace(/^page-/, '') : 'home';
+      if (id === 'home') renderHome();
+      if (STOCK_KINDS.indexOf(id) > -1) renderStockPage(id);
+      if (['count', 'reorder', 'costs'].indexOf(id) > -1) navigateTo(id);
+      STOCK_KINDS.forEach(updateFreshnessLabel);
+    }).catch(function (err) {
+      if (!err.sessionRejected) toast('Showing the figures saved on this device — couldn’t refresh: ' + err.message, true);
+    }).finally(hideAppProgress);
+    return;
+  }
   setLoaderProgress(78, 'Fetching stock data…');
   showAppProgress(30);
   try {
     await refreshAllData();
     showAppProgress(85);
   } catch (err) {
+    if (opts.strict) { hideAppProgress(); throw err; }
     toast(err.message, true);
   }
+  // Access is known for certain only once the bootstrap is in.
+  syncAccessUi();
   populateCategoryFilters();
   // An entry whose outcome was never learned — the tablet lost signal, or was
   // closed mid-post — is settled here, before the operator sees the stock
@@ -3293,6 +3567,22 @@ async function boot() {
   setLoaderProgress(100, 'Ready');
   await hideInitialLoader();
   hideAppProgress();
+}
+
+// Who is signed in, and the buttons and links their access allows. Run at
+// start and again once the bootstrap is in, since an Admin may have changed it.
+function syncAccessUi() {
+  document.getElementById('userName').textContent = state.session.name || state.session.username;
+  document.getElementById('userRoleDept').textContent = state.session.role + (state.session.department ? ' · ' + state.session.department : '');
+  // Gated on the resolved permission, not the role name — that's what the
+  // backend checks, and a button that only fails on click is worse than no
+  // button. Team & Access stays keyed to Admin because managing accounts
+  // isn't a grantable feature.
+  document.getElementById('adminRecalcBtn').classList.toggle('hidden', !can('stock.recalculate'));
+  document.getElementById('navUsers').classList.toggle('hidden', state.session.role !== 'Admin');
+  state.canEditMaster = STOCK_KINDS.some(function (k) { return canEditItems(uiConfig(k)); });
+  syncItemButtons();
+  syncPermLinks();
 }
 
 // Add and Import follow each ledger's own access.
@@ -3312,6 +3602,19 @@ async function refreshAllData() {
   // faster — especially noticeable right after login, on slower
   // connections, and on every "Refresh" click.
   const data = await api('getBootstrap');
+  applyBootstrap(data);
+  writeBootCache(data);
+  warmLedgers();
+}
+
+// The bootstrap's lists into the app's state: from the server, or from the
+// copy kept on this device for a quick start.
+function applyBootstrap(data, at) {
+  if (data.me && state.session) {
+    const changed = state.session.role !== data.me.role || state.session.department !== data.me.department;
+    state.session.role = data.me.role; state.session.department = data.me.department;
+    if (changed) saveSession(state.session);
+  }
   state.rmMaster = data.rmMaster; state.fgMaster = data.fgMaster; state.rmStock = data.rmStock; state.fgStock = data.fgStock; state.departments = data.departments;
   // An older backend sends no Trade lists; the Trade pages are then simply empty.
   state.tradeMaster = data.tradeMaster || []; state.tradeStock = data.tradeStock || [];
@@ -3322,9 +3625,10 @@ async function refreshAllData() {
   // while they were signed in.
   if (data.permissions) { state.permissions = data.permissions; if (state.session) syncItemButtons(); }
   if (data.users) state.users = data.users;
-  state.rmLastUpdated = new Date(); state.fgLastUpdated = new Date(); state.tradeLastUpdated = new Date();
+  const when = at ? new Date(at) : new Date();
+  state.rmLastUpdated = when; state.fgLastUpdated = when; state.tradeLastUpdated = when;
   invalidateMergeCache();
-  warmLedgers();
+  syncPermLinks();
 }
 
 // Runs every time someone actually looks at the RM/FG page (see navigateTo)
@@ -3492,6 +3796,7 @@ function syncTopbarTitle(pageEl) {
 
 function navigateTo(page, kind) {
   if (page === 'users' && state.session.role !== 'Admin') page = 'home';
+  if (PAGE_PERMS[page] && !permOk(PAGE_PERMS[page])) page = 'home';
   // Feedback remembers the screen it was opened from, for the report.
   const shown = document.querySelector('.page:not(.hidden)');
   if (page === 'feedback') {
@@ -3519,6 +3824,10 @@ function navigateTo(page, kind) {
   if (page === 'apps') renderAppsPage();
   if (page === 'about') renderAboutPage();
   if (page === 'feedback') renderFeedbackPage();
+  if (page === 'count') renderCountPage();
+  if (page === 'reorder') renderReorderPage();
+  if (page === 'costs') renderCostsPage();
+  if (page === 'dropdowns') renderDropdownsPage();
   // Loads on first visit rather than at boot — the ledger can be large and
   // most sessions never open it.
   if (page === 'ledger') {
@@ -4060,6 +4369,7 @@ function renderHome() {
   renderDashAttention(kinds, all);
   renderDashRecent(kinds, moves, ready);
   renderDashIdle(all, ready);
+  renderDashShelf();
 }
 
 function syncDashControls() {
@@ -4119,7 +4429,7 @@ function renderDashKpis(kinds, items, all, stats, ready) {
     const missing = all.filter(function (r) { return r.cost === null && r.balance > 0; }).length;
     cards.push(kpiHtml({
       icon: DB_ICONS.value, label: 'Stock value', value: compactINR(total), title: '₹' + Math.round(total).toLocaleString('en-IN') + ' at standard cost', go: 'stock',
-      sub: missing ? plural(missing, 'item') + ' in stock with no standard cost' : 'At standard cost',
+      sub: missing ? (permOk(PAGE_PERMS.costs) ? '<button type="button" class="kpi-link" data-go="costs">' + plural(missing, 'item') + ' in stock with no standard cost &rarr;</button>' : plural(missing, 'item') + ' in stock with no standard cost') : 'At standard cost',
       extra: kinds.length > 1 ? mixBar(kinds.map(function (k) { return { kind: k, v: items[k].reduce(function (s, r) { return s + (r.value || 0); }, 0) }; })) : ''
     }));
   } else {
@@ -4140,11 +4450,17 @@ function renderDashKpis(kinds, items, all, stats, ready) {
   }));
 
   if (ready) {
-    const delta = stats.prevEntries ? Math.round((stats.entries - stats.prevEntries) / stats.prevEntries * 100) : null;
+    // A percentage on a tiny earlier figure reads as nonsense (▲ 1417%), so
+    // below 10 entries, or past three times as many, the earlier count is given instead.
+    const prev = stats.prevEntries || 0;
+    const delta = prev >= 10 ? Math.round((stats.entries - prev) / prev * 100) : null;
+    const trend = !prev ? '' : (delta !== null && Math.abs(delta) <= 300)
+      ? (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta) + '% on the previous ' + dash.days + ' days'
+      : formatNum(prev) + ' in the previous ' + dash.days + ' days';
     cards.push(kpiHtml({
       icon: DB_ICONS.activity, label: 'Entries, last ' + dash.days + ' days', value: formatNum(stats.entries), go: 'activity',
       sub: formatNum(stats.ins) + ' in · ' + formatNum(stats.outs) + ' out' +
-        (delta === null ? '' : '<br><span class="kpi-delta">' + (delta >= 0 ? '▲ ' : '▼ ') + Math.abs(delta) + '% on the previous ' + dash.days + ' days</span>'),
+        (trend ? '<br><span class="kpi-delta">' + trend + '</span>' : ''),
       extra: sparkline(stats.buckets.map(function (b) { return kinds.reduce(function (s, k) { return s + (b.counts[k] || 0); }, 0); }))
     }));
   } else {
@@ -4409,6 +4725,8 @@ function dashGo(where) {
   if (where === 'attention') return kinds.length === 1 ? goToStockTab(kinds[0], 'NeedsAttention') : scrollToDashCard('dbAttentionCard');
   if (where === 'idle') return scrollToDashCard('dbIdleCard');
   if (where === 'activity') return navigateTo('ledger', kinds.length === 1 ? kinds[0] : state.ledgerKind);
+  if (where === 'costs') { costView.kind = kinds[0]; return navigateTo('costs'); }
+  if (where === 'reorder') { reorderView.scope = dash.scope; return navigateTo('reorder'); }
 }
 function scrollToDashCard(id) {
   const el = document.getElementById(id);
@@ -4428,6 +4746,7 @@ let _dashRedrawTimer = null;
 function dashLedgerArrived() {
   clearTimeout(_dashRedrawTimer);
   _dashRedrawTimer = setTimeout(function () {
+    if (!document.getElementById('page-reorder').classList.contains('hidden')) renderReorderPage();
     const page = document.getElementById('page-home');
     if (page && !page.classList.contains('hidden')) renderHome();
   }, 150);
@@ -4519,7 +4838,7 @@ function openTxnModal(key, code) {
     deptSelect.value = defaultStockDepartment(places);
   }
 
-  ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
+  ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnLotNo', 'txnExpiry', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
 
   // Supplier list comes from the Dropdowns tab, in the tab's own order.
   const suppliers = (state.dropdowns && state.dropdowns.Supplier) || [];
@@ -4603,6 +4922,7 @@ function updateTxnFormVisibility() {
   const supplierTypes = (activeTxnConfig && activeTxnConfig.supplierTypes) || [];
   const supplierReturn = type === 'Return to supplier' && supplierTypes.indexOf(type) > -1;
   document.getElementById('receiptFields').classList.toggle('hidden', supplierTypes.indexOf(type) === -1);
+  syncLotFields(type);
   document.getElementById('receiptFieldsLabel').textContent = supplierReturn ? 'Going back to (required)' : 'Procurement details (Optional)';
   document.getElementById('txnInvoiceNoLabel').textContent = supplierReturn ? 'Original invoice no (optional)' : 'Invoice No';
   document.getElementById('txnReferenceLabel').textContent = supplierReturn ? 'Debit note / return challan no.' : 'Reference (optional)';
@@ -4611,6 +4931,37 @@ function updateTxnFormVisibility() {
   if (typeof txnQtyMinSync === 'function') txnQtyMinSync();
   if (activeTxnConfig) renderTxnPrice(priceCache[activeTxnConfig.key + ':' + document.getElementById('txnCode').value]);
   validateTxnQty();
+}
+
+// Lot and expiry on RM receipts; on taking RM out, the oldest lot on hand (3.27).
+function syncLotFields(type) {
+  const rm = activeTxnConfig && activeTxnConfig.key === 'rm';
+  const receipt = rm && type === 'Receipt';
+  document.getElementById('lotFields').classList.toggle('hidden', !receipt);
+  const code = document.getElementById('txnCode').value;
+  const master = rm ? (state.rmMaster || []).find(function (m) { return m.RM_Code === code; }) : null;
+  const life = master ? Number(master.ShelfLifeDays) || 0 : 0;
+  const exp = document.getElementById('txnExpiry');
+  if (receipt && life && !exp.value) {
+    const from = (document.getElementById('txnDate') && document.getElementById('txnDate').value) || localDayISO(new Date());
+    exp.value = localDayISO(new Date(new Date(from + 'T12:00:00').getTime() + life * DAY_MS));
+  }
+  document.getElementById('txnExpiryHint').textContent = receipt && life ? 'Shelf life ' + life + ' days; change it if the label says otherwise.' : '';
+  const hint = document.getElementById('txnLotHint');
+  const out = rm && (activeTxnConfig.outTypes || []).indexOf(type) > -1;
+  let text = '';
+  if (out && code) {
+    const item = mergeStock(state.rmMaster || [], state.rmStock || [], RM_CONFIG_UI, true).find(function (i) { return i.code === code; });
+    const r = item ? lotsOnHand(code, item.balance) : null;
+    const tracked = r ? r.lots.filter(function (l) { return l.lot || l.expiry; }) : [];
+    if (tracked.length) {
+      const oldest = tracked[tracked.length - 1];
+      text = 'Use first: ' + (oldest.lot ? 'lot ' + oldest.lot : 'the oldest lot') + (oldest.expiry ? ', expires ' + formatDay(oldest.expiry) : '') +
+        ' (' + qtyPlain(oldest.qty) + ' ' + item.unit + ' left, first in, first out).';
+    }
+  }
+  hint.textContent = text;
+  hint.classList.toggle('hidden', !text);
 }
 
 // Warns as the operator types rather than on submit. Never blocks the
@@ -4942,6 +5293,11 @@ async function handleTxnSubmit(e) {
   if (!activeTxnClientId) activeTxnClientId = newClientTxnId();
   payload.clientTxnId = activeTxnClientId;
   if ((config.supplierTypes || []).indexOf(txnType) > -1) { payload.supplier = document.getElementById('txnSupplier').value; payload.invoiceNo = document.getElementById('txnInvoiceNo').value; payload.invoiceDate = document.getElementById('txnInvoiceDate').value; }
+  if (config.key === 'rm' && txnType === 'Receipt') {
+    const lot = document.getElementById('txnLotNo').value.trim(), exp = document.getElementById('txnExpiry').value;
+    if (lot) payload.lotNo = lot;
+    if (exp) payload.expiryDate = exp;
+  }
 
   const unit = currentTxnUnit();
   // Written down before the request leaves, so an entry whose outcome is
@@ -5504,8 +5860,9 @@ function wireAttachments() {
 /* =========================================================================
    LEDGER HISTORY MODAL
    ========================================================================= */
-function renderLedgerRow(r) {
+function renderLedgerRow(r, archived) {
   const dateStr = (localDayISO(movementDate(r)) || '—') + lateTag(r);
+  const lotTag = (r.LotNo || r.ExpiryDate) ? '<div class="lot-tag">' + (r.LotNo ? 'Lot ' + escapeHtml(r.LotNo) : '') + (r.LotNo && r.ExpiryDate ? ' · ' : '') + (r.ExpiryDate ? 'exp ' + escapeHtml(formatDay(localDayISO(r.ExpiryDate))) : '') + '</div>' : '';
 
   const txnTypeLower = typeSlug(r.TxnType); const isReceipt = txnTypeLower === 'receipt' || txnTypeLower === 'purchase';
   const qtyClass = isReceipt && Number(r.Qty) > 0 ? 'qty-bold qty-positive' : 'qty-bold';
@@ -5513,12 +5870,12 @@ function renderLedgerRow(r) {
   let refSuppHtml = escapeHtml(r.Reference || '—');
   if ((isReceipt || txnTypeLower === 'return-to-supplier') && (r.Supplier || r.InvoiceNo)) {
      const invDate = r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '';
-     refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div><div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>';
+     refSuppHtml = '<div style="font-weight:700; color:var(--ink);">' + escapeHtml(r.Supplier || '—') + '</div>' + ((r.InvoiceNo || invDate) ? '<div style="font-size:11.5px; color:var(--ink-soft); margin-top:3px; font-weight:500;">Inv: ' + escapeHtml(r.InvoiceNo || '') + ' ' + escapeHtml(invDate) + '</div>' : '');
   }
 
   const revOf = asText(r.ReversalOf), revBy = asText(r.ReversedBy);
-  return '<tr' + (revBy ? ' class="is-reversed"' : '') + '><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(pillLabel(r.TxnType)) + '</span>' + revTag(revOf, revBy) + attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department) + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
-    ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key, !!(revOf || revBy)) + '</tr>';
+  return '<tr class="' + (revBy ? 'is-reversed' : '') + (archived ? ' is-archived' : '') + '"><td class="mono col-date" style="color:var(--ink-soft); font-size:13.5px;">' + dateStr + '</td><td><span class="txn-pill txn-type-' + escapeHtml(txnTypeLower) + '">' + escapeHtml(pillLabel(r.TxnType)) + '</span>' + revTag(revOf, revBy) + (archived ? '' : attachChip(activeLedgerConfig && activeLedgerConfig.key, r.TxnID, Number(r.AttachmentCount) || 0, r.Department)) + lotTag + '</td><td class="col-qty ' + qtyClass + '">' + qtyWithUnit(r.Qty, r.Unit || activeLedgerUnit) + '</td><td class="col-dept">' + escapeHtml(r.Department || '—') + '</td><td class="col-ref">' + refSuppHtml + '</td><td class="col-user" style="color:var(--ink-soft); font-weight:500;">' + escapeHtml(r.EnteredBy || '—') + '</td>' +
+    ledgerActionsCell(r.TxnID, activeLedgerConfig && activeLedgerConfig.key, archived || !!(revOf || revBy)) + '</tr>';
 }
 
 function currentLedgerFilters() {
@@ -5570,7 +5927,7 @@ function rawFromMapped(config, m) {
   const r = { TxnID: m.txnId, Date: when, Timestamp: m.late && m.enteredISO ? m.enteredISO : when, TxnType: m.type, Qty: m.qty,
               Unit: m.unit, Department: m.department, Reference: m.reference, Supplier: m.supplier, InvoiceNo: m.invoiceNo,
               InvoiceDate: m.invoiceDate, Remarks: m.remarks, EnteredBy: m.enteredBy, ReversalOf: m.reversalOf,
-              ReversedBy: m.reversedBy, AttachmentCount: m.attachCount, _row: m.row };
+              ReversedBy: m.reversedBy, AttachmentCount: m.attachCount, LotNo: m.lotNo || '', ExpiryDate: m.expiry || '', _row: m.row };
   r[config.codeField] = m.code;
   return r;
 }
@@ -5595,7 +5952,7 @@ async function loadLedgerRows(opts) {
     const rows = hit && hit.rows && hit.rows.length ? hit.rows : historyFromLoadedLedger(config, code);
     if (rows && rows.length) {
       state.ledgerModalRows = rows;
-      tbody.innerHTML = rows.map(renderLedgerRow).join('');
+      tbody.innerHTML = rows.map(function (r) { return renderLedgerRow(r); }).join('');
       syncLedgerActionColumns();
       renderLedgerStock();
       showingOld = true;
@@ -5624,7 +5981,7 @@ async function loadLedgerRows(opts) {
       return;
     }
     state.ledgerModalRows = rows;
-    tbody.innerHTML = rows.map(renderLedgerRow).join('');
+    tbody.innerHTML = rows.map(function (r) { return renderLedgerRow(r); }).join('');
     syncLedgerActionColumns();
     renderLedgerStock();
     await checkLedgerAgreement(rows, !!(filters.dateFrom || filters.dateTo || filters.enteredBy), 100, stockNow, filters);
@@ -5649,6 +6006,7 @@ async function openLedgerModal(key, code) {
   document.getElementById('ledgerModalTitle').textContent = 'Ledger: ' + (item[config.nameField] || code);
   document.getElementById('ledgerDateFrom').value = ''; document.getElementById('ledgerDateTo').value = ''; document.getElementById('ledgerUserFilter').value = '';
   document.getElementById('ledgerModal').classList.remove('hidden');
+  syncEarlierBtn();
   await loadLedgerRows();
 }
 function closeLedgerModal() { document.getElementById('ledgerModal').classList.add('hidden'); activeLedgerConfig = null; activeLedgerCode = null; }
@@ -6416,6 +6774,7 @@ function mapLedgerRows(config, rows) {
       invoiceDate: r.InvoiceDate ? String(r.InvoiceDate).substring(0, 10) : '',
       remarks: asText(r.Remarks), enteredBy: asText(r.EnteredBy),
       reversalOf: asText(r.ReversalOf), reversedBy: asText(r.ReversedBy),
+      lotNo: asText(r.LotNo), expiry: r.ExpiryDate ? localDayISO(r.ExpiryDate) : '',
       // Only sent to people who can see costs.
       value: Number(r.Value) || 0
     };
@@ -6691,7 +7050,7 @@ function warmLedgers() {
         .then(function (ok) { ledgerWarming[kind] = null; if (!ok) dashLedgerFailed(kind); return ok; });
       ledgerWarming[kind] = p;
     });
-  }, 4000);
+  }, 1500);
 }
 
 function filteredLedgerRows() {
@@ -7537,6 +7896,726 @@ async function exportToExcel(config) {
 
 
 /* =========================================================================
+   3.27: TOOLS (STOCK COUNT, REORDER LIST, STANDARD COSTS, DROPDOWNS),
+   SHELF LIFE, EARLIER YEARS AND A QUICK START
+   ========================================================================= */
+
+// Links and pages shown only to people with the access they need:
+// data-perm="stock.count" (several, comma-separated, all needed; "admin").
+function permOk(spec) {
+  if (!spec) return true;
+  return spec.split(',').every(function (p) {
+    p = p.trim();
+    if (p === 'admin') return !!(state.session && state.session.role === 'Admin');
+    if (p === 'items') return STOCK_KINDS.some(function (k) { return can(uiConfig(k).itemsPerm); });
+    return can(p);
+  });
+}
+function syncPermLinks() {
+  document.querySelectorAll('[data-perm]').forEach(function (el) { el.classList.toggle('hidden', !permOk(el.dataset.perm)); });
+}
+const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns' };
+
+function kindSeg(kinds, current, withAll) {
+  return (withAll ? ['all'] : []).concat(kinds).map(function (k) {
+    const label = k === 'all' ? 'All' : uiConfig(k).label;
+    const dot = k === 'all' ? '' : '<i style="background:' + seriesColor(k) + '"></i>';
+    return '<button type="button" data-kind="' + k + '" class="' + (k === current ? 'is-on' : '') + '" aria-pressed="' + (k === current) + '">' + dot + escapeHtml(label) + '</button>';
+  }).join('');
+}
+function qtyPlain(n) { return formatNum(Math.round((Number(n) || 0) * 1000) / 1000); }
+
+// Out per day over the last `days`, per item, from the ledger loaded after sign-in.
+function dailyUse(kind, days) {
+  const rows = dashMoves(kind);
+  if (!rows) return null;
+  const config = uiConfig(kind);
+  const since = Date.now() - days * DAY_MS;
+  const out = {};
+  rows.forEach(function (m) {
+    if (!realMove(m) || m.ts < since || !moveIsOut(config, m)) return;
+    out[m.code] = (out[m.code] || 0) + Math.abs(m.qty);
+  });
+  Object.keys(out).forEach(function (c) { out[c] = out[c] / days; });
+  return out;
+}
+// The supplier of each item's newest receipt that names one.
+function lastSuppliers(kind) {
+  const rows = dashMoves(kind) || [];
+  const config = uiConfig(kind);
+  const out = {};
+  rows.forEach(function (m) {
+    if (!m.supplier || !realMove(m) || (config.inTypes || []).indexOf(m.type) === -1) return;
+    if (!out[m.code] || m.ts > out[m.code].ts) out[m.code] = { name: m.supplier, ts: m.ts };
+  });
+  return out;
+}
+
+// Last prices, from the server (only for people who can see costs).
+let costSuggest = null, costSuggestAt = 0, costSuggestLoading = null;
+function loadCostSuggestions(force) {
+  if (!canSeeCosts()) return Promise.resolve(null);
+  if (!force && costSuggest && Date.now() - costSuggestAt < 300000) return Promise.resolve(costSuggest);
+  if (costSuggestLoading) return costSuggestLoading;
+  costSuggestLoading = api('getCostSuggestions', {}).then(function (d) { costSuggest = d || {}; costSuggestAt = Date.now(); return costSuggest; })
+    .finally(function () { costSuggestLoading = null; });
+  return costSuggestLoading;
+}
+
+// ---- Stock count ----
+const countView = { kind: 'rm', search: '', cat: '', onlyLeft: false };
+function countKinds() { return STOCK_KINDS.filter(function (k) { return can(uiConfig(k).postPerm); }); }
+function countDraftKey(kind) { return 'stock_count:' + ((state.session && state.session.username) || '') + ':' + kind; }
+function countDraft(kind) {
+  try { const d = JSON.parse(localStorage.getItem(countDraftKey(kind)) || 'null'); if (d && d.lines && d.countId) return d; } catch (e) {}
+  return { countId: 'CNT-' + localDayISO(new Date()).replace(/-/g, '') + '-' + newClientTxnId().replace(/-/g, '').slice(0, 8), startedAt: Date.now(), lines: {}, dept: '' };
+}
+function saveCountDraft(kind, d) { try { localStorage.setItem(countDraftKey(kind), JSON.stringify(d)); } catch (e) {} }
+function countItems(config) {
+  return mergeStock(state[config.masterKey] || [], state[config.stockKey] || [], config, false)
+    .sort(function (a, b) { return lc(a.category).localeCompare(lc(b.category)) || String(a.code).localeCompare(String(b.code)); });
+}
+function countPlaces() {
+  const me = state.session && state.session.department;
+  return stockDepartments().filter(function (d) { return can('stock.post.any') || d.name === me; });
+}
+
+function renderCountPage() {
+  const kinds = countKinds();
+  const body = document.getElementById('countBody');
+  if (!kinds.length) { body.innerHTML = '<div class="db-card tool-empty">You can’t post to any ledger, so there is nothing to count.</div>'; return; }
+  if (kinds.indexOf(countView.kind) < 0) countView.kind = kinds[0];
+  const config = uiConfig(countView.kind);
+  document.getElementById('countKind').innerHTML = kindSeg(kinds, countView.kind);
+  const draft = countDraft(countView.kind);
+  const places = countPlaces();
+  const deptSel = document.getElementById('countDept');
+  deptSel.innerHTML = places.map(function (d) { return '<option>' + escapeHtml(d.name) + '</option>'; }).join('');
+  deptSel.value = draft.dept && places.some(function (p) { return p.name === draft.dept; }) ? draft.dept : defaultStockDepartment(places);
+  const cats = Array.from(new Set(countItems(config).map(function (i) { return i.category || ''; }).filter(Boolean))).sort();
+  const catSel = document.getElementById('countCat');
+  catSel.innerHTML = '<option value="">' + escapeHtml(config.catAll) + '</option>' + cats.map(function (c) { return '<option>' + escapeHtml(c) + '</option>'; }).join('');
+  catSel.value = cats.indexOf(countView.cat) > -1 ? countView.cat : '';
+  document.getElementById('countSearch').value = countView.search;
+  document.getElementById('countOnlyLeft').checked = countView.onlyLeft;
+  renderCountList();
+}
+
+function countSummary(config, draft, items) {
+  let counted = 0, differ = 0, moved = 0;
+  items.forEach(function (i) {
+    const l = draft.lines[i.code];
+    if (!l) return;
+    counted++;
+    if (Math.abs(l.counted - i.balance) > 1e-6) differ++;
+    if (Math.abs(l.seen - i.balance) > 1e-6) moved++;
+  });
+  return { counted: counted, differ: differ, moved: moved, total: items.length };
+}
+function paintCountSummary() {
+  const config = uiConfig(countView.kind);
+  const draft = countDraft(countView.kind);
+  const s = countSummary(config, draft, countItems(config));
+  document.getElementById('countSummaryText').innerHTML =
+    '<b>' + formatNum(s.counted) + '</b> of ' + formatNum(s.total) + ' counted' +
+    (s.counted ? ' · <b class="' + (s.differ ? 'sub-low' : 'sub-ok') + '">' + formatNum(s.differ) + '</b> differ' : '') +
+    (s.moved ? ' · <b class="sub-critical">' + formatNum(s.moved) + '</b> moved since counted' : '');
+  document.getElementById('countPostBtn').disabled = !s.counted || s.moved > 0;
+  document.getElementById('countClearBtn').disabled = !s.counted;
+  document.getElementById('countMeter').style.width = (s.total ? Math.round(s.counted / s.total * 100) : 0) + '%';
+}
+
+function countRowHtml(i, line, unit) {
+  const moved = line && Math.abs(line.seen - i.balance) > 1e-6;
+  const diff = line ? Math.round((line.counted - i.balance) * 1e6) / 1e6 : null;
+  const diffCls = diff === null ? '' : Math.abs(diff) < 1e-6 ? 'is-zero' : diff > 0 ? 'is-up' : 'is-down';
+  const diffText = diff === null ? '' : Math.abs(diff) < 1e-6 ? 'Matches' : (diff > 0 ? '+' : '−') + qtyPlain(Math.abs(diff));
+  return '<div class="count-row' + (line ? ' is-counted' : '') + (moved ? ' is-moved' : '') + '" data-code="' + escapeHtml(i.code) + '">' +
+    '<div class="cr-item"><span class="mono cr-code">' + escapeHtml(i.code) + '</span><span class="cr-name">' + escapeHtml(i.name || '') + '</span>' +
+      (i.category ? '<span class="cr-cat">' + escapeHtml(i.category) + '</span>' : '') + '</div>' +
+    '<div class="cr-sys"><span class="cr-lab">System</span><span class="cr-num">' + qtyPlain(i.balance) + '</span></div>' +
+    '<div class="cr-count"><input type="number" inputmode="decimal" min="0" step="any" data-count="' + escapeHtml(i.code) + '" value="' + (line ? line.counted : '') + '" aria-label="Counted ' + escapeHtml(i.code) + '" placeholder="Count"><span class="cr-unit">' + escapeHtml(unit) + '</span></div>' +
+    '<div class="cr-diff ' + diffCls + '">' + diffText + '</div>' +
+    (moved ? '<div class="cr-moved">Stock moved since you counted (it was ' + qtyPlain(line.seen) + '). Check it, then <button type="button" class="link-btn" data-keep="' + escapeHtml(i.code) + '">keep my count</button>.</div>' : '') +
+    '</div>';
+}
+
+function renderCountList() {
+  const config = uiConfig(countView.kind);
+  const draft = countDraft(countView.kind);
+  const q = lc(countView.search).trim();
+  let items = countItems(config).filter(function (i) {
+    if (countView.cat && i.category !== countView.cat) return false;
+    if (countView.onlyLeft && draft.lines[i.code]) return false;
+    return !q || lc(i.code).indexOf(q) > -1 || lc(i.name).indexOf(q) > -1;
+  });
+  const total = items.length;
+  items = items.slice(0, 500);
+  document.getElementById('countList').innerHTML = items.length
+    ? items.map(function (i) { return countRowHtml(i, draft.lines[i.code], i.unit); }).join('') +
+      (total > items.length ? '<div class="tool-more">Showing 500 of ' + formatNum(total) + '. Search or pick a ' + escapeHtml(config.catLabel.toLowerCase()) + ' to see the rest.</div>' : '')
+    : '<div class="tool-empty">Nothing matches.</div>';
+  paintCountSummary();
+}
+
+function onCountInput(input) {
+  const code = input.dataset.count;
+  const config = uiConfig(countView.kind);
+  const draft = countDraft(countView.kind);
+  const item = countItems(config).find(function (i) { return i.code === code; });
+  if (!item) return;
+  const v = input.value.trim();
+  if (v === '' || isNaN(Number(v)) || Number(v) < 0) delete draft.lines[code];
+  else draft.lines[code] = { counted: Number(v), seen: item.balance, at: Date.now() };
+  draft.dept = document.getElementById('countDept').value;
+  saveCountDraft(countView.kind, draft);
+  const row = input.closest('.count-row');
+  const tmp = document.createElement('div');
+  tmp.innerHTML = countRowHtml(item, draft.lines[code], item.unit);
+  const fresh = tmp.firstChild;
+  row.className = fresh.className;
+  row.querySelector('.cr-diff').outerHTML = fresh.querySelector('.cr-diff').outerHTML;
+  const oldMoved = row.querySelector('.cr-moved'); if (oldMoved) oldMoved.remove();
+  const newMoved = fresh.querySelector('.cr-moved'); if (newMoved) row.appendChild(newMoved);
+  paintCountSummary();
+}
+
+function openCountReview() {
+  const config = uiConfig(countView.kind);
+  const draft = countDraft(countView.kind);
+  const items = countItems(config);
+  const byCode = {}; items.forEach(function (i) { byCode[i.code] = i; });
+  const lines = Object.keys(draft.lines).filter(function (c) { return byCode[c]; });
+  const diffs = lines.filter(function (c) { return Math.abs(draft.lines[c].counted - byCode[c].balance) > 1e-6; });
+  document.getElementById('countReviewSub').textContent = config.label + ' · ' + document.getElementById('countDept').value + ' · ' +
+    plural(lines.length, 'item') + ' counted, ' + plural(diffs.length, 'difference');
+  const reason = document.getElementById('countReason');
+  if (!reason.value) reason.value = 'Stock count ' + formatDay(localDayISO(new Date()));
+  document.getElementById('countReviewList').innerHTML = diffs.length
+    ? '<table class="tool-table"><thead><tr><th>Item</th><th style="text-align:right">System</th><th style="text-align:right">Counted</th><th style="text-align:right">Adjustment</th></tr></thead><tbody>' +
+      diffs.map(function (c) {
+        const d = draft.lines[c].counted - byCode[c].balance;
+        return '<tr><td><span class="mono">' + escapeHtml(c) + '</span> ' + escapeHtml(byCode[c].name || '') + '</td><td style="text-align:right">' + qtyPlain(byCode[c].balance) +
+          '</td><td style="text-align:right">' + qtyPlain(draft.lines[c].counted) + '</td><td style="text-align:right" class="' + (d > 0 ? 'sub-ok' : 'sub-critical') + '"><b>' + (d > 0 ? '+' : '−') + qtyPlain(Math.abs(d)) + ' ' + escapeHtml(byCode[c].unit) + '</b></td></tr>';
+      }).join('') + '</tbody></table>'
+    : '<div class="tool-empty">Every counted item matches the system. Posting records the count and changes nothing.</div>';
+  document.getElementById('countReviewError').textContent = '';
+  document.getElementById('countPostConfirmBtn').textContent = diffs.length ? 'Post ' + plural(diffs.length, 'adjustment') : 'Record the count';
+  document.getElementById('countModal').classList.remove('hidden');
+}
+
+async function postCount() {
+  const config = uiConfig(countView.kind);
+  const draft = countDraft(countView.kind);
+  const dept = document.getElementById('countDept').value;
+  const reason = document.getElementById('countReason').value.trim();
+  const errEl = document.getElementById('countReviewError');
+  if (reason.length < 3) { errEl.textContent = 'Say what this count is.'; return; }
+  const lines = Object.keys(draft.lines).map(function (c) { return { code: c, counted: draft.lines[c].counted, seen: draft.lines[c].seen }; });
+  const btn = document.getElementById('countPostConfirmBtn');
+  setBtnLoading(btn, 'Posting…');
+  try {
+    const r = await api('postStockCount', { key: config.key, department: dept, reason: reason, countId: draft.countId, lines: lines });
+    (r.entries || []).forEach(function (e) {
+      applyLocalStockUpdate(config, e.code, e.newBalance);
+      noteLocalEntry(config, e.code, 'Adjustment', e.qty, dept, e.txnId);
+    });
+    localStorage.removeItem(countDraftKey(countView.kind));
+    document.getElementById('countModal').classList.add('hidden');
+    document.getElementById('countReason').value = '';
+    toast(r.duplicate ? 'This count had already been posted; nothing changed.' :
+      'Count posted: ' + plural(r.posted, 'adjustment') + ' for ' + plural(r.counted, 'counted item') + '.');
+    renderCountPage(); renderStockPage(config.key); renderHome();
+  } catch (err) {
+    if (/Stock moved while you were counting/.test(err.message)) {
+      document.getElementById('countModal').classList.add('hidden');
+      try { await refreshAllData(); } catch (e2) {}
+      renderCountPage();
+      toast(err.message, true);
+    } else errEl.textContent = err.message;
+  } finally { clearBtnLoading(btn); }
+}
+
+function wireCountPage() {
+  document.getElementById('countKind').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-kind]'); if (!b) return;
+    countView.kind = b.dataset.kind; countView.cat = ''; renderCountPage();
+  });
+  document.getElementById('countDept').addEventListener('change', function () {
+    const d = countDraft(countView.kind); d.dept = this.value; saveCountDraft(countView.kind, d);
+  });
+  document.getElementById('countSearch').addEventListener('input', debounce(function () { countView.search = document.getElementById('countSearch').value; renderCountList(); }, 150));
+  document.getElementById('countCat').addEventListener('change', function () { countView.cat = this.value; renderCountList(); });
+  document.getElementById('countOnlyLeft').addEventListener('change', function () { countView.onlyLeft = this.checked; renderCountList(); });
+  const list = document.getElementById('countList');
+  list.addEventListener('input', function (e) { if (e.target.matches('[data-count]')) onCountInput(e.target); });
+  list.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || !e.target.matches('[data-count]')) return;
+    e.preventDefault();
+    const all = Array.from(list.querySelectorAll('[data-count]'));
+    const next = all[all.indexOf(e.target) + 1];
+    if (next) { next.focus(); next.select(); } else e.target.blur();
+  });
+  list.addEventListener('click', function (e) {
+    const k = e.target.closest('[data-keep]'); if (!k) return;
+    const config = uiConfig(countView.kind);
+    const d = countDraft(countView.kind);
+    const item = countItems(config).find(function (i) { return i.code === k.dataset.keep; });
+    if (item && d.lines[item.code]) { d.lines[item.code].seen = item.balance; saveCountDraft(countView.kind, d); renderCountList(); }
+  });
+  document.getElementById('countClearBtn').addEventListener('click', async function () {
+    if (!await confirmDialog('Clear every counted figure for ' + uiConfig(countView.kind).label + '? Nothing has been posted yet.', { title: 'Start the count again', confirmText: 'Clear' })) return;
+    localStorage.removeItem(countDraftKey(countView.kind)); renderCountPage();
+  });
+  document.getElementById('countPostBtn').addEventListener('click', openCountReview);
+  document.getElementById('countPostConfirmBtn').addEventListener('click', postCount);
+  ['countCancelBtn', 'countCloseBtn'].forEach(function (id) { document.getElementById(id).addEventListener('click', function () { document.getElementById('countModal').classList.add('hidden'); }); });
+}
+
+// ---- Reorder list ----
+const reorderView = { scope: 'all', cover: 30, qty: {} };
+function readReorderTo() { try { return localStorage.getItem('stock_reorder_to') || ''; } catch (e) { return ''; } }
+
+function reorderRows() {
+  const kinds = reorderView.scope === 'all' ? STOCK_KINDS.slice() : [reorderView.scope];
+  const rows = [];
+  let usageReady = true;
+  kinds.forEach(function (k) {
+    const config = uiConfig(k);
+    const use = dailyUse(k, 90);
+    if (!use) usageReady = false;
+    const sup = lastSuppliers(k);
+    const master = {};
+    (state[config.masterKey] || []).forEach(function (m) { master[m[config.codeField]] = m; });
+    const prices = (costSuggest && costSuggest[k]) || {};
+    mergeStock(state[config.masterKey] || [], state[config.stockKey] || [], config, false)
+      .filter(function (i) { return i.status === 'Low' || i.status === 'Critical'; })
+      .forEach(function (i) {
+        const perDay = (use && use[i.code]) || 0;
+        const target = Math.max(i.reorder * 2, perDay * reorderView.cover);
+        let suggest = Math.ceil(Math.max(0, target - i.balance));
+        if (!suggest && i.reorder > 0) suggest = Math.ceil(Math.max(0, i.reorder - i.balance));
+        // Out of stock with no minimum and no use lately: nothing to reorder.
+        if (!suggest && !i.reorder) return;
+        const key = k + ':' + i.code;
+        const m = master[i.code] || {};
+        const p = prices[i.code];
+        const std = Number(m.StandardCost);
+        rows.push({
+          key: key, kind: k, code: i.code, name: i.name || '', unit: i.unit, status: i.status, onHand: i.balance, minimum: i.reorder,
+          perDay: perDay, suggest: suggest, order: hasOwn(reorderView.qty, key) ? reorderView.qty[key] : suggest,
+          supplier: String((k === 'trade' && m.Supplier) || (p && p.supplier) || (sup[i.code] && sup[i.code].name) || ''),
+          rate: p && p.rate ? Number(p.rate) : (std > 0 ? std : 0)
+        });
+      });
+  });
+  return { rows: rows, usageReady: usageReady };
+}
+function hasOwn(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
+function renderReorderPage() {
+  document.getElementById('reorderKind').innerHTML = kindSeg(STOCK_KINDS, reorderView.scope, true);
+  document.querySelectorAll('#reorderCover [data-cover]').forEach(function (b) { b.classList.toggle('is-on', Number(b.dataset.cover) === reorderView.cover); });
+  document.getElementById('reorderExportBtn').classList.toggle('hidden', !can('stock.export'));
+  document.getElementById('reorderEmailBtn').classList.toggle('hidden', !can('stock.export'));
+  if (canSeeCosts() && !costSuggest) loadCostSuggestions().then(function () { if (!document.getElementById('page-reorder').classList.contains('hidden')) renderReorderPage(); }).catch(function () {});
+  const r = reorderRows();
+  const costs = canSeeCosts();
+  const groups = {};
+  r.rows.forEach(function (row) { const g = row.supplier || '￿No supplier on record'; (groups[g] = groups[g] || []).push(row); });
+  const names = Object.keys(groups).sort();
+  const totalValue = r.rows.reduce(function (s, x) { return s + x.rate * (Number(x.order) || 0); }, 0);
+  document.getElementById('reorderSummary').innerHTML = r.rows.length
+    ? '<span><b>' + formatNum(r.rows.length) + '</b> item' + (r.rows.length === 1 ? '' : 's') + ' at or below the minimum, from <b>' + formatNum(names.length) + '</b> supplier' + (names.length === 1 ? '' : 's') +
+      (costs && totalValue ? ' · about <b>' + compactINR(totalValue) + '</b> at the last rate' : '') +
+      (r.usageReady ? '' : ' · <span class="sub-zero">usage figures follow once the ledgers have loaded</span>') + '</span>'
+    : '';
+  document.getElementById('reorderList').innerHTML = r.rows.length ? names.map(function (g) {
+    const list = groups[g].sort(function (a, b) { return (a.status === 'Critical' ? 0 : 1) - (b.status === 'Critical' ? 0 : 1) || String(a.code).localeCompare(String(b.code)); });
+    const gv = list.reduce(function (s, x) { return s + x.rate * (Number(x.order) || 0); }, 0);
+    return '<div class="db-card ro-group"><div class="ro-head"><h3>' + escapeHtml(g.replace(/^￿/, '')) + '</h3><span>' + plural(list.length, 'item') + (costs && gv ? ' · ' + compactINR(gv) : '') + '</span></div>' +
+      list.map(function (x) {
+        return '<div class="ro-row" data-key="' + escapeHtml(x.key) + '">' +
+          '<div class="ro-item"><span class="ro-status is-' + x.status.toLowerCase() + '" title="' + x.status + '"></span><span class="mono">' + escapeHtml(x.code) + '</span> <span class="ro-name">' + escapeHtml(x.name) + '</span>' +
+            (reorderView.scope === 'all' ? '<span class="ro-kind" style="color:' + seriesColor(x.kind) + '">' + uiConfig(x.kind).label + '</span>' : '') + '</div>' +
+          '<div class="ro-fig"><span class="cr-lab">On hand / min</span><span>' + qtyPlain(x.onHand) + ' / ' + qtyPlain(x.minimum) + '</span></div>' +
+          '<div class="ro-fig"><span class="cr-lab">Used a day</span><span>' + (x.perDay ? qtyPlain(x.perDay) : '—') + '</span></div>' +
+          '<div class="cr-count"><input type="number" inputmode="decimal" min="0" step="any" data-order="' + escapeHtml(x.key) + '" value="' + x.order + '" aria-label="Order quantity for ' + escapeHtml(x.code) + '"><span class="cr-unit">' + escapeHtml(x.unit) + '</span></div>' +
+          (costs ? '<div class="ro-fig"><span class="cr-lab">Last rate</span><span>' + (x.rate ? '₹' + formatNum(x.rate) : '—') + '</span></div>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+  }).join('') : '<div class="db-card tool-empty"><div class="db-allclear">✓ Nothing is at or below its minimum quantity.</div></div>';
+}
+
+function reorderExportRows() {
+  return reorderRows().rows.filter(function (x) { return Number(x.order) > 0; }).map(function (x) {
+    return { supplier: x.supplier || 'No supplier on record', ledger: uiConfig(x.kind).label, code: x.code, name: x.name, unit: x.unit,
+             onHand: x.onHand, minimum: x.minimum, perDay: Math.round(x.perDay * 100) / 100, order: Number(x.order) || 0, rate: x.rate,
+             value: Math.round(x.rate * (Number(x.order) || 0) * 100) / 100 };
+  }).sort(function (a, b) { return a.supplier.localeCompare(b.supplier) || String(a.code).localeCompare(String(b.code)); });
+}
+
+async function exportReorderList() {
+  const rows = reorderExportRows();
+  if (!rows.length) { toast('Nothing to order.', true); return; }
+  const btn = document.getElementById('reorderExportBtn');
+  setBtnLoading(btn, 'Exporting…', true);
+  try {
+    const columns = [{ key: 'supplier', label: 'Supplier', width: 180 }, { key: 'ledger', label: 'Ledger', width: 60, align: 'center' },
+      { key: 'code', label: 'Code', width: 110 }, { key: 'name', label: 'Item', width: 220 }, { key: 'unit', label: 'Unit', width: 60, align: 'center' },
+      { key: 'onHand', label: 'On hand', width: 85, align: 'right' }, { key: 'minimum', label: 'Minimum', width: 85, align: 'right' },
+      { key: 'perDay', label: 'Used per day', width: 95, align: 'right' }, { key: 'order', label: 'Order qty', width: 90, align: 'right' }];
+    if (canSeeCosts()) columns.push({ key: 'rate', label: 'Last rate', width: 85, align: 'right' }, { key: 'value', label: 'Value', width: 95, align: 'right' });
+    const result = await api('exportStyledWorkbook', { filename: 'Reorder_list', sheets: [{ name: 'Reorder list', title: COMPANY_NAME + ' — Reorder list',
+      subtitle: localDayISO(new Date()) + ' · ' + rows.length + ' items · ' + reorderView.cover + ' days of use', columns: columns, rows: rows }] });
+    downloadBase64File(result.filename, result.base64);
+  } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); }
+}
+
+async function emailReorderList() {
+  const rows = reorderExportRows();
+  if (!rows.length) { toast('Nothing to order.', true); return; }
+  const to = document.getElementById('reorderTo').value.trim();
+  const btn = document.getElementById('reorderSendBtn');
+  const err = document.getElementById('reorderMailError');
+  err.textContent = '';
+  setBtnLoading(btn, 'Sending…');
+  try {
+    const r = await api('sendReorderList', { to: to, note: document.getElementById('reorderNote').value, rows: rows });
+    try { localStorage.setItem('stock_reorder_to', to); } catch (e) {}
+    document.getElementById('reorderMail').classList.add('hidden');
+    toast('Reorder list sent to ' + plural(r.sent, 'address', 'addresses') + (r.attached ? ', with the workbook.' : '.'));
+  } catch (e) { err.textContent = e.message; } finally { clearBtnLoading(btn, 'Send'); }
+}
+
+function wireReorderPage() {
+  document.getElementById('reorderKind').addEventListener('click', function (e) { const b = e.target.closest('[data-kind]'); if (!b) return; reorderView.scope = b.dataset.kind; renderReorderPage(); });
+  document.getElementById('reorderCover').addEventListener('click', function (e) { const b = e.target.closest('[data-cover]'); if (!b) return; reorderView.cover = Number(b.dataset.cover); reorderView.qty = {}; renderReorderPage(); });
+  document.getElementById('reorderList').addEventListener('input', function (e) {
+    const i = e.target.closest('[data-order]'); if (!i) return;
+    reorderView.qty[i.dataset.order] = i.value === '' ? 0 : Number(i.value);
+  });
+  document.getElementById('reorderList').addEventListener('change', function (e) { if (e.target.closest('[data-order]')) renderReorderPage(); });
+  document.getElementById('reorderExportBtn').addEventListener('click', exportReorderList);
+  document.getElementById('reorderEmailBtn').addEventListener('click', function () {
+    const box = document.getElementById('reorderMail');
+    box.classList.toggle('hidden');
+    if (!box.classList.contains('hidden')) { const to = document.getElementById('reorderTo'); if (!to.value) to.value = readReorderTo(); to.focus(); }
+  });
+  document.getElementById('reorderSendBtn').addEventListener('click', emailReorderList);
+}
+
+// ---- Standard costs ----
+const costView = { kind: 'rm', mode: 'stock', search: '', edits: {} };
+function costKinds() { return STOCK_KINDS.filter(function (k) { return can(uiConfig(k).itemsPerm); }); }
+function hasCost(m) { const v = m && m.StandardCost; return v !== '' && v !== null && v !== undefined && Number(v) > 0; }
+function costRows() {
+  const config = uiConfig(costView.kind);
+  const master = {};
+  (state[config.masterKey] || []).forEach(function (m) { master[m[config.codeField]] = m; });
+  const q = lc(costView.search).trim();
+  const all = mergeStock(state[config.masterKey] || [], state[config.stockKey] || [], config, false).filter(function (i) { return !hasCost(master[i.code]); });
+  const inStock = all.filter(function (i) { return i.balance > 0; });
+  const rows = (costView.mode === 'stock' ? inStock : all).filter(function (i) { return !q || lc(i.code).indexOf(q) > -1 || lc(i.name).indexOf(q) > -1; })
+    .sort(function (a, b) { return b.balance - a.balance || String(a.code).localeCompare(String(b.code)); });
+  return { rows: rows, all: all.length, inStock: inStock.length };
+}
+function suggestionText(p) {
+  if (!p) return '';
+  const when = p.date ? formatDay(p.date) : '';
+  const from = p.kept ? 'kept at the year close' : p.source === 'receipt' ? 'last receipt' : 'last entry with a rate';
+  return '₹' + formatNum(p.rate) + ' · ' + from + (when ? ', ' + when : '') + (p.supplier ? ' · ' + p.supplier : '');
+}
+async function renderCostsPage() {
+  const kinds = costKinds();
+  if (kinds.indexOf(costView.kind) < 0) costView.kind = kinds[0] || 'rm';
+  document.getElementById('costKind').innerHTML = kindSeg(kinds, costView.kind);
+  document.querySelectorAll('#costMode [data-mode]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.mode === costView.mode); });
+  document.getElementById('costSearch').value = costView.search;
+  renderCostsList();
+  if (!costSuggest) {
+    document.getElementById('costSummary').innerHTML += ' · <span class="sub-zero">finding last prices…</span>';
+    try { await loadCostSuggestions(); } catch (err) { toast(err.message, true); }
+    renderCostsList();
+  }
+}
+function renderCostsList() {
+  const config = uiConfig(costView.kind);
+  const r = costRows();
+  const prices = (costSuggest && costSuggest[costView.kind]) || {};
+  const withSuggestion = r.rows.filter(function (i) { return prices[i.code]; }).length;
+  const edits = Object.keys(costView.edits).filter(function (k) { return k.indexOf(costView.kind + ':') === 0 && costView.edits[k] !== ''; }).length;
+  document.getElementById('costSummary').innerHTML = '<b>' + formatNum(r.all) + '</b> ' + escapeHtml(config.label) + ' item' + (r.all === 1 ? '' : 's') + ' without a standard cost, <b>' +
+    formatNum(r.inStock) + '</b> of them in stock' + (costSuggest ? ' · last price known for <b>' + formatNum(withSuggestion) + '</b> shown here' : '');
+  document.getElementById('costSaveBtn').textContent = edits ? 'Save ' + formatNum(edits) : 'Save';
+  document.getElementById('costSaveBtn').disabled = !edits;
+  document.getElementById('costFillBtn').disabled = !withSuggestion;
+  const shown = r.rows.slice(0, 400);
+  document.getElementById('costList').innerHTML = shown.length ? shown.map(function (i) {
+    const k = costView.kind + ':' + i.code;
+    const p = prices[i.code];
+    const v = hasOwn(costView.edits, k) ? costView.edits[k] : '';
+    return '<div class="cost-row' + (v !== '' ? ' is-edited' : '') + '">' +
+      '<div class="cr-item"><span class="mono cr-code">' + escapeHtml(i.code) + '</span><span class="cr-name">' + escapeHtml(i.name || '') + '</span>' + (i.category ? '<span class="cr-cat">' + escapeHtml(i.category) + '</span>' : '') + '</div>' +
+      '<div class="cr-sys"><span class="cr-lab">On hand</span><span class="cr-num">' + qtyPlain(i.balance) + ' ' + escapeHtml(i.unit) + '</span></div>' +
+      '<div class="cost-sug">' + (p ? '<button type="button" class="chip-btn" data-use="' + escapeHtml(i.code) + '" title="Use this price">' + escapeHtml(suggestionText(p)) + '</button>' : '<span class="sub-zero">No price on record</span>') + '</div>' +
+      '<div class="cr-count"><span class="cr-unit">₹</span><input type="number" inputmode="decimal" min="0" step="any" data-cost="' + escapeHtml(i.code) + '" value="' + escapeHtml(String(v)) + '" placeholder="Cost" aria-label="Standard cost for ' + escapeHtml(i.code) + '"></div>' +
+      '</div>';
+  }).join('') + (r.rows.length > shown.length ? '<div class="tool-more">Showing 400 of ' + formatNum(r.rows.length) + '. Save these, or search, to see the rest.</div>' : '')
+    : '<div class="tool-empty"><div class="db-allclear">✓ Every ' + (costView.mode === 'stock' ? 'item in stock' : 'item') + ' here has a standard cost.</div></div>';
+}
+async function saveCosts() {
+  const config = uiConfig(costView.kind);
+  const costs = Object.keys(costView.edits).filter(function (k) { return k.indexOf(costView.kind + ':') === 0 && costView.edits[k] !== '' && !isNaN(Number(costView.edits[k])); })
+    .map(function (k) { return { code: k.slice(costView.kind.length + 1), cost: Number(costView.edits[k]) }; });
+  if (!costs.length) return;
+  const btn = document.getElementById('costSaveBtn');
+  setBtnLoading(btn, 'Saving…');
+  try {
+    const r = await api('setStandardCosts', { key: config.key, costs: costs });
+    const byCode = {}; costs.forEach(function (c) { byCode[c.code] = c.cost; });
+    (state[config.masterKey] || []).forEach(function (m) { if (hasOwn(byCode, m[config.codeField])) m.StandardCost = byCode[m[config.codeField]]; });
+    costs.forEach(function (c) { delete costView.edits[config.key + ':' + c.code]; });
+    invalidateMergeCache();
+    toast('Saved standard costs for ' + plural(r.saved, 'item') + '.');
+    renderCostsList(); renderHome();
+  } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); renderCostsList(); }
+}
+function wireCostsPage() {
+  document.getElementById('costKind').addEventListener('click', function (e) { const b = e.target.closest('[data-kind]'); if (!b) return; costView.kind = b.dataset.kind; renderCostsPage(); });
+  document.getElementById('costMode').addEventListener('click', function (e) { const b = e.target.closest('[data-mode]'); if (!b) return; costView.mode = b.dataset.mode; renderCostsPage(); });
+  document.getElementById('costSearch').addEventListener('input', debounce(function () { costView.search = document.getElementById('costSearch').value; renderCostsList(); }, 150));
+  const list = document.getElementById('costList');
+  list.addEventListener('input', function (e) {
+    const i = e.target.closest('[data-cost]'); if (!i) return;
+    costView.edits[costView.kind + ':' + i.dataset.cost] = i.value.trim();
+    i.closest('.cost-row').classList.toggle('is-edited', i.value.trim() !== '');
+    const n = Object.keys(costView.edits).filter(function (k) { return k.indexOf(costView.kind + ':') === 0 && costView.edits[k] !== ''; }).length;
+    const btn = document.getElementById('costSaveBtn'); btn.textContent = n ? 'Save ' + formatNum(n) : 'Save'; btn.disabled = !n;
+  });
+  list.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-use]'); if (!b) return;
+    const p = ((costSuggest || {})[costView.kind] || {})[b.dataset.use];
+    if (!p) return;
+    costView.edits[costView.kind + ':' + b.dataset.use] = String(p.rate);
+    renderCostsList();
+  });
+  document.getElementById('costFillBtn').addEventListener('click', function () {
+    const prices = (costSuggest && costSuggest[costView.kind]) || {};
+    costRows().rows.forEach(function (i) {
+      const k = costView.kind + ':' + i.code;
+      if (prices[i.code] && (!hasOwn(costView.edits, k) || costView.edits[k] === '')) costView.edits[k] = String(prices[i.code].rate);
+    });
+    renderCostsList();
+  });
+  document.getElementById('costSaveBtn').addEventListener('click', saveCosts);
+}
+
+// ---- Dropdown lists (Admin) ----
+const DD_NAMES = { RM_Category: 'RM categories', FG_Family: 'FG families', FG_Category: 'FG categories', Trade_Category: 'Trade categories',
+                   Unit: 'Units', Supplier: 'Suppliers', OLCustomer: 'OL customers', Holidays: 'Holidays', 'Weekly Off': 'Weekly off days' };
+const DD_HINTS = { Holidays: 'No automatic mail goes out on these days.', 'Weekly Off': 'Day names, like Sunday. No automatic mail goes out on them.',
+                   Unit: 'Used by RM, FG and Trade items.' };
+const ddView = { data: null, list: null, renaming: null, loading: null };
+function ddLabel(name) { return DD_NAMES[name] || name.replace(/_/g, ' '); }
+async function renderDropdownsPage(force) {
+  const box = document.getElementById('ddBody');
+  if (!ddView.data || force) {
+    box.innerHTML = '<div class="db-card tool-empty">Loading the lists…</div>';
+    try { ddView.data = await (ddView.loading = ddView.loading || api('getDropdownLists', {})); }
+    catch (err) { box.innerHTML = '<div class="db-card tool-empty">' + escapeHtml(err.message) + '</div>'; return; }
+    finally { ddView.loading = null; }
+  }
+  const lists = ddView.data.lists || [];
+  if (!ddView.list || !lists.some(function (l) { return l.name === ddView.list; })) ddView.list = lists.length ? lists[0].name : null;
+  document.getElementById('ddPicker').innerHTML = lists.map(function (l) {
+    return '<button type="button" class="dd-chip' + (l.name === ddView.list ? ' is-on' : '') + '" data-list="' + escapeHtml(l.name) + '">' + escapeHtml(ddLabel(l.name)) + '<span>' + l.values.length + '</span></button>';
+  }).join('');
+  const l = lists.find(function (x) { return x.name === ddView.list; });
+  if (!l) { box.innerHTML = '<div class="db-card tool-empty">The Dropdowns tab has no lists.</div>'; return; }
+  const addInput = l.date ? '<input type="date" id="ddNew" aria-label="New date">' : '<input type="text" id="ddNew" maxlength="100" placeholder="New value" aria-label="New value">';
+  box.innerHTML = '<div class="db-card dd-card">' +
+    '<div class="db-card-head"><div><h3 class="db-card-title">' + escapeHtml(ddLabel(l.name)) + '</h3><p class="db-card-sub">' +
+      escapeHtml((DD_HINTS[l.name] || 'The choices in the app’s forms.') + ' Column ' + l.name + ' on the Dropdowns tab.') + '</p></div></div>' +
+    '<form class="dd-add" id="ddAddForm">' + addInput + (l.pair ? '<input type="text" id="ddNewReason" maxlength="100" placeholder="Reason" aria-label="Reason">' : '') +
+      '<button type="submit" class="btn-primary btn-compact">Add</button></form>' +
+    '<div class="dd-list">' + (l.values.length ? l.values.map(function (v, i) {
+      const used = (l.usage || {})[v] || 0;
+      const reason = l.reasons ? l.reasons[i] : '';
+      if (ddView.renaming === v) {
+        return '<form class="dd-row is-editing" data-edit="' + escapeHtml(v) + '">' +
+          (l.date ? '<input type="date" class="dd-edit-input" value="' + escapeHtml(v) + '">' : '<input type="text" class="dd-edit-input" maxlength="100" value="' + escapeHtml(v) + '">') +
+          (l.pair ? '<input type="text" class="dd-edit-reason" maxlength="100" value="' + escapeHtml(reason) + '" placeholder="Reason">' : '') +
+          (l.renames && used ? '<label class="dd-also"><input type="checkbox" class="dd-edit-items" checked> Also change it on the ' + plural(used, 'item') + ' using it</label>' : '') +
+          '<div class="dd-actions"><button type="button" class="btn-ghost btn-compact" data-cancel>Cancel</button><button type="submit" class="btn-primary btn-compact">Save</button></div></form>';
+      }
+      return '<div class="dd-row"><div class="dd-val"><span>' + escapeHtml(l.date ? formatDay(v) : v) + '</span>' + (reason ? '<small>' + escapeHtml(reason) + '</small>' : '') +
+        (l.renames ? '<small class="dd-used">' + (used ? 'used by ' + plural(used, 'item') : 'not used yet') + '</small>' : '') + '</div>' +
+        '<div class="dd-actions">' +
+          '<button type="button" class="icon-btn dd-btn" data-move="-1" data-value="' + escapeHtml(v) + '" title="Move up" aria-label="Move ' + escapeHtml(v) + ' up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+          '<button type="button" class="icon-btn dd-btn" data-move="1" data-value="' + escapeHtml(v) + '" title="Move down" aria-label="Move ' + escapeHtml(v) + ' down"' + (i === l.values.length - 1 ? ' disabled' : '') + '>↓</button>' +
+          '<button type="button" class="icon-btn dd-btn" data-rename="' + escapeHtml(v) + '" title="Edit" aria-label="Edit ' + escapeHtml(v) + '">✎</button>' +
+          '<button type="button" class="icon-btn dd-btn dd-del" data-delete="' + escapeHtml(v) + '" title="Delete" aria-label="Delete ' + escapeHtml(v) + '">✕</button>' +
+        '</div></div>';
+    }).join('') : '<div class="tool-empty">This list is empty. Add the first value above.</div>') + '</div></div>';
+}
+async function ddSave(op, payload, okText) {
+  try {
+    const r = await api('saveDropdownList', Object.assign({ list: ddView.list, op: op }, payload));
+    ddView.data = r; ddView.renaming = null;
+    (r.lists || []).forEach(function (l) { state.dropdowns = state.dropdowns || {}; state.dropdowns[l.name] = l.values.slice(); });
+    if (r.itemsUpdated) refreshAllData().then(function () { renderStockPage('rm'); renderStockPage('fg'); renderStockPage('trade'); }).catch(function () {});
+    renderDropdownsPage();
+    if (okText) toast(okText + (r.itemsUpdated ? ', and on ' + plural(r.itemsUpdated, 'item') : '') + '.');
+  } catch (err) { toast(err.message, true); }
+}
+function wireDropdownsPage() {
+  document.getElementById('ddPicker').addEventListener('click', function (e) { const b = e.target.closest('[data-list]'); if (!b) return; ddView.list = b.dataset.list; ddView.renaming = null; renderDropdownsPage(); });
+  const box = document.getElementById('ddBody');
+  box.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (e.target.id === 'ddAddForm') {
+      const v = document.getElementById('ddNew').value.trim();
+      if (!v) { document.getElementById('ddNew').focus(); return; }
+      const reason = document.getElementById('ddNewReason');
+      ddSave('add', { value: v, reason: reason ? reason.value : '' }, 'Added ' + v);
+      return;
+    }
+    const f = e.target.closest('[data-edit]'); if (!f) return;
+    const items = f.querySelector('.dd-edit-items');
+    const reason = f.querySelector('.dd-edit-reason');
+    const nv = f.querySelector('.dd-edit-input').value.trim();
+    ddSave('rename', { value: f.dataset.edit, newValue: nv, reason: reason ? reason.value : undefined, updateItems: !!(items && items.checked) }, 'Saved ' + nv);
+  });
+  box.addEventListener('click', async function (e) {
+    const t = e.target.closest('button'); if (!t) return;
+    if (t.hasAttribute('data-cancel')) { ddView.renaming = null; renderDropdownsPage(); return; }
+    if (t.dataset.rename) { ddView.renaming = t.dataset.rename; renderDropdownsPage(); const i = box.querySelector('.dd-edit-input'); if (i) i.focus(); return; }
+    if (t.dataset.move) { ddSave('move', { value: t.dataset.value, dir: Number(t.dataset.move) }); return; }
+    if (t.dataset.delete) {
+      const l = (ddView.data.lists || []).find(function (x) { return x.name === ddView.list; }) || {};
+      const used = (l.usage || {})[t.dataset.delete] || 0;
+      const ok = await confirmDialog('Delete “' + t.dataset.delete + '” from ' + ddLabel(ddView.list) + '?' +
+        (used ? ' ' + plural(used, 'item') + ' use it; they keep it until someone edits them.' : ''), { title: 'Delete a value', confirmText: 'Delete' });
+      if (ok) ddSave('delete', { value: t.dataset.delete }, 'Deleted ' + t.dataset.delete);
+    }
+  });
+}
+
+// ---- Shelf life: RM lots on hand, first in first out ----
+// What is on hand is taken to be the newest receipts (FIFO use), so the lots
+// still in stock are found by filling the balance from the newest receipt back.
+// Receipts are grouped by item once per loaded ledger, not once per item.
+let _rmReceipts = { rows: null, map: null };
+function rmReceiptsByCode() {
+  const rows = dashMoves('rm');
+  if (!rows) return null;
+  if (_rmReceipts.rows === rows && _rmReceipts.n === rows.length) return _rmReceipts.map;
+  const map = {};
+  rows.forEach(function (m) { if (m.type === 'Receipt' && m.qty > 0 && realMove(m)) (map[m.code] = map[m.code] || []).push(m); });
+  Object.keys(map).forEach(function (c) { map[c].sort(function (a, b) { return b.ts - a.ts; }); });
+  _rmReceipts = { rows: rows, n: rows.length, map: map };
+  return map;
+}
+function lotsOnHand(code, balance) {
+  const map = rmReceiptsByCode();
+  if (!map) return null;
+  let left = Math.max(0, Number(balance) || 0);
+  const out = [];
+  (map[code] || []).some(function (m) {
+    if (left <= 1e-9) return true;
+    const take = Math.min(m.qty, left);
+    left -= take;
+    out.push({ lot: m.lotNo || '', expiry: m.expiry || '', qty: take, received: m.ts });
+    return false;
+  });
+  return { lots: out, untracked: left > 1e-9 ? left : 0 };
+}
+function renderDashShelf() {
+  const card = document.getElementById('dbShelfCard');
+  if (!card) return;
+  const map = (dash.scope === 'all' || dash.scope === 'rm') ? rmReceiptsByCode() : null;
+  // Shown only once some RM lot on hand carries an expiry date.
+  const found = [];
+  if (map) {
+    mergeStock(state.rmMaster || [], state.rmStock || [], RM_CONFIG_UI, false).forEach(function (i) {
+      if (i.balance <= 0 || !map[i.code]) return;
+      lotsOnHand(i.code, i.balance).lots.forEach(function (l) {
+        if (l.expiry) found.push({ code: i.code, name: i.name, unit: i.unit, lot: l.lot, expiry: l.expiry, qty: l.qty });
+      });
+    });
+  }
+  card.classList.toggle('hidden', !found.length);
+  if (!found.length) return;
+  const el = document.getElementById('dbShelf');
+  const today = localDayISO(new Date());
+  const soon = localDayISO(new Date(Date.now() + 30 * DAY_MS));
+  const due = found.filter(function (f) { return f.expiry <= soon; }).sort(function (a, b) { return a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : 0; });
+  document.getElementById('dbShelfSub').textContent = plural(found.length, 'RM lot') + ' on hand with an expiry date (first in, first out) · ' +
+    formatNum(due.length) + ' expired or due within 30 days';
+  if (!due.length) { el.innerHTML = '<div class="db-allclear">✓ No lot on hand expires in the next 30 days.</div>'; return; }
+  el.innerHTML = '<div class="db-list">' + due.slice(0, 10).map(function (f) {
+    const expired = f.expiry < today;
+    const days = Math.round((new Date(f.expiry + 'T00:00:00') - new Date(today + 'T00:00:00')) / DAY_MS);
+    return '<div class="db-row shelf-row" data-kind="rm" data-code="' + escapeHtml(f.code) + '" data-open="history" title="Open history">' +
+      '<span class="shelf-badge ' + (expired ? 'is-expired' : 'is-soon') + '">' + (expired ? 'Expired' : days === 0 ? 'Today' : days + ' d') + '</span>' +
+      '<span class="shelf-item"><b class="mono">' + escapeHtml(f.code) + '</b> ' + escapeHtml(f.name || '') + (f.lot ? ' · lot ' + escapeHtml(f.lot) : '') + '</span>' +
+      '<span class="shelf-qty">' + qtyPlain(f.qty) + ' ' + escapeHtml(f.unit) + '</span><span class="shelf-date">' + escapeHtml(formatDay(f.expiry)) + '</span></div>';
+  }).join('') + (due.length > 10 ? '<div class="db-total"><span>' + formatNum(due.length - 10) + ' more</span></div>' : '') + '</div>';
+}
+
+// ---- Earlier years in an item's history ----
+async function loadEarlierYears() {
+  const config = activeLedgerConfig; const code = activeLedgerCode;
+  if (!config || !code) return;
+  const btn = document.getElementById('ledgerEarlierBtn');
+  setBtnLoading(btn, 'Loading…', true);
+  try {
+    const r = await api('getArchivedLedger', { key: config.key, code: code });
+    if (activeLedgerCode !== code) return;
+    const rows = r.rows || [];
+    const tbody = document.getElementById('ledgerTableBody');
+    tbody.querySelectorAll('.is-archived, .ledger-sep').forEach(function (el) { el.remove(); });
+    if (!rows.length) { toast('No earlier entries for ' + code + ' in the yearly archives.'); return; }
+    let last = '';
+    tbody.insertAdjacentHTML('beforeend', rows.map(function (x) {
+      const sep = x._fy !== last ? '<tr class="ledger-sep"><td colspan="7">' + escapeHtml(x._fy) + ' · archived, read only</td></tr>' : '';
+      last = x._fy;
+      return sep + renderLedgerRow(x, true);
+    }).join(''));
+    syncLedgerActionColumns();
+    btn.dataset.done = '1';
+  } catch (err) { toast(err.message, true); }
+  finally { clearBtnLoading(btn, btn.dataset.done ? 'Earlier years shown' : 'Earlier years'); btn.disabled = !!btn.dataset.done; }
+}
+function syncEarlierBtn() {
+  const btn = document.getElementById('ledgerEarlierBtn');
+  delete btn.dataset.done;
+  btn.disabled = false;
+  btn.textContent = 'Earlier years';
+  btn.classList.toggle('hidden', !state.ledgerClosedThrough);
+}
+
+// ---- A quick start: the last figures this device saw, at once ----
+const BOOT_CACHE_KEY = 'stock_boot_cache';
+function readBootCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(BOOT_CACHE_KEY) || 'null');
+    if (!c || !c.data || !state.session || c.user !== state.session.username) return null;
+    if (Date.now() - c.at > 7 * DAY_MS) return null;
+    return c;
+  } catch (e) { return null; }
+}
+function writeBootCache(data) {
+  try {
+    const keep = Object.assign({}, data);
+    delete keep.users;
+    const text = JSON.stringify({ user: state.session && state.session.username, at: Date.now(), v: APP_VERSION, data: keep });
+    if (text.length < 3500000) localStorage.setItem(BOOT_CACHE_KEY, text);
+  } catch (e) {}
+}
+
+/* =========================================================================
    3.26: SHOW PASSWORD, ZOOM, AND THE MORE PAGES (Apps, About, Feedback)
    ========================================================================= */
 
@@ -7595,14 +8674,12 @@ function applyZoom(z, remember) {
   const root = document.documentElement;
   if (z === 1) { root.style.removeProperty('zoom'); root.style.removeProperty('--app-zoom'); }
   else { root.style.zoom = String(z); root.style.setProperty('--app-zoom', String(z)); }
-  const label = document.getElementById('zoomResetBtn');
-  if (label) {
+  document.querySelectorAll('.zoom-level').forEach(function (label) {
     label.textContent = Math.round(z * 100) + '%';
     label.setAttribute('aria-label', 'Zoom ' + Math.round(z * 100) + '%' + (z === 1 ? '' : ', press for 100%'));
-  }
-  const out = document.getElementById('zoomOutBtn'), inn = document.getElementById('zoomInBtn');
-  if (out) out.disabled = z <= ZOOM_STEPS[0];
-  if (inn) inn.disabled = z >= ZOOM_STEPS[ZOOM_STEPS.length - 1];
+  });
+  document.querySelectorAll('#zoomOutBtn, .nav-zoom [data-zoom="-1"]').forEach(function (b) { b.disabled = z <= ZOOM_STEPS[0]; });
+  document.querySelectorAll('#zoomInBtn, .nav-zoom [data-zoom="1"]').forEach(function (b) { b.disabled = z >= ZOOM_STEPS[ZOOM_STEPS.length - 1]; });
   if (remember) {
     try { if (z === 1) localStorage.removeItem(ZOOM_KEY); else localStorage.setItem(ZOOM_KEY, String(z)); } catch (e) {}
     // Charts and the sidebar marker measure themselves on resize.
@@ -7767,6 +8844,15 @@ function wireStaticEvents() {
   document.getElementById('zoomResetBtn').addEventListener('click', function () { applyZoom(1, true); });
   document.getElementById('appVersion').addEventListener('click', function () { if (state.session) navigateTo('about'); });
   wireMorePages();
+  document.querySelectorAll('.nav-zoom [data-zoom]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      const d = Number(b.dataset.zoom);
+      if (d) stepZoom(d); else applyZoom(1, true);
+    });
+  });
+  wireCountPage(); wireReorderPage(); wireCostsPage(); wireDropdownsPage();
+  document.getElementById('ledgerEarlierBtn').addEventListener('click', loadEarlierYears);
   window.addEventListener('resize', debounce(updateNavIndicator, 100));
 
   document.getElementById('profileBtn').addEventListener('click', openPasswordModal);
