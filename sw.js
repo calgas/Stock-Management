@@ -24,7 +24,7 @@
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
 const CACHE_PREFIX = 'calgas-shell-';
-const CACHE_VERSION = CACHE_PREFIX + 'v53';
+const CACHE_VERSION = CACHE_PREFIX + 'v54';
 const APP_SHELL = [
   './',
   './index.html',
@@ -95,4 +95,68 @@ self.addEventListener('fetch', (e) => {
       })
     )
   );
+});
+
+// ---- Notifications (3.30.0) ----
+// The server sends an empty push (nothing to decrypt); this worker then asks
+// the server (whose address the page keeps in PUSH_CACHE) for the newest
+// unread notification, naming this device by its push address, and shows it.
+// If that fails, a plain line shows instead. Open pages are told, so their
+// bell catches up.
+const PUSH_CACHE = 'calgas-stock-push';
+const ICON = './logo/icon-192.png';
+
+async function latestNotification() {
+  const cache = await caches.open(PUSH_CACHE);
+  const saved = await cache.match(new URL('__push_session', self.registration.scope).href);
+  if (!saved) return null;
+  const cfg = await saved.json();
+  const sub = await self.registration.pushManager.getSubscription();
+  if (!cfg || !cfg.url || !sub) return null;
+  const res = await fetch(cfg.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'pushPeek', endpoint: sub.endpoint })
+  });
+  const json = await res.json();
+  return json && json.success ? json.data : null;
+}
+
+self.addEventListener('push', (e) => {
+  e.waitUntil((async () => {
+    let title = 'Stock Management', options = { body: 'Something needs your attention. Open the app to see it.', icon: ICON, badge: ICON, tag: 'stock-notification', data: {} };
+    try {
+      const d = await latestNotification();
+      const n = d && d.items && d.items[0];
+      if (n) {
+        title = n.Title;
+        options = {
+          body: n.Body + (d.unread > 1 ? '\n(' + (d.unread - 1) + ' more unread)' : ''),
+          icon: ICON, badge: ICON, tag: n.ID, timestamp: Number(n.Created_At) || Date.now(),
+          data: { link: n.Link || '', id: n.ID }
+        };
+        if (self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge(d.unread).catch(() => {});
+      }
+    } catch (err) { /* show the plain line */ }
+    const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    open.forEach((c) => c.postMessage({ type: 'notif' }));
+    await self.registration.showNotification(title, options);
+  })());
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const data = e.notification.data || {};
+  e.waitUntil((async () => {
+    const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const here = open.filter((c) => c.url.indexOf(self.registration.scope) === 0)[0];
+    if (here) {
+      await here.focus();
+      if (data.link) here.postMessage({ type: 'open-notif', link: data.link, id: data.id });
+      return;
+    }
+    const url = new URL('./', self.registration.scope);
+    if (data.link) url.hash = 'notif=' + encodeURIComponent(data.link) + '&id=' + encodeURIComponent(data.id || '');
+    await self.clients.openWindow(url.href);
+  })());
 });
