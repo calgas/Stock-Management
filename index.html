@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.29.1">
+<meta name="app-version" content="3.30.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -801,10 +801,51 @@
   .ind-f-note { grid-area: note; } .ind-line .ind-line-info { grid-area: info; margin: -2px 0 0; }
   .ind-line .ind-line-info:empty { display: none; } .ind-line-info.warn { color: #c0392b; }
   .ind-meta { font-size: 13px; margin-bottom: 10px; line-height: 1.6; }
-  .ind-table-wrap { overflow-x: auto; } .ind-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .ind-table th, .ind-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-  .ind-table .num { text-align: right; } .ind-table input { width: 90px; } .ind-table input[data-why] { width: 140px; margin-top: 4px; }
-  .ind-off { opacity: .55; } .ind-rej { white-space: nowrap; font-size: 12.5px; display: inline-flex; gap: 4px; align-items: center; } .ind-rej input { width: auto; margin: 0; }
+  /* One card per item (3.30): the figures in a row of tiles and the approve
+     or issue box under them, so nothing runs off a phone screen. */
+  .ind-lis { border-top: 1px solid var(--line); }
+  .ind-li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ind-li-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ind-li-name { font-size: 13px; margin-top: 2px; }
+  .ind-li-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+  .ind-li-nums > div { background: var(--line-soft); border-radius: 8px; padding: 6px 8px; font-size: 11.5px; color: var(--ink-soft); min-width: 0; }
+  .ind-li-nums b { display: block; font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .ind-li-nums .is-short b { color: #c0392b; }
+  .ind-li-act { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .ind-qty { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .ind-li-act input[type="number"] { width: 120px; }
+  .ind-li-act input[data-why] { flex: 1 1 200px; min-width: 0; }
+  .ind-li .hint.warn, .ind-li-act .hint.warn { color: #c0392b; }
+  .ind-off { opacity: .55; } .ind-rej { white-space: nowrap; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; } .ind-rej input { width: auto; margin: 0; }
+  @media (max-width: 520px) { .ind-li-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ind-li-act input[type="number"] { width: 110px; } }
+  /* The bell (3.30) */
+  .notif-wrap { position: relative; }
+  .notif-btn { position: relative; }
+  .notif-count { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #c0392b; color: #fff;
+                 font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--panel); pointer-events: none; }
+  .notif-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 380px; max-height: min(72vh, 580px); display: flex; flex-direction: column; text-align: left;
+                 background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 44px rgba(0,0,0,.2); z-index: 120; overflow: hidden; }
+  .notif-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--line); }
+  .notif-head h4 { margin: 0; font-size: 15px; flex: 1; color: var(--ink); }
+  .notif-head .btn-compact { padding: 6px 10px !important; font-size: 12.5px !important; }
+  .notif-list { overflow-y: auto; flex: 1; overscroll-behavior: contain; }
+  .notif-item { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; font: inherit; color: var(--ink);
+                padding: 11px 16px 11px 30px; cursor: pointer; position: relative; }
+  .notif-item:hover { background: var(--line-soft); }
+  .notif-item.is-unread::before { content: ''; position: absolute; left: 13px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--copper); }
+  .notif-item b { display: block; font-size: 13.5px; }
+  .notif-item:not(.is-unread) b { font-weight: 600; }
+  .notif-item span { display: block; font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; line-height: 1.45; }
+  .notif-item time { display: block; font-size: 11px; color: var(--ink-soft); margin-top: 4px; opacity: .8; }
+  .notif-empty { padding: 30px 16px; text-align: center; color: var(--ink-soft); font-size: 13px; }
+  .notif-foot { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; line-height: 1.45; }
+  .notif-foot .btn-compact { padding: 7px 12px !important; font-size: 12.5px !important; }
+  .notif-on { color: #23854a; font-weight: 600; }
+  @media (max-width: 780px) {
+    /* On a phone the panel spans the top bar (the bar is the positioned box). */
+    .notif-wrap { position: static; }
+    .notif-panel { left: 8px; right: 8px; top: calc(100% + 6px); width: auto; max-height: calc(100vh - 190px); }
+  }
   .ind-ask { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
   .ind-actions { flex-wrap: wrap; gap: 8px; }
   @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 44px 40px; grid-template-areas: "item item item" "qty unit rm" "note note note" "info info info"; } }
@@ -1708,6 +1749,13 @@
           <button type="button" class="zoom-level" id="zoomResetBtn" title="Back to 100%" aria-label="Zoom 100%, press to reset">100%</button>
           <button type="button" class="zoom-btn" id="zoomInBtn" title="Zoom in" aria-label="Zoom in"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8h9M8 3.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         </div>
+        <div class="notif-wrap">
+          <button id="notifBtn" type="button" class="btn-ghost theme-btn notif-btn" title="Notifications" aria-label="Notifications" aria-haspopup="dialog" aria-expanded="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="notif-count hidden" id="notifCount">0</span>
+          </button>
+          <div class="notif-panel hidden" id="notifPanel" role="dialog" aria-label="Notifications"></div>
+        </div>
         <button id="themeToggleBtn" class="btn-ghost theme-btn" title="Toggle Dark Mode">
           <!-- Sun Icon (shows in dark mode) -->
           <svg class="sun-icon hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -2090,7 +2138,7 @@
           <div class="db-card">
             <div class="db-card-head"><div><h3 class="db-card-title">How it works</h3></div></div>
             <p>The data lives in the company’s own Google Sheet, and a Google Apps Script backend checks and records every change. This app is a web app you can install on a computer or phone; it remembers recent figures, so it opens quickly.</p>
-            <p>Orders &amp; Dispatch, Batch Card Tracker and ELE Tracker use the same sign-in.</p>
+            <p>Orders &amp; Dispatch and Batch Card Tracker use the same sign-in.</p>
           </div>
           <div class="db-card">
             <div class="db-card-head"><div><h3 class="db-card-title">You</h3></div></div>
@@ -2476,7 +2524,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.29.1';
+const APP_VERSION = '3.30.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2780,7 +2828,10 @@ const MUTATING_ACTIONS = {
   // 3.22-3.27: Trade, reversals, feedback and the tools
   addTradeTransaction: true, updateTradeTransaction: true, reverseTradeTransaction: true, reverseRMTransaction: true, reverseFGTransaction: true,
   recalculateTradeStock: true, addTradeItem: true, updateTradeItem: true, deleteTradeItem: true, reactivateTradeItem: true, bulkAddTradeItems: true,
-  sendFeedback: true, postStockCount: true, setStandardCosts: true, sendReorderList: true, saveDropdownList: true
+  sendFeedback: true, postStockCount: true, setStandardCosts: true, sendReorderList: true, saveDropdownList: true,
+  // 3.29-3.30: indents and notifications
+  raiseIndent: true, decideIndent: true, issueIndent: true, closeIndent: true, receiveIndent: true, returnIndent: true,
+  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true, testPush: true
 };
 
 // Writes that are safe to send again when a reply is lost, because a second
@@ -2796,7 +2847,9 @@ const REPEATABLE_WRITES = {
   // carries its own duplicate-safe ID, which already makes it safe.)
   removeAttachment: true,
   // A count carries its own ID, and costs are absolute values.
-  postStockCount: true, setStandardCosts: true
+  postStockCount: true, setStandardCosts: true,
+  // Marking read and saving or removing a device set values.
+  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true
 };
 
 // Waits before each retry when Google's reply isn't ours. Its hiccups tend
@@ -3043,6 +3096,7 @@ function loadSession() {
 }
 function clearSession() {
   state.session = null; localStorage.removeItem('stock_session');
+  try { stopNotifications(); indentView.data = null; indentView.loadedAt = 0; } catch (e) {}
   // The entries kept for instant opening go too — a shared device shouldn't
   // show the last person's ledger.
   ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache', 'stock_boot_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
@@ -3550,6 +3604,14 @@ async function init() {
   }
 }
 
+// Indents and notifications, once the app is open (from the saved copy or not).
+function afterSignIn() {
+  loadIndents(true);
+  startNotifications();
+  handleIndentLink();
+  handleNotifLink();
+}
+
 async function boot(opts) {
   opts = opts || {};
   setLoaderProgress(62, 'Loading workspace…');
@@ -3567,6 +3629,7 @@ async function boot(opts) {
     navigateTo('home');
     warmLedgers();
     startFreshnessInterval();
+    afterSignIn();
     setLoaderProgress(100, 'Ready');
     await hideInitialLoader();
     showAppProgress(40);
@@ -3603,8 +3666,7 @@ async function boot(opts) {
   resolvePendingTxn();
   setLoaderProgress(94, 'Preparing dashboard…');
   navigateTo('home');
-  loadIndents(true);
-  handleIndentLink();
+  afterSignIn();
   startFreshnessInterval();
   setLoaderProgress(100, 'Ready');
   await hideInitialLoader();
@@ -3753,6 +3815,7 @@ async function handleLogout() {
   if (loader) { loader.classList.remove('hidden', 'loader-exit'); loader.setAttribute('aria-busy', 'true'); }
   setLoaderProgress(30, 'Signing you out…');
   stopFreshnessInterval();
+  try { await releasePushForSignOut(); } catch (err) {}
   try { await api('logout'); } catch (err) { /* client-side logout proceeds regardless */ }
   setLoaderProgress(70, 'Clearing your session…');
   clearSession();
@@ -7631,8 +7694,9 @@ const SUBSCRIPTION_KEYS = ['stock.mail.rm', 'stock.mail.fg', 'stock.mail.trade']
 // unticked is remembered here until saved, across both views, and exactly
 // that is what gets sent — so switching app never loses a change, and
 // saving never touches a switch nobody moved.
+// (ELE Tracker was retired in 3.30.0: Batch Card Tracker replaced it.)
 const ACCESS_APPS = [{ id: 'stock', label: 'Stock Management' }, { id: 'pt', label: 'Orders & Dispatch' },
-                     { id: 'ele', label: 'ELE Tracker' }, { id: 'bct', label: 'Batch Card Tracker' }];
+                     { id: 'bct', label: 'Batch Card Tracker' }];
 let accessApp = 'stock';
 const accessDraft = { user: {}, tier: {} };
 
@@ -8748,11 +8812,8 @@ const APP_GALLERY = [
   { name: 'Orders & Dispatch', tag: 'Same sign-in', color: '#3e6e97', url: 'https://calgas.github.io/Production-Tracker/',
     desc: 'Customer orders, the batches made for them, receiving finished batches into stores, and dispatches with a printable delivery note.',
     icon: '<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>' },
-  { name: 'ELE Tracker', tag: 'Same sign-in', color: '#5a57a6', url: 'https://calgas.github.io/Ele-Tracker/',
-    desc: 'The winding-to-final-QA batch card, stage by stage, for every capacitor element batch.',
-    icon: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>' },
-  { name: 'Batch Card Tracker', tag: 'AppSheet', color: '#2f8a6a', url: 'https://www.appsheet.com/start/170ed4b4-a703-4e0c-9f32-7e154f097f84',
-    desc: 'Batch cards on the shop floor, in the AppSheet app.',
+  { name: 'Batch Card Tracker', tag: 'Same sign-in', color: '#2f8a6a', url: 'https://calgas.github.io/Batch-Card-Tracker/',
+    desc: 'The batch card for every capacitor batch, stage by stage from winding to final QA, with a material request to Stores for each batch.',
     icon: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M8 15h3"/>' },
   { name: 'CALGAS Workforce', tag: 'HR', color: '#a2733b', url: 'https://calgas.github.io/Workforce/',
     desc: 'Attendance, payroll and HR for the factory team.',
@@ -9065,6 +9126,7 @@ function makeTablesResizable() {
    =========================================================================== */
 const INDENT_PERMS = ['stock.indent.raise', 'stock.indent.any', 'stock.indent.approve', 'stock.indent.issue'];
 const indentView = { filter: 'me', dept: '', data: null, loadedAt: 0, loading: null };
+let indentFormRefill = null;   // set while the New indent form is open
 function canIndents() { return INDENT_PERMS.some(function (k) { return can(k); }); }
 function indentCan(k) { return !!(indentView.data && indentView.data.can && indentView.data.can[k]); }
 async function loadIndents(quiet) {
@@ -9073,6 +9135,7 @@ async function loadIndents(quiet) {
   indentView.loading = api('getIndents', {}).then(function (d) {
     indentView.data = d; indentView.loadedAt = Date.now();
     syncIndentBadge();
+    if (indentFormRefill) indentFormRefill();
     if (!document.getElementById('page-indents').classList.contains('hidden')) renderIndentsPage();
   }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { indentView.loading = null; });
   return indentView.loading;
@@ -9098,6 +9161,14 @@ function indentWhen(v) { return v ? new Date(v).toLocaleString('en-IN', { day: '
 function indentWho(u) { const x = (state.users || []).filter(function (y) { return String(y.Username || y.username).toLowerCase() === String(u).toLowerCase(); })[0]; return x ? (x.Name || x.name || u) : u; }
 function rmItems() { return mergeStock(state.rmMaster || [], state.rmStock || [], uiConfig('rm'), false); }
 function rmByCode(code) { return rmItems().filter(function (i) { return String(i.code).toUpperCase() === String(code || '').trim().toUpperCase(); })[0]; }
+// Stock now: the indent list carries the ledger's figure for its items; else
+// the stock list's.
+function indentBal(code) {
+  const s = indentView.data && indentView.data.stock;
+  if (s && Object.prototype.hasOwnProperty.call(s, code)) return Number(s[code]) || 0;
+  const it = rmByCode(code);
+  return it ? Number(it.balance) || 0 : 0;
+}
 
 function renderIndentsPage() {
   const body = document.getElementById('indentList');
@@ -9140,7 +9211,7 @@ function indentModal(html, wide) {
   document.body.appendChild(bg);
   return bg;
 }
-function closeIndentModal() { const m = document.getElementById('indentModal'); if (m) m.remove(); }
+function closeIndentModal() { indentFormRefill = null; const m = document.getElementById('indentModal'); if (m) m.remove(); }
 function indentHead(eyebrow, title, sub) {
   return '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(eyebrow) + '</div><h3>' + escapeHtml(title) + '</h3>' + (sub ? '<div class="muted">' + sub + '</div>' : '') + '</div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>';
 }
@@ -9148,16 +9219,15 @@ function indentHead(eyebrow, title, sub) {
 // New indent. pre.batchNo comes from Batch Card Tracker's "Request material".
 function openIndentForm(pre) {
   pre = pre || {};
-  const d = indentView.data || { batches: [] };
   const anyDept = can('stock.indent.any') || (state.session && state.session.role === 'Admin');
   const depts = stockDepartments().map(function (x) { return x.name; });
   const myDept = state.session ? state.session.department : '';
-  const batches = (d.batches || []).slice().sort(function (a, b) { return String(b.batchNo).localeCompare(String(a.batchNo)); });
+  let batches = [];
   const items = rmItems();
   const m = indentModal(indentHead('NEW INDENT', 'Ask Stores for material', 'Pick the batch it is for. Stores approves and issues it.') +
     '<div class="ind-form">' +
       '<div class="field"><label for="indDept">Department</label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + depts.map(function (x) { return '<option ' + (x === myDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">— Not for a batch</option>' + batches.map(function (b) { return '<option value="' + escapeHtml(b.batchNo) + '">' + escapeHtml(b.batchNo) + ' · ' + escapeHtml(b.product || b.part) + ' (' + formatNum(b.qty) + ')</option>'; }).join('') + '</select><div class="hint" id="indBatchHint"></div></div>' +
+      '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">— Not for a batch</option></select><div class="hint" id="indBatchHint"></div></div>' +
       '<div class="field hidden" id="indReasonWrap"><label for="indReason">Why isn’t it for a batch? <span class="req">*</span></label><input id="indReason" maxlength="300" placeholder="e.g. maintenance of winding machine M-2"></div>' +
       '<div class="field"><label for="indDue">Needed by</label><input type="date" id="indDue"></div>' +
       '<div class="field"><label>Priority</label><div class="seg" id="indPri"><button type="button" class="is-on" data-p="Normal">Normal</button><button type="button" data-p="Urgent">Urgent</button></div></div>' +
@@ -9184,15 +9254,24 @@ function openIndentForm(pre) {
     lines.appendChild(row);
     const code = row.querySelector('[data-k="code"]');
     enhanceSelect_(code);
-    code.addEventListener('change', function () {
+    const qty = row.querySelector('[data-k="qty"]');
+    function showInfo() {
       const it = rmByCode(code.value);
       const twice = it && Array.from(lines.querySelectorAll('select[data-k="code"]')).filter(function (x) { return x.value === it.code; }).length > 1;
+      const bal = it ? indentBal(it.code) : 0, q = Number(qty.value);
       row.querySelector('[data-k="unit"]').textContent = it ? it.unit : '';
       const info = row.querySelector('[data-k="info"]');
-      info.textContent = !it ? '' : twice ? it.code + ' is already on this indent — change the quantity there.' : it.name + ' · ' + qtyPlain(it.balance) + ' ' + it.unit + ' in stock';
-      info.classList.toggle('warn', !!twice);
-      if (it && !twice) row.querySelector('[data-k="qty"]').focus();
-    });
+      const over = it && !twice && q > bal + 1e-9;
+      info.textContent = !it ? '' : twice ? it.code + ' is already on this indent — change the quantity there.'
+        : bal <= 0 ? it.name + ' · nothing in stock, so it can’t be asked for.'
+        : over ? 'Only ' + qtyPlain(bal) + ' ' + it.unit + ' in stock — you can’t ask for more than that.'
+        : it.name + ' · ' + qtyPlain(bal) + ' ' + it.unit + ' in stock';
+      info.classList.toggle('warn', !!(twice || over || (it && bal <= 0)));
+      if (it) qty.max = Math.max(0, bal); else qty.removeAttribute('max');
+      return it;
+    }
+    code.addEventListener('change', function () { const it = showInfo(); if (it && !qty.value) qty.focus(); });
+    qty.addEventListener('input', showInfo);
     row.querySelector('[data-rm]').addEventListener('click', function () { if (lines.querySelectorAll('.ind-line').length > 1) row.remove(); else { code.value = ''; row.querySelector('[data-k="qty"]').value = ''; code.dispatchEvent(new Event('change')); } });
     return row;
   }
@@ -9201,17 +9280,33 @@ function openIndentForm(pre) {
   const sel = m.querySelector('#indBatch');
   enhanceSelect_(m.querySelector('#indDept'));
   enhanceSelect_(sel);
+  const wantBatch = pre.batchNo ? String(pre.batchNo).trim().toUpperCase() : '';
   function syncBatch() {
     const b = batches.filter(function (x) { return x.batchNo === sel.value; })[0];
     m.querySelector('#indReasonWrap').classList.toggle('hidden', !!sel.value);
-    m.querySelector('#indBatchHint').textContent = b ? (b.product || b.part) + ' · ' + formatNum(b.qty) + ' pcs · stage ' + Math.min(8, Math.floor(b.step / 2) + 1) + ' of 8' : batches.length ? '' : 'No open batches in Batch Card Tracker.';
+    m.querySelector('#indBatchHint').textContent = !indentView.data ? 'Loading the open batches…'
+      : b && b.extra ? 'Not in the open batches; it’s checked when you send.'
+      : b ? (b.product || b.part) + ' · ' + formatNum(b.qty) + ' pcs · stage ' + Math.min(8, Math.floor(b.step / 2) + 1) + ' of 8'
+      : batches.length ? '' : 'No open batches in Batch Card Tracker.';
+  }
+  // The form opens straight away from what the app already has; the open
+  // batches fill in as soon as they arrive, keeping what was picked.
+  function fillBatches() {
+    const d = indentView.data;
+    const keep = sel.value || wantBatch;
+    batches = ((d && d.batches) || []).slice().sort(function (a, b) { return String(b.batchNo).localeCompare(String(a.batchNo)); });
+    if (keep && !batches.some(function (b) { return b.batchNo === keep; })) batches.unshift({ batchNo: keep, product: '', part: '', qty: 0, step: 0, extra: true });
+    sel.innerHTML = '<option value="">— Not for a batch</option>' + batches.map(function (b) {
+      return '<option value="' + escapeHtml(b.batchNo) + '">' + escapeHtml(b.batchNo) + (b.extra ? '' : ' · ' + escapeHtml(b.product || b.part) + (b.qty ? ' (' + formatNum(b.qty) + ')' : '')) + '</option>';
+    }).join('');
+    sel.value = keep;
+    syncBatch();
+    lines.querySelectorAll('.ind-line select[data-k="code"]').forEach(function (c) { if (c.value) c.dispatchEvent(new Event('change')); });
   }
   sel.addEventListener('change', syncBatch);
-  if (pre.batchNo) {
-    if (batches.some(function (b) { return b.batchNo === String(pre.batchNo).toUpperCase(); })) sel.value = String(pre.batchNo).toUpperCase();
-    else toast(pre.batchNo + ' isn’t an open batch.', true);
-  }
-  syncBatch();
+  fillBatches();
+  indentFormRefill = fillBatches;
+  if (!indentView.data || Date.now() - indentView.loadedAt > 60000) loadIndents(true);
   m.querySelectorAll('#indPri button').forEach(function (b) { b.addEventListener('click', function () { m.querySelectorAll('#indPri button').forEach(function (x) { x.classList.toggle('is-on', x === b); }); }); });
   const clientTxnId = newClientTxnId();
   m.querySelector('#indSend').addEventListener('click', async function (e) {
@@ -9224,6 +9319,8 @@ function openIndentForm(pre) {
     if (dup) { err.textContent = dup.code + ' is on the indent twice. Keep one line and put the total there.'; return; }
     const noQty = rows.filter(function (r) { return !(r.qty > 0); })[0];
     if (noQty) { err.textContent = 'Enter the quantity for ' + noQty.code + '.'; return; }
+    const over = rows.filter(function (r) { return r.qty > indentBal(rmByCode(r.code).code) + 1e-9; })[0];
+    if (over) { const it = rmByCode(over.code); err.textContent = it.code + ': only ' + qtyPlain(Math.max(0, indentBal(it.code))) + ' ' + it.unit + ' in stock, so you can’t ask for ' + qtyPlain(over.qty) + '.'; return; }
     if (!sel.value && m.querySelector('#indReason').value.trim().length < 3) { err.textContent = 'Pick the batch, or say why it isn’t for a batch.'; return; }
     const btn = e.currentTarget; setBtnLoading(btn, 'Sending…');
     try {
@@ -9244,15 +9341,33 @@ function openIndentDetail(no) {
   const issuing = (i.Status === 'Approved' || i.Status === 'Part issued') && indentCan('issue');
   const mineDept = state.session && i.Department === state.session.department;
   const confirmable = Number(i.Issues) > Number(i.Confirmed_Issues || 0);
+  // One card per item: what was asked, approved and issued, the stock now,
+  // and (for the approver or Stores) the quantity to approve or issue.
   const rows = ls.map(function (l) {
-    const it = rmByCode(l.RM_Code), left = Math.max(0, Number(l.Qty_Approved || 0) - Number(l.Qty_Issued || 0));
+    const bal = indentBal(l.RM_Code), left = Math.max(0, Number(l.Qty_Approved || 0) - Number(l.Qty_Issued || 0));
+    const live = ['Approved', 'Part issued'].indexOf(l.Line_Status) > -1, unit = escapeHtml(l.Unit);
+    const short = (deciding && Number(l.Qty_Requested) > bal + 1e-9) || (issuing && live && left > bal + 1e-9);
     let act = '';
-    if (deciding) act = '<td class="num"><input type="number" inputmode="decimal" min="0" step="any" data-approve="' + l.Line_ID + '" value="' + l.Qty_Requested + '"></td><td><label class="ind-rej"><input type="checkbox" data-reject="' + l.Line_ID + '"> Reject</label><input data-why="' + l.Line_ID + '" placeholder="Reason" maxlength="300" class="hidden"></td>';
-    else if (issuing) act = '<td class="num">' + (['Approved', 'Part issued'].indexOf(l.Line_Status) > -1 ? '<input type="number" inputmode="decimal" min="0" step="any" data-issue="' + l.Line_ID + '" value="' + Math.min(left, it ? Math.max(0, it.balance) : left) + '">' : '') + '</td>';
-    return '<tr class="' + (l.Line_Status === 'Rejected' || l.Line_Status === 'Cancelled' ? 'ind-off' : '') + '"><td><span class="mono">' + escapeHtml(l.RM_Code) + '</span><div class="muted">' + escapeHtml(l.RM_Name) + (l.Remarks ? ' · ' + escapeHtml(l.Remarks) : '') + '</div>' + (l.Reason ? '<div class="hint">' + escapeHtml(l.Reason) + '</div>' : '') + '</td>' +
-      '<td class="num">' + qtyPlain(l.Qty_Requested) + ' <span class="muted">' + escapeHtml(l.Unit) + '</span></td>' +
-      '<td class="num">' + (l.Qty_Approved === '' ? '—' : qtyPlain(l.Qty_Approved)) + '</td><td class="num">' + qtyPlain(l.Qty_Issued) + (Number(l.Qty_Returned) ? '<div class="muted">−' + qtyPlain(l.Qty_Returned) + ' back</div>' : '') + '</td>' +
-      '<td class="num">' + (it ? qtyPlain(it.balance) : '—') + '</td><td>' + indentBadge(l.Line_Status) + '</td>' + act + '</tr>';
+    if (deciding) {
+      const def = Math.max(0, Math.min(Number(l.Qty_Requested), bal));
+      act = '<div class="ind-li-act"><label class="ind-qty">Approve <input type="number" inputmode="decimal" min="0" step="any" max="' + Math.max(0, bal) + '" data-approve="' + l.Line_ID + '" value="' + (def > 0 ? def : '') + '"> ' + unit + '</label>' +
+        '<label class="ind-rej"><input type="checkbox" data-reject="' + l.Line_ID + '"' + (bal <= 0 ? ' checked' : '') + '> Reject</label>' +
+        '<input data-why="' + l.Line_ID + '" placeholder="Why it’s rejected" maxlength="300" class="' + (bal <= 0 ? '' : 'hidden') + '"' + (bal <= 0 ? ' value="Not in stock"' : '') + '>' +
+        (short ? '<div class="hint warn" style="flex-basis:100%">' + (bal <= 0 ? 'Nothing in stock.' : 'Only ' + qtyPlain(bal) + ' ' + unit + ' in stock, so no more than that can be approved.') + '</div>' : '') + '</div>';
+    } else if (issuing && live) {
+      const def = Math.max(0, Math.min(left, bal));
+      act = '<div class="ind-li-act"><label class="ind-qty">Issue now <input type="number" inputmode="decimal" min="0" step="any" max="' + Math.max(0, Math.min(left, bal)) + '" data-issue="' + l.Line_ID + '" value="' + (def > 0 ? def : '') + '"> ' + unit + '</label>' +
+        '<span class="muted">' + qtyPlain(left) + ' ' + unit + ' still to issue</span>' +
+        (short ? '<div class="hint warn" style="flex-basis:100%">' + (bal <= 0 ? 'Nothing in stock to issue.' : 'Only ' + qtyPlain(bal) + ' ' + unit + ' in stock.') + '</div>' : '') + '</div>';
+    }
+    return '<div class="ind-li' + (l.Line_Status === 'Rejected' || l.Line_Status === 'Cancelled' ? ' ind-off' : '') + '">' +
+      '<div class="ind-li-top"><b class="mono">' + escapeHtml(l.RM_Code) + '</b>' + indentBadge(l.Line_Status) + '</div>' +
+      '<div class="ind-li-name muted">' + escapeHtml(l.RM_Name) + (l.Remarks ? ' · ' + escapeHtml(l.Remarks) : '') + '</div>' +
+      (l.Reason ? '<div class="hint">' + escapeHtml(l.Reason) + '</div>' : '') +
+      '<div class="ind-li-nums"><div>Asked<b>' + qtyPlain(l.Qty_Requested) + ' ' + unit + '</b></div>' +
+        '<div>Approved<b>' + (l.Qty_Approved === '' ? '—' : qtyPlain(l.Qty_Approved)) + '</b></div>' +
+        '<div>Issued<b>' + qtyPlain(l.Qty_Issued) + (Number(l.Qty_Returned) ? ' <span class="muted">(−' + qtyPlain(l.Qty_Returned) + ' back)</span>' : '') + '</b></div>' +
+        '<div class="' + (short ? 'is-short' : '') + '">In stock<b>' + qtyPlain(bal) + '</b></div></div>' + act + '</div>';
   }).join('');
   const acts = [];
   acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="print">Print slip</button>');
@@ -9267,11 +9382,15 @@ function openIndentDetail(no) {
       (i.Decided_By ? '<br>' + (i.Status === 'Rejected' ? 'Rejected' : 'Approved') + ' by ' + escapeHtml(indentWho(i.Decided_By)) + ', ' + indentWhen(i.Decided_At) + (i.Decision_Note ? ' — ' + escapeHtml(i.Decision_Note) : '') : '') +
       (i.Received_By ? '<br>Received (' + escapeHtml(i.Receipt_Mode) + ') — ' + escapeHtml(indentWho(i.Received_By)) + ', ' + indentWhen(i.Received_At) : '') +
       (i.Closed_Reason ? '<br>' + escapeHtml(i.Status === 'Cancelled' ? 'Cancelled' : 'Closed short') + ': ' + escapeHtml(i.Closed_Reason) : '') + (i.Remarks ? '<br>' + escapeHtml(i.Remarks) : '') + '</div>' +
-    '<div class="ind-table-wrap"><table class="ind-table"><thead><tr><th>Item</th><th class="num">Asked</th><th class="num">Approved</th><th class="num">Issued</th><th class="num">In stock</th><th>Status</th>' +
-      (deciding ? '<th class="num">Approve</th><th></th>' : issuing ? '<th class="num">Issue now</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="ind-lis">' + rows + '</div>' +
     (deciding ? '<div class="field"><label for="indNote">Note (optional)</label><input id="indNote" maxlength="500"></div>' : '') +
     '<div class="ind-ask hidden" id="indAsk"></div><div class="modal-error" id="indDErr"></div><div class="modal-actions ind-actions">' + acts.join('') + '</div>', true);
-  m.querySelectorAll('[data-reject]').forEach(function (c) { c.addEventListener('change', function () { m.querySelector('[data-why="' + c.dataset.reject + '"]').classList.toggle('hidden', !c.checked); m.querySelector('[data-approve="' + c.dataset.reject + '"]').disabled = c.checked; }); });
+  m.dataset.ind = no;
+  m.addEventListener('input', function () { m.dataset.touched = '1'; });
+  m.querySelectorAll('[data-reject]').forEach(function (c) {
+    const sync = function () { m.querySelector('[data-why="' + c.dataset.reject + '"]').classList.toggle('hidden', !c.checked); m.querySelector('[data-approve="' + c.dataset.reject + '"]').disabled = c.checked; };
+    c.addEventListener('change', sync); sync();
+  });
   const err = m.querySelector('#indDErr');
   const issueTxn = newClientTxnId();
   async function run(btn, action, params, done) {
@@ -9293,6 +9412,18 @@ function openIndentDetail(no) {
     const b = e.target.closest('[data-ia]'); if (!b) return;
     const a = b.dataset.ia;
     if (a === 'print') return printIndentSlip(no);
+    if (a === 'decide') {
+      for (const l of ls) {
+        if (m.querySelector('[data-reject="' + l.Line_ID + '"]').checked) {
+          if (m.querySelector('[data-why="' + l.Line_ID + '"]').value.trim().length < 3) { err.textContent = 'Say why ' + l.RM_Code + ' is rejected.'; return; }
+          continue;
+        }
+        const q = Number(m.querySelector('[data-approve="' + l.Line_ID + '"]').value), bal = indentBal(l.RM_Code);
+        if (!(q > 0)) { err.textContent = 'Enter the quantity to approve for ' + l.RM_Code + ', or reject it.'; return; }
+        if (q > Number(l.Qty_Requested) + 1e-9) { err.textContent = l.RM_Code + ': you can’t approve more than the ' + qtyPlain(l.Qty_Requested) + ' asked for.'; return; }
+        if (q > bal + 1e-9) { err.textContent = l.RM_Code + ': only ' + qtyPlain(Math.max(0, bal)) + ' ' + l.Unit + ' in stock, so you can’t approve ' + qtyPlain(q) + '.'; return; }
+      }
+    }
     if (a === 'decide') return run(b, 'decideIndent', { note: (m.querySelector('#indNote') || {}).value || '', lines: ls.map(function (l) {
       const rej = m.querySelector('[data-reject="' + l.Line_ID + '"]').checked;
       return rej ? { lineId: l.Line_ID, reject: true, reason: m.querySelector('[data-why="' + l.Line_ID + '"]').value } : { lineId: l.Line_ID, qty: m.querySelector('[data-approve="' + l.Line_ID + '"]').value };
@@ -9301,6 +9432,12 @@ function openIndentDetail(no) {
     if (a === 'issue') {
       const lines = Array.from(m.querySelectorAll('[data-issue]')).map(function (x) { return { lineId: x.dataset.issue, qty: Number(x.value) }; }).filter(function (x) { return x.qty > 0; });
       if (!lines.length) { err.textContent = 'Enter the quantity to issue.'; return; }
+      for (const x of lines) {
+        const l = ls.filter(function (y) { return y.Line_ID === x.lineId; })[0];
+        const left = Number(l.Qty_Approved || 0) - Number(l.Qty_Issued || 0), bal = indentBal(l.RM_Code);
+        if (x.qty > left + 1e-9) { err.textContent = l.RM_Code + ': only ' + qtyPlain(left) + ' ' + l.Unit + ' approved and not yet issued.'; return; }
+        if (x.qty > bal + 1e-9) { err.textContent = l.RM_Code + ': only ' + qtyPlain(Math.max(0, bal)) + ' ' + l.Unit + ' in stock.'; return; }
+      }
       return run(b, 'issueIndent', { lines: lines, clientTxnId: issueTxn }, 'Issued and posted to the RM ledger.');
     }
     if (a === 'received') return run(b, 'receiveIndent', { mode: 'app' }, 'Receipt confirmed.');
@@ -9350,7 +9487,7 @@ function handleIndentLink() {
   history.replaceState(null, '', location.pathname + location.search);
   if (!canIndents()) { toast('Your account can’t raise indents. Ask an Admin.', true); return; }
   navigateTo('indents');
-  loadIndents().then(function () { openIndentForm({ batchNo: m[1] ? decodeURIComponent(m[1]) : '' }); });
+  openIndentForm({ batchNo: m[1] ? decodeURIComponent(m[1]) : '' });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -9361,10 +9498,279 @@ document.addEventListener('DOMContentLoaded', function () {
     if (f) { indentView.filter = f.dataset.f; renderIndentsPage(); return; }
     const card = e.target.closest('[data-ind]');
     if (card) { openIndentDetail(card.dataset.ind); return; }
-    if (e.target.closest('#indentNewBtn')) { loadIndents().then(function () { openIndentForm({}); }); return; }
+    if (e.target.closest('#indentNewBtn')) { openIndentForm({}); return; }
     if (e.target.closest('#indentRefreshBtn')) loadIndents();
   });
   document.getElementById('indentDept').addEventListener('change', function (e) { indentView.dept = e.target.value; renderIndentsPage(); });
+});
+
+/* ===========================================================================
+   NOTIFICATIONS (3.30.0)
+   The bell beside the theme button lists what happened that concerns you
+   (indents raised, approved, rejected, issued, received). Polled every
+   minute while the app is open. "Turn on notifications on this device"
+   subscribes the phone or computer to Web Push: the server sends an empty
+   push, and the service worker asks the server for the newest notification
+   with that device's own push address (no sign-in is kept for it), so it
+   shows even with the app closed. Whoever signs in on a device gets that
+   device's pushes; signing out stops them.
+   =========================================================================== */
+const notifView = { items: [], unread: 0, loadedAt: 0, loading: null, timer: null };
+const pushView = { on: false, checked: false, saved: false };
+const PUSH_CACHE = 'calgas-stock-push';
+function pushSessionUrl() { return new URL('__push_session', location.href.split('#')[0]).href; }
+function pushSupported() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+function isIos() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function isStandalone() { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+
+async function loadNotifications(quiet) {
+  if (!state.session) return;
+  if (notifView.loading) return notifView.loading;
+  const had = notifView.loadedAt ? (notifView.items[0] && notifView.items[0].ID) || '' : null;
+  notifView.loading = _apiRequest('getNotifications', { limit: 40 }).then(function (d) {
+    notifView.items = d.items || []; notifView.unread = d.unread || 0; notifView.loadedAt = Date.now();
+    syncNotifBadge();
+    if (isNotifOpen()) renderNotifPanel();
+    const top = notifView.items[0];
+    // Something new about an indent: the indent list (and its count) follows.
+    if (had !== null && top && top.ID !== had && /^indent:/.test(top.Link || '')) loadIndents(true);
+  }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { notifView.loading = null; });
+  return notifView.loading;
+}
+function syncNotifBadge() {
+  const c = document.getElementById('notifCount'), b = document.getElementById('notifBtn');
+  if (c) { c.textContent = notifView.unread > 99 ? '99+' : String(notifView.unread); c.classList.toggle('hidden', !notifView.unread); }
+  if (b) { const t = notifView.unread ? notifView.unread + ' unread notification' + (notifView.unread === 1 ? '' : 's') : 'Notifications'; b.title = t; b.setAttribute('aria-label', t); }
+  try {
+    if (notifView.unread && navigator.setAppBadge) navigator.setAppBadge(notifView.unread).catch(function () {});
+    else if (!notifView.unread && navigator.clearAppBadge) navigator.clearAppBadge().catch(function () {});
+  } catch (e) {}
+}
+function notifAgo(ms) {
+  const s = (Date.now() - Number(ms)) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400 && new Date(ms).toDateString() === new Date().toDateString()) return Math.floor(s / 3600) + ' h ago';
+  return indentWhen(ms);
+}
+function isNotifOpen() { const p = document.getElementById('notifPanel'); return !!p && !p.classList.contains('hidden'); }
+function toggleNotifPanel(open) {
+  const p = document.getElementById('notifPanel'), btn = document.getElementById('notifBtn');
+  if (!p || !btn) return;
+  if (open === undefined) open = p.classList.contains('hidden');
+  if (open) { renderNotifPanel(); p.classList.remove('hidden'); loadNotifications(true); if (pushSupported() && !pushView.checked) checkPush().then(renderNotifPanel); }
+  else p.classList.add('hidden');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function pushFootHtml() {
+  if (!pushSupported()) {
+    return isIos() && !isStandalone()
+      ? '<span>To get notifications on iPhone: Share → <b>Add to Home Screen</b>, then open the app from the icon and turn them on here.</span>'
+      : '<span>This browser can’t show notifications. The bell still lists them here.</span>';
+  }
+  if (Notification.permission === 'denied') return '<span>Notifications are blocked for this site. Allow them in the browser’s site settings, then come back here.</span>';
+  if (pushView.on) return '<span class="notif-on">This device gets notifications.</span><span class="tool-spacer"></span><button type="button" class="btn-ghost btn-compact" data-nf="test">Send a test</button><button type="button" class="btn-ghost btn-compact" data-nf="off">Turn off</button>';
+  return '<button type="button" class="btn-primary btn-compact" data-nf="on">Turn on notifications on this device</button><span>You’ll get them even when the app is closed.</span>';
+}
+function renderNotifPanel() {
+  const p = document.getElementById('notifPanel');
+  if (!p) return;
+  const items = notifView.items;
+  p.innerHTML = '<div class="notif-head"><h4>Notifications</h4>' + (notifView.unread ? '<button type="button" class="btn-ghost btn-compact" data-nf="all">Mark all read</button>' : '') +
+    '<button type="button" class="icon-btn" data-nf="close" aria-label="Close">&#10005;</button></div>' +
+    '<div class="notif-list">' + (items.length ? items.map(function (n) {
+      return '<button type="button" class="notif-item' + (n.Read_At ? '' : ' is-unread') + '" data-nid="' + escapeHtml(n.ID) + '"><b>' + escapeHtml(n.Title) + '</b>' +
+        (n.Body ? '<span>' + escapeHtml(n.Body) + '</span>' : '') + '<time>' + escapeHtml(notifAgo(n.Created_At)) + '</time></button>';
+    }).join('') : '<div class="notif-empty">' + (notifView.loadedAt ? 'Nothing yet. Indent requests, approvals and issues for you show up here.' : 'Loading…') + '</div>') + '</div>' +
+    '<div class="notif-foot">' + pushFootHtml() + '</div>';
+}
+function markNotifRead(ids) {
+  let n = 0;
+  notifView.items.forEach(function (x) { if (!x.Read_At && (!ids || ids.indexOf(x.ID) > -1)) { x.Read_At = Date.now(); n++; } });
+  notifView.unread = ids ? Math.max(0, notifView.unread - n) : 0;
+  syncNotifBadge();
+  if (isNotifOpen()) renderNotifPanel();
+  api('markNotificationsRead', ids ? { ids: ids } : {}).catch(function () {});
+}
+// Where a notification leads. "indent:IND/26-27/0004" opens that indent.
+function openNotifLink(link) {
+  const m = String(link || '').match(/^indent:(.+)$/);
+  if (!m) return;
+  if (!canIndents()) { toast('Your account can’t open indents.', true); return; }
+  const no = m[1];
+  navigateTo('indents');
+  if (indentFind(no)) openIndentDetail(no);
+  loadIndents(true).then(function () {
+    const open = document.getElementById('indentModal');
+    if (!indentFind(no)) { if (!open) toast(no + ' isn’t in your indent list.', true); return; }
+    // Show the fresh figures, unless someone has started typing in it.
+    if (!open || (open.dataset.ind === no && !open.dataset.touched)) openIndentDetail(no);
+  });
+}
+async function onNotifPanelClick(e) {
+  const item = e.target.closest('[data-nid]');
+  if (item) {
+    const n = notifView.items.filter(function (x) { return x.ID === item.dataset.nid; })[0];
+    if (!n) return;
+    if (!n.Read_At) markNotifRead([n.ID]);
+    toggleNotifPanel(false);
+    openNotifLink(n.Link);
+    return;
+  }
+  const b = e.target.closest('[data-nf]');
+  if (!b) return;
+  const a = b.dataset.nf;
+  if (a === 'close') toggleNotifPanel(false);
+  else if (a === 'all') markNotifRead(null);
+  else if (a === 'on') enablePush(b);
+  else if (a === 'off') disablePush(b);
+  else if (a === 'test') {
+    setBtnLoading(b, 'Sending…');
+    try { await api('testPush', {}); toast('Test sent. It should pop up on this device in a few seconds.'); loadNotifications(true); }
+    catch (x) { toast(x.message, true); } finally { clearBtnLoading(b); }
+  }
+}
+
+// ---- phone and computer notifications (Web Push) ----
+function b64uToBytes(s) {
+  const pad = '='.repeat((4 - s.length % 4) % 4), raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+function bytesToB64u(buf) {
+  if (!buf) return '';
+  const b = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function deviceLabel() {
+  const ua = navigator.userAgent;
+  const os = /Android/.test(ua) ? 'Android' : isIos() ? 'iPhone/iPad' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Device';
+  const br = /Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
+  return os + ' · ' + br + (isStandalone() ? ' (app)' : '');
+}
+// Where the service worker asks for the newest notification after a push.
+function savePushSession() {
+  if (!('caches' in window) || pushView.saved) return;
+  pushView.saved = true;
+  caches.open(PUSH_CACHE).then(function (c) {
+    return c.put(pushSessionUrl(), new Response(JSON.stringify({ url: GOOGLE_API_URL }), { headers: { 'Content-Type': 'application/json' } }));
+  }).catch(function () { pushView.saved = false; });
+}
+function forgetPushSession() {
+  pushView.saved = false;
+  if ('caches' in window) caches.delete(PUSH_CACHE).catch(function () {});
+}
+async function pushRegistration() {
+  const reg = await navigator.serviceWorker.getRegistration();
+  return reg || navigator.serviceWorker.ready;
+}
+// On sign-in: if this device already has notifications on, they now go to
+// whoever just signed in.
+async function checkPush() {
+  pushView.checked = true;
+  if (!pushSupported() || Notification.permission !== 'granted' || !state.session) { pushView.on = false; return; }
+  try {
+    const reg = await pushRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (!sub) { pushView.on = false; return; }
+    await api('savePushSubscription', { subscription: sub.toJSON(), device: deviceLabel() });
+    pushView.on = true;
+    savePushSession();
+  } catch (e) { pushView.on = false; }
+}
+async function enablePush(btn) {
+  if (btn) setBtnLoading(btn, 'Turning on…');
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast(perm === 'denied' ? 'Notifications are blocked. Allow them in the browser’s site settings.' : 'Notifications weren’t allowed.', true); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const key = (await api('getPushKey', {})).key;
+    let sub = await reg.pushManager.getSubscription();
+    // Subscribed with an older key: start again with this one.
+    if (sub && sub.options && sub.options.applicationServerKey && bytesToB64u(sub.options.applicationServerKey) !== key) { await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(key) });
+    await api('savePushSubscription', { subscription: sub.toJSON(), device: deviceLabel() });
+    pushView.on = true; pushView.checked = true;
+    savePushSession();
+    toast('Notifications are on for this device.');
+    api('testPush', {}).then(function () { loadNotifications(true); }).catch(function () {});
+  } catch (e) {
+    toast('Couldn’t turn on notifications: ' + (e && e.message || e), true);
+  } finally {
+    if (btn && btn.isConnected) clearBtnLoading(btn);
+    renderNotifPanel();
+  }
+}
+async function disablePush(btn) {
+  if (btn) setBtnLoading(btn, 'Turning off…');
+  try {
+    const reg = await pushRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub) { await api('removePushSubscription', { endpoint: sub.endpoint }).catch(function () {}); await sub.unsubscribe(); }
+    pushView.on = false;
+    forgetPushSession();
+    toast('Notifications are off for this device.');
+  } catch (e) { toast(e.message, true); }
+  finally { renderNotifPanel(); }
+}
+// Signing out: this device stops getting the person's notifications.
+async function releasePushForSignOut() {
+  forgetPushSession();
+  if (!pushSupported() || !pushView.on) return;
+  try {
+    const reg = await pushRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub) await api('removePushSubscription', { endpoint: sub.endpoint });
+  } catch (e) {}
+}
+
+function startNotifications() {
+  if (!state.session) return;
+  syncNotifBadge();
+  loadNotifications(true);
+  if (pushSupported()) checkPush();
+  clearInterval(notifView.timer);
+  notifView.timer = setInterval(function () {
+    if (state.session && document.visibilityState === 'visible') loadNotifications(true);
+  }, 60000);
+}
+function stopNotifications() {
+  clearInterval(notifView.timer); notifView.timer = null;
+  notifView.items = []; notifView.unread = 0; notifView.loadedAt = 0;
+  pushView.on = false; pushView.checked = false;
+  syncNotifBadge();
+  const p = document.getElementById('notifPanel'); if (p) p.classList.add('hidden');
+  forgetPushSession();
+}
+// A push opened the app: #notif=indent%3AIND%2F26-27%2F0004&id=N…
+function handleNotifLink() {
+  const m = location.hash.match(/^#notif=([^&]*)(?:&id=([^&]*))?/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  const id = m[2] ? decodeURIComponent(m[2]) : '';
+  if (id) markNotifRead([id]);
+  openNotifLink(decodeURIComponent(m[1]));
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.getElementById('notifBtn'), panel = document.getElementById('notifPanel');
+  if (!btn || !panel) return;
+  btn.addEventListener('click', function (e) { e.stopPropagation(); toggleNotifPanel(); });
+  panel.addEventListener('click', function (e) { e.stopPropagation(); onNotifPanelClick(e); });
+  document.addEventListener('click', function () { if (isNotifOpen()) toggleNotifPanel(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isNotifOpen()) toggleNotifPanel(false); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.session && Date.now() - notifView.loadedAt > 20000) loadNotifications(true);
+  });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      const d = e.data || {};
+      if (d.type === 'notif' && state.session) loadNotifications(true);
+      if (d.type === 'open-notif' && state.session) { if (d.id) markNotifRead([d.id]); openNotifLink(d.link); }
+    });
+  }
 });
 
 </script>
