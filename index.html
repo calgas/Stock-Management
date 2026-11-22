@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.29.0">
+<meta name="app-version" content="3.29.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -795,8 +795,11 @@
   .ind-st.is-mute { color: var(--muted, #777); }
   .ind-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 14px; }
   .ind-lines-head { display: flex; gap: 10px; align-items: baseline; margin: 10px 0 6px; flex-wrap: wrap; }
-  .ind-line { display: grid; grid-template-columns: minmax(120px, 1.3fr) 90px 44px minmax(100px, 1fr) 32px; gap: 6px; align-items: center; margin-bottom: 8px; }
-  .ind-line .ind-line-info { grid-column: 1 / -1; margin-top: -4px; }
+  .ind-line { display: grid; grid-template-columns: minmax(180px, 1.6fr) 110px 44px 40px; grid-template-areas: "item qty unit rm" "note note note note" "info info info info"; gap: 8px 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line-soft); }
+  .ind-line .field { margin: 0; } .ind-line .field input { width: 100%; }
+  .ind-f-item { grid-area: item; min-width: 0; } .ind-f-qty { grid-area: qty; } .ind-unit { grid-area: unit; font-size: 13px; } .ind-rm { grid-area: rm; }
+  .ind-f-note { grid-area: note; } .ind-line .ind-line-info { grid-area: info; margin: -2px 0 0; }
+  .ind-line .ind-line-info:empty { display: none; } .ind-line-info.warn { color: #c0392b; }
   .ind-meta { font-size: 13px; margin-bottom: 10px; line-height: 1.6; }
   .ind-table-wrap { overflow-x: auto; } .ind-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .ind-table th, .ind-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
@@ -804,7 +807,7 @@
   .ind-off { opacity: .55; } .ind-rej { white-space: nowrap; font-size: 12.5px; display: inline-flex; gap: 4px; align-items: center; } .ind-rej input { width: auto; margin: 0; }
   .ind-ask { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
   .ind-actions { flex-wrap: wrap; gap: 8px; }
-  @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 80px 40px; } .ind-line [data-k="remarks"] { grid-column: 1 / 3; } }
+  @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 44px 40px; grid-template-areas: "item item item" "qty unit rm" "note note note" "info info info"; } }
   .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.3s var(--ease); }
   .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.4s var(--spring) both; }
   .modal.modal-wide { max-width: 760px; }
@@ -2473,7 +2476,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.29.0';
+const APP_VERSION = '3.29.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -9104,7 +9107,8 @@ function renderIndentsPage() {
   const seesAll = indentCan('any') || indentCan('approve') || indentCan('issue');
   const deptSel = document.getElementById('indentDept');
   deptSel.classList.toggle('hidden', !seesAll);
-  if (seesAll && !deptSel.options.length) deptSel.innerHTML = '<option value="">All departments</option>' + stockDepartments().map(function (x) { return '<option>' + escapeHtml(x.name) + '</option>'; }).join('');
+  if (seesAll && !deptSel.options.length) { deptSel.innerHTML = '<option value="">All departments</option>' + stockDepartments().map(function (x) { return '<option>' + escapeHtml(x.name) + '</option>'; }).join(''); enhanceSelect_(deptSel); }
+  if (deptSel.parentNode.classList.contains('combo-select')) deptSel.parentNode.classList.toggle('hidden', !seesAll);
   deptSel.value = indentView.dept;
   const open = ['Pending', 'Approved', 'Part issued', 'Issued'];
   let list = d.indents.slice().sort(function (a, b) { return (b.Raised_At || 0) - (a.Raised_At || 0); });
@@ -9151,7 +9155,6 @@ function openIndentForm(pre) {
   const batches = (d.batches || []).slice().sort(function (a, b) { return String(b.batchNo).localeCompare(String(a.batchNo)); });
   const items = rmItems();
   const m = indentModal(indentHead('NEW INDENT', 'Ask Stores for material', 'Pick the batch it is for. Stores approves and issues it.') +
-    '<datalist id="indRmList">' + items.map(function (i) { return '<option value="' + escapeHtml(i.code) + '">' + escapeHtml(i.name) + ' · ' + qtyPlain(i.balance) + ' ' + escapeHtml(i.unit) + ' in stock</option>'; }).join('') + '</datalist>' +
     '<div class="ind-form">' +
       '<div class="field"><label for="indDept">Department</label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + depts.map(function (x) { return '<option ' + (x === myDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">— Not for a batch</option>' + batches.map(function (b) { return '<option value="' + escapeHtml(b.batchNo) + '">' + escapeHtml(b.batchNo) + ' · ' + escapeHtml(b.product || b.part) + ' (' + formatNum(b.qty) + ')</option>'; }).join('') + '</select><div class="hint" id="indBatchHint"></div></div>' +
@@ -9165,22 +9168,39 @@ function openIndentForm(pre) {
     '<div class="modal-error" id="indErr"></div>' +
     '<div class="modal-actions"><button type="button" class="btn-ghost" data-x>Cancel</button><button type="button" class="btn-primary" id="indSend">Send to Stores</button></div>', true);
   const lines = m.querySelector('#indLines');
+  // Each item is picked from the app's own dropdown (type to filter, one item
+  // per line), like Category and the other lists.
+  const itemOptions = '<option value="">Pick an item</option>' + items.slice().sort(function (a, b) { return String(a.code).localeCompare(String(b.code)); }).map(function (i) {
+    return '<option value="' + escapeHtml(i.code) + '">' + escapeHtml(i.code + ' — ' + i.name + ' · ' + qtyPlain(i.balance) + ' ' + i.unit) + '</option>';
+  }).join('');
   function addLine() {
     const row = document.createElement('div'); row.className = 'ind-line';
-    row.innerHTML = '<input list="indRmList" class="mono" data-k="code" placeholder="RM code" autocomplete="off"><input type="number" inputmode="decimal" min="0" step="any" data-k="qty" placeholder="Qty"><span class="muted ind-unit" data-k="unit"></span><input data-k="remarks" placeholder="Note (optional)" maxlength="300"><button type="button" class="icon-btn" data-rm aria-label="Remove">&#10005;</button><div class="hint ind-line-info" data-k="info"></div>';
+    row.innerHTML = '<div class="field ind-f-item"><select data-k="code" aria-label="Item">' + itemOptions + '</select></div>' +
+      '<div class="field ind-f-qty"><input type="number" inputmode="decimal" min="0" step="any" data-k="qty" placeholder="Qty" aria-label="Quantity"></div>' +
+      '<span class="muted ind-unit" data-k="unit"></span>' +
+      '<button type="button" class="icon-btn ind-rm" data-rm aria-label="Remove item">&#10005;</button>' +
+      '<div class="field ind-f-note"><input data-k="remarks" placeholder="Note (optional)" maxlength="300" aria-label="Note"></div>' +
+      '<div class="hint ind-line-info" data-k="info"></div>';
     lines.appendChild(row);
     const code = row.querySelector('[data-k="code"]');
-    code.addEventListener('input', function () {
+    enhanceSelect_(code);
+    code.addEventListener('change', function () {
       const it = rmByCode(code.value);
+      const twice = it && Array.from(lines.querySelectorAll('select[data-k="code"]')).filter(function (x) { return x.value === it.code; }).length > 1;
       row.querySelector('[data-k="unit"]').textContent = it ? it.unit : '';
-      row.querySelector('[data-k="info"]').textContent = it ? it.name + ' · ' + qtyPlain(it.balance) + ' ' + it.unit + ' in stock' : code.value ? 'Not an active RM item.' : '';
+      const info = row.querySelector('[data-k="info"]');
+      info.textContent = !it ? '' : twice ? it.code + ' is already on this indent — change the quantity there.' : it.name + ' · ' + qtyPlain(it.balance) + ' ' + it.unit + ' in stock';
+      info.classList.toggle('warn', !!twice);
+      if (it && !twice) row.querySelector('[data-k="qty"]').focus();
     });
-    row.querySelector('[data-rm]').addEventListener('click', function () { row.remove(); });
+    row.querySelector('[data-rm]').addEventListener('click', function () { if (lines.querySelectorAll('.ind-line').length > 1) row.remove(); else { code.value = ''; row.querySelector('[data-k="qty"]').value = ''; code.dispatchEvent(new Event('change')); } });
     return row;
   }
   addLine();
-  m.querySelector('#indAddLine').addEventListener('click', function () { addLine().querySelector('input').focus(); });
+  m.querySelector('#indAddLine').addEventListener('click', function () { const r = addLine(); const box = r.querySelector('.combo-input'); if (box) box.focus(); });
   const sel = m.querySelector('#indBatch');
+  enhanceSelect_(m.querySelector('#indDept'));
+  enhanceSelect_(sel);
   function syncBatch() {
     const b = batches.filter(function (x) { return x.batchNo === sel.value; })[0];
     m.querySelector('#indReasonWrap').classList.toggle('hidden', !!sel.value);
@@ -9200,6 +9220,8 @@ function openIndentForm(pre) {
     if (!rows.length) { err.textContent = 'Add at least one item.'; return; }
     const bad = rows.filter(function (r) { return !rmByCode(r.code); })[0];
     if (bad) { err.textContent = (bad.code || 'An item') + ' isn’t an active RM item. Pick it from the list.'; return; }
+    const seen = {}, dup = rows.filter(function (r) { const k = String(r.code).toUpperCase(); if (seen[k]) return true; seen[k] = 1; return false; })[0];
+    if (dup) { err.textContent = dup.code + ' is on the indent twice. Keep one line and put the total there.'; return; }
     const noQty = rows.filter(function (r) { return !(r.qty > 0); })[0];
     if (noQty) { err.textContent = 'Enter the quantity for ' + noQty.code + '.'; return; }
     if (!sel.value && m.querySelector('#indReason').value.trim().length < 3) { err.textContent = 'Pick the batch, or say why it isn’t for a batch.'; return; }
@@ -9262,6 +9284,7 @@ function openIndentDetail(no) {
     const box = m.querySelector('#indAsk');
     box.innerHTML = html + '<div class="modal-actions"><button type="button" class="btn-ghost btn-compact" data-ask="no">Back</button><button type="button" class="btn-primary btn-compact" data-ask="ok">' + okLabel + '</button></div>';
     box.classList.remove('hidden');
+    box.querySelectorAll('select').forEach(enhanceSelect_);
     box.querySelector('[data-ask="no"]').addEventListener('click', function () { box.classList.add('hidden'); });
     box.querySelector('[data-ask="ok"]').addEventListener('click', function (ev) { onOk(ev.currentTarget, box); });
     const f = box.querySelector('input, select'); if (f) f.focus();
