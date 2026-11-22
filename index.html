@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.28.0">
+<meta name="app-version" content="3.29.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -782,6 +782,29 @@
   .empty-state svg { color: var(--ok); opacity: 0.7; }
 
   /* Modals */
+  /* Indents (3.29.0) */
+  .ind-list { display: flex; flex-direction: column; gap: 10px; }
+  .ind-card { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 14px 16px; }
+  .ind-card:hover { border-color: var(--accent, #b5652e); }
+  .ind-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ind-mid { margin-top: 6px; } .ind-items { margin-top: 4px; font-size: 13px; } .ind-foot { margin-top: 6px; font-size: 12.5px; }
+  .ind-todo { color: var(--accent, #b5652e); } .ind-late { color: #c0392b; font-weight: 600; }
+  .ind-st { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: rgba(120,120,120,.15); }
+  .ind-st.is-warn { background: rgba(214,137,16,.16); color: #b8740c; } .ind-st.is-info { background: rgba(52,120,200,.14); color: #2f6db5; }
+  .ind-st.is-ok { background: rgba(46,160,90,.15); color: #23854a; } .ind-st.is-bad { background: rgba(200,60,50,.14); color: #c0392b; }
+  .ind-st.is-mute { color: var(--muted, #777); }
+  .ind-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 14px; }
+  .ind-lines-head { display: flex; gap: 10px; align-items: baseline; margin: 10px 0 6px; flex-wrap: wrap; }
+  .ind-line { display: grid; grid-template-columns: minmax(120px, 1.3fr) 90px 44px minmax(100px, 1fr) 32px; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .ind-line .ind-line-info { grid-column: 1 / -1; margin-top: -4px; }
+  .ind-meta { font-size: 13px; margin-bottom: 10px; line-height: 1.6; }
+  .ind-table-wrap { overflow-x: auto; } .ind-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ind-table th, .ind-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .ind-table .num { text-align: right; } .ind-table input { width: 90px; } .ind-table input[data-why] { width: 140px; margin-top: 4px; }
+  .ind-off { opacity: .55; } .ind-rej { white-space: nowrap; font-size: 12.5px; display: inline-flex; gap: 4px; align-items: center; } .ind-rej input { width: auto; margin: 0; }
+  .ind-ask { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
+  .ind-actions { flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 80px 40px; } .ind-line [data-k="remarks"] { grid-column: 1 / 3; } }
   .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.3s var(--ease); }
   .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.4s var(--spring) both; }
   .modal.modal-wide { max-width: 760px; }
@@ -1608,6 +1631,7 @@
       <div class="nav-sub">
       <a href="#" class="nav-link nav-sub-link" data-page="rm"><span class="nav-dot" aria-hidden="true"></span><span class="label">RM</span><span class="nav-abbr" aria-hidden="true">RM</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="fg"><span class="nav-dot" aria-hidden="true"></span><span class="label">FG</span><span class="nav-abbr" aria-hidden="true">FG</span></a>
+      <a href="#" class="nav-link nav-sub-link" data-page="indents" data-perm="indents"><span class="nav-dot" aria-hidden="true"></span><span class="label">Indents</span><span class="nav-abbr" aria-hidden="true">IND</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="trade"><span class="nav-dot" aria-hidden="true"></span><span class="label">Trade</span><span class="nav-abbr" aria-hidden="true">TR</span></a>
       </div>
     </div>
@@ -1973,6 +1997,19 @@
           <p class="tool-note">Your figures are kept on this device until you post them, so a count can be finished later.</p>
         </div>
         <div id="countBody"><div class="count-list" id="countList"></div></div>
+      </div>
+    </section>
+
+    <section class="page page-doc hidden" id="page-indents">
+      <div class="page-head"><h2>Indents</h2><p>Raw material asked for by production, against a batch: approved, issued and received.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="tool-bar">
+          <div class="seg" id="indentFilter" role="group" aria-label="Show"><button type="button" data-f="me">Needs me <i></i></button><button type="button" data-f="open">Open <i></i></button><button type="button" data-f="all">All <i></i></button></div>
+          <select id="indentDept" class="hidden" aria-label="Department"></select>
+          <span class="tool-spacer"></span>
+          <span class="tool-actions"><button type="button" class="btn-ghost btn-compact" id="indentRefreshBtn">Refresh</button><button type="button" class="btn-primary btn-compact hidden" id="indentNewBtn">New indent</button></span>
+        </div>
+        <div id="indentList" class="ind-list"></div>
       </div>
     </section>
 
@@ -2436,7 +2473,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.28.0';
+const APP_VERSION = '3.29.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3563,6 +3600,8 @@ async function boot(opts) {
   resolvePendingTxn();
   setLoaderProgress(94, 'Preparing dashboard…');
   navigateTo('home');
+  loadIndents(true);
+  handleIndentLink();
   startFreshnessInterval();
   setLoaderProgress(100, 'Ready');
   await hideInitialLoader();
@@ -3826,6 +3865,7 @@ function navigateTo(page, kind) {
   if (page === 'feedback') renderFeedbackPage();
   if (page === 'count') renderCountPage();
   if (page === 'reorder') renderReorderPage();
+  if (page === 'indents') { renderIndentsPage(); if (Date.now() - indentView.loadedAt > 60000) loadIndents(true); }
   if (page === 'costs') renderCostsPage();
   if (page === 'dropdowns') renderDropdownsPage();
   // Loads on first visit rather than at boot — the ledger can be large and
@@ -4927,7 +4967,8 @@ function updateTxnFormVisibility() {
   document.getElementById('txnInvoiceNoLabel').textContent = supplierReturn ? 'Original invoice no (optional)' : 'Invoice No';
   document.getElementById('txnReferenceLabel').textContent = supplierReturn ? 'Debit note / return challan no.' : 'Reference (optional)';
   document.getElementById('txnReference').placeholder = supplierReturn ? 'e.g. DN-0123' : 'PO / work order / invoice #';
-  document.getElementById('txnRemarksLabel').textContent = type === 'Scrap' ? 'Reason for scrapping' : 'Remarks (optional)';
+  document.getElementById('txnRemarksLabel').textContent = type === 'Scrap' ? 'Reason for scrapping'
+    : activeTxnConfig && activeTxnConfig.key === 'rm' && type === 'Issue' ? 'Reason for issuing without an indent' : 'Remarks (optional)';
   if (typeof txnQtyMinSync === 'function') txnQtyMinSync();
   if (activeTxnConfig) renderTxnPrice(priceCache[activeTxnConfig.key + ':' + document.getElementById('txnCode').value]);
   validateTxnQty();
@@ -5277,6 +5318,7 @@ async function handleTxnSubmit(e) {
   if (entryDate === false) { document.getElementById('txnError').textContent = 'The entry date can\u2019t be in the future.'; return; }
   const typeNow = document.getElementById('txnType').value;
   const missing = typeNow === 'Scrap' && document.getElementById('txnRemarks').value.trim().length < 3 ? 'Say why it is being scrapped.'
+    : activeTxnConfig && activeTxnConfig.key === 'rm' && typeNow === 'Issue' && document.getElementById('txnRemarks').value.trim().length < 3 ? 'Raw material goes out against an indent (Stock → Indents). To issue without one, give the reason.'
     : typeNow === 'Return to supplier' && !document.getElementById('txnSupplier').value ? 'Pick the supplier it is going back to.'
     : typeNow === 'Return to supplier' && !document.getElementById('txnReference').value.trim() ? 'Put the debit note or return challan number in Reference.'
     : '';
@@ -5285,6 +5327,7 @@ async function handleTxnSubmit(e) {
   errEl.textContent = ''; setBtnLoading(btn, 'Posting…');
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
+  if (config.key === 'rm' && txnType === 'Issue') { payload.noIndentReason = payload.remarks; payload.remarks = ''; }
   const rateRaw = document.getElementById('txnRate').value; if(rateRaw !== '') payload.rate = Number(rateRaw);
   if (entryDate) payload.date = entryDate;
   // The ID identifies this ENTRY, not this attempt. It was minted when the
@@ -7908,13 +7951,14 @@ function permOk(spec) {
     p = p.trim();
     if (p === 'admin') return !!(state.session && state.session.role === 'Admin');
     if (p === 'items') return STOCK_KINDS.some(function (k) { return can(uiConfig(k).itemsPerm); });
+    if (p === 'indents') return canIndents();
     return can(p);
   });
 }
 function syncPermLinks() {
   document.querySelectorAll('[data-perm]').forEach(function (el) { el.classList.toggle('hidden', !permOk(el.dataset.perm)); });
 }
-const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns' };
+const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns', indents: 'indents' };
 
 function kindSeg(kinds, current, withAll) {
   return (withAll ? ['all'] : []).concat(kinds).map(function (k) {
@@ -9008,6 +9052,298 @@ function makeTablesResizable() {
     });
   });
 }
+
+/* ===========================================================================
+   INDENTS (3.29.0) — raw material for production
+   A department raises an indent against a batch (or, with a reason, without
+   one); the approver approves or rejects each line; Stores issues all or part
+   of it (each issue is an RM Issue entry referencing the indent); the
+   receiver confirms in the app, or Stores records the signed slip.
+   =========================================================================== */
+const INDENT_PERMS = ['stock.indent.raise', 'stock.indent.any', 'stock.indent.approve', 'stock.indent.issue'];
+const indentView = { filter: 'me', dept: '', data: null, loadedAt: 0, loading: null };
+function canIndents() { return INDENT_PERMS.some(function (k) { return can(k); }); }
+function indentCan(k) { return !!(indentView.data && indentView.data.can && indentView.data.can[k]); }
+async function loadIndents(quiet) {
+  if (!canIndents()) return;
+  if (indentView.loading) return indentView.loading;
+  indentView.loading = api('getIndents', {}).then(function (d) {
+    indentView.data = d; indentView.loadedAt = Date.now();
+    syncIndentBadge();
+    if (!document.getElementById('page-indents').classList.contains('hidden')) renderIndentsPage();
+  }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { indentView.loading = null; });
+  return indentView.loading;
+}
+function indentLinesOf(no) { return ((indentView.data && indentView.data.lines) || []).filter(function (l) { return l.Indent_No === no; }).sort(function (a, b) { return a.Line_No - b.Line_No; }); }
+function indentFind(no) { return ((indentView.data && indentView.data.indents) || []).filter(function (i) { return i.Indent_No === no; })[0]; }
+// What this person has to do on an indent, if anything.
+function indentTodo(i) {
+  const mineDept = state.session && i.Department === state.session.department;
+  if (i.Status === 'Pending' && indentCan('approve')) return 'Approve';
+  if ((i.Status === 'Approved' || i.Status === 'Part issued') && indentCan('issue')) return 'Issue';
+  if (Number(i.Issues) > Number(i.Confirmed_Issues || 0) && (mineDept || indentCan('any'))) return 'Confirm receipt';
+  return '';
+}
+function syncIndentBadge() {
+  const n = ((indentView.data && indentView.data.indents) || []).filter(function (i) { return indentTodo(i); }).length;
+  document.querySelectorAll('[data-page="indents"] .label').forEach(function (el) { el.textContent = n ? 'Indents (' + n + ')' : 'Indents'; });
+}
+const INDENT_TONE = { 'Pending': 'warn', 'Approved': 'info', 'Part issued': 'info', 'Issued': 'ok', 'Received': 'ok', 'Rejected': 'bad', 'Cancelled': 'mute', 'Closed short': 'mute' };
+function indentBadge(s) { return '<span class="ind-st is-' + (INDENT_TONE[s] || 'mute') + '">' + escapeHtml(s) + '</span>'; }
+function indentDay(v) { return v ? new Date(v).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; }
+function indentWhen(v) { return v ? new Date(v).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; }
+function indentWho(u) { const x = (state.users || []).filter(function (y) { return String(y.Username || y.username).toLowerCase() === String(u).toLowerCase(); })[0]; return x ? (x.Name || x.name || u) : u; }
+function rmItems() { return mergeStock(state.rmMaster || [], state.rmStock || [], uiConfig('rm'), false); }
+function rmByCode(code) { return rmItems().filter(function (i) { return String(i.code).toUpperCase() === String(code || '').trim().toUpperCase(); })[0]; }
+
+function renderIndentsPage() {
+  const body = document.getElementById('indentList');
+  const d = indentView.data;
+  document.getElementById('indentNewBtn').classList.toggle('hidden', !(can('stock.indent.raise') || can('stock.indent.any')));
+  if (!d) { body.innerHTML = '<div class="db-card tool-empty muted">Loading indents…</div>'; loadIndents(); return; }
+  const seesAll = indentCan('any') || indentCan('approve') || indentCan('issue');
+  const deptSel = document.getElementById('indentDept');
+  deptSel.classList.toggle('hidden', !seesAll);
+  if (seesAll && !deptSel.options.length) deptSel.innerHTML = '<option value="">All departments</option>' + stockDepartments().map(function (x) { return '<option>' + escapeHtml(x.name) + '</option>'; }).join('');
+  deptSel.value = indentView.dept;
+  const open = ['Pending', 'Approved', 'Part issued', 'Issued'];
+  let list = d.indents.slice().sort(function (a, b) { return (b.Raised_At || 0) - (a.Raised_At || 0); });
+  if (indentView.dept) list = list.filter(function (i) { return i.Department === indentView.dept; });
+  const counts = { me: list.filter(indentTodo).length, open: list.filter(function (i) { return open.indexOf(i.Status) > -1; }).length, all: list.length };
+  document.querySelectorAll('#indentFilter [data-f]').forEach(function (b) {
+    b.classList.toggle('is-on', b.dataset.f === indentView.filter);
+    b.querySelector('i').textContent = counts[b.dataset.f];
+  });
+  list = list.filter(function (i) { return indentView.filter === 'all' ? true : indentView.filter === 'open' ? open.indexOf(i.Status) > -1 : !!indentTodo(i); });
+  body.innerHTML = list.length ? list.map(function (i) {
+    const ls = indentLinesOf(i.Indent_No), todo = indentTodo(i);
+    const late = i.Required_By && open.indexOf(i.Status) > -1 && i.Required_By < new Date().setHours(0, 0, 0, 0);
+    return '<button type="button" class="db-card ind-card" data-ind="' + escapeHtml(i.Indent_No) + '">' +
+      '<div class="ind-top"><b class="mono">' + escapeHtml(i.Indent_No) + '</b>' + indentBadge(i.Status) + (i.Priority === 'Urgent' ? '<span class="ind-st is-bad">Urgent</span>' : '') +
+        '<span class="tool-spacer"></span><span class="muted">' + indentWhen(i.Raised_At) + '</span></div>' +
+      '<div class="ind-mid"><b>' + escapeHtml(i.Department) + '</b> · ' + (i.Batch_No ? '<span class="mono">' + escapeHtml(i.Batch_No) + '</span> ' + escapeHtml(i.Product || i.Part_Code) + (i.Batch_Qty ? ' (' + formatNum(i.Batch_Qty) + ')' : '') : '<i>No batch:</i> ' + escapeHtml(i.No_Batch_Reason)) + '</div>' +
+      '<div class="ind-items">' + ls.slice(0, 3).map(function (l) { return '<span><span class="mono">' + escapeHtml(l.RM_Code) + '</span> ' + qtyPlain(l.Qty_Requested) + ' ' + escapeHtml(l.Unit) + '</span>'; }).join(' · ') + (ls.length > 3 ? ' · +' + (ls.length - 3) + ' more' : '') + '</div>' +
+      '<div class="ind-foot muted">' + escapeHtml(indentWho(i.Raised_By)) + (i.Required_By ? ' · needed by <span class="' + (late ? 'ind-late' : '') + '">' + indentDay(i.Required_By) + '</span>' : '') + (todo ? ' · <b class="ind-todo">' + todo + '</b>' : '') + '</div></button>';
+  }).join('') : '<div class="db-card tool-empty"><div class="db-allclear">' + (indentView.filter === 'me' ? '✓ Nothing waiting for you.' : 'No indents here.') + '</div></div>';
+}
+
+function indentModal(html, wide) {
+  closeIndentModal();
+  const bg = document.createElement('div');
+  bg.className = 'modal-backdrop'; bg.id = 'indentModal';
+  bg.innerHTML = '<div class="modal" style="max-width:' + (wide ? 820 : 520) + 'px"><div class="modal-drag-handle" aria-hidden="true"></div>' + html + '</div>';
+  bg.addEventListener('click', function (e) { if (e.target === bg || e.target.closest('[data-x]')) closeIndentModal(); });
+  document.body.appendChild(bg);
+  return bg;
+}
+function closeIndentModal() { const m = document.getElementById('indentModal'); if (m) m.remove(); }
+function indentHead(eyebrow, title, sub) {
+  return '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(eyebrow) + '</div><h3>' + escapeHtml(title) + '</h3>' + (sub ? '<div class="muted">' + sub + '</div>' : '') + '</div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>';
+}
+
+// New indent. pre.batchNo comes from Batch Card Tracker's "Request material".
+function openIndentForm(pre) {
+  pre = pre || {};
+  const d = indentView.data || { batches: [] };
+  const anyDept = can('stock.indent.any') || (state.session && state.session.role === 'Admin');
+  const depts = stockDepartments().map(function (x) { return x.name; });
+  const myDept = state.session ? state.session.department : '';
+  const batches = (d.batches || []).slice().sort(function (a, b) { return String(b.batchNo).localeCompare(String(a.batchNo)); });
+  const items = rmItems();
+  const m = indentModal(indentHead('NEW INDENT', 'Ask Stores for material', 'Pick the batch it is for. Stores approves and issues it.') +
+    '<datalist id="indRmList">' + items.map(function (i) { return '<option value="' + escapeHtml(i.code) + '">' + escapeHtml(i.name) + ' · ' + qtyPlain(i.balance) + ' ' + escapeHtml(i.unit) + ' in stock</option>'; }).join('') + '</datalist>' +
+    '<div class="ind-form">' +
+      '<div class="field"><label for="indDept">Department</label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + depts.map(function (x) { return '<option ' + (x === myDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">— Not for a batch</option>' + batches.map(function (b) { return '<option value="' + escapeHtml(b.batchNo) + '">' + escapeHtml(b.batchNo) + ' · ' + escapeHtml(b.product || b.part) + ' (' + formatNum(b.qty) + ')</option>'; }).join('') + '</select><div class="hint" id="indBatchHint"></div></div>' +
+      '<div class="field hidden" id="indReasonWrap"><label for="indReason">Why isn’t it for a batch? <span class="req">*</span></label><input id="indReason" maxlength="300" placeholder="e.g. maintenance of winding machine M-2"></div>' +
+      '<div class="field"><label for="indDue">Needed by</label><input type="date" id="indDue"></div>' +
+      '<div class="field"><label>Priority</label><div class="seg" id="indPri"><button type="button" class="is-on" data-p="Normal">Normal</button><button type="button" data-p="Urgent">Urgent</button></div></div>' +
+    '</div>' +
+    '<div class="ind-lines-head"><b>Material</b><span class="muted">Type a code or name; the stock shows beside it.</span></div>' +
+    '<div id="indLines"></div><button type="button" class="btn-ghost btn-compact" id="indAddLine">+ Add item</button>' +
+    '<div class="field" style="margin-top:12px"><label for="indRemarks">Remarks</label><input id="indRemarks" maxlength="500"></div>' +
+    '<div class="modal-error" id="indErr"></div>' +
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x>Cancel</button><button type="button" class="btn-primary" id="indSend">Send to Stores</button></div>', true);
+  const lines = m.querySelector('#indLines');
+  function addLine() {
+    const row = document.createElement('div'); row.className = 'ind-line';
+    row.innerHTML = '<input list="indRmList" class="mono" data-k="code" placeholder="RM code" autocomplete="off"><input type="number" inputmode="decimal" min="0" step="any" data-k="qty" placeholder="Qty"><span class="muted ind-unit" data-k="unit"></span><input data-k="remarks" placeholder="Note (optional)" maxlength="300"><button type="button" class="icon-btn" data-rm aria-label="Remove">&#10005;</button><div class="hint ind-line-info" data-k="info"></div>';
+    lines.appendChild(row);
+    const code = row.querySelector('[data-k="code"]');
+    code.addEventListener('input', function () {
+      const it = rmByCode(code.value);
+      row.querySelector('[data-k="unit"]').textContent = it ? it.unit : '';
+      row.querySelector('[data-k="info"]').textContent = it ? it.name + ' · ' + qtyPlain(it.balance) + ' ' + it.unit + ' in stock' : code.value ? 'Not an active RM item.' : '';
+    });
+    row.querySelector('[data-rm]').addEventListener('click', function () { row.remove(); });
+    return row;
+  }
+  addLine();
+  m.querySelector('#indAddLine').addEventListener('click', function () { addLine().querySelector('input').focus(); });
+  const sel = m.querySelector('#indBatch');
+  function syncBatch() {
+    const b = batches.filter(function (x) { return x.batchNo === sel.value; })[0];
+    m.querySelector('#indReasonWrap').classList.toggle('hidden', !!sel.value);
+    m.querySelector('#indBatchHint').textContent = b ? (b.product || b.part) + ' · ' + formatNum(b.qty) + ' pcs · stage ' + Math.min(8, Math.floor(b.step / 2) + 1) + ' of 8' : batches.length ? '' : 'No open batches in Batch Card Tracker.';
+  }
+  sel.addEventListener('change', syncBatch);
+  if (pre.batchNo) {
+    if (batches.some(function (b) { return b.batchNo === String(pre.batchNo).toUpperCase(); })) sel.value = String(pre.batchNo).toUpperCase();
+    else toast(pre.batchNo + ' isn’t an open batch.', true);
+  }
+  syncBatch();
+  m.querySelectorAll('#indPri button').forEach(function (b) { b.addEventListener('click', function () { m.querySelectorAll('#indPri button').forEach(function (x) { x.classList.toggle('is-on', x === b); }); }); });
+  const clientTxnId = newClientTxnId();
+  m.querySelector('#indSend').addEventListener('click', async function (e) {
+    const err = m.querySelector('#indErr'); err.textContent = '';
+    const rows = Array.from(lines.querySelectorAll('.ind-line')).map(function (r) { return { code: r.querySelector('[data-k="code"]').value.trim(), qty: Number(r.querySelector('[data-k="qty"]').value), remarks: r.querySelector('[data-k="remarks"]').value.trim() }; }).filter(function (r) { return r.code || r.qty; });
+    if (!rows.length) { err.textContent = 'Add at least one item.'; return; }
+    const bad = rows.filter(function (r) { return !rmByCode(r.code); })[0];
+    if (bad) { err.textContent = (bad.code || 'An item') + ' isn’t an active RM item. Pick it from the list.'; return; }
+    const noQty = rows.filter(function (r) { return !(r.qty > 0); })[0];
+    if (noQty) { err.textContent = 'Enter the quantity for ' + noQty.code + '.'; return; }
+    if (!sel.value && m.querySelector('#indReason').value.trim().length < 3) { err.textContent = 'Pick the batch, or say why it isn’t for a batch.'; return; }
+    const btn = e.currentTarget; setBtnLoading(btn, 'Sending…');
+    try {
+      const r = await api('raiseIndent', { department: m.querySelector('#indDept').value, batchNo: sel.value, noBatchReason: m.querySelector('#indReason').value,
+        requiredBy: m.querySelector('#indDue').value, priority: (m.querySelector('#indPri .is-on') || {}).dataset.p, remarks: m.querySelector('#indRemarks').value,
+        lines: rows.map(function (r) { return { code: rmByCode(r.code).code, qty: r.qty, remarks: r.remarks }; }), clientTxnId: clientTxnId });
+      closeIndentModal(); toast(r.indent.Indent_No + ' sent to Stores.');
+      indentView.filter = 'open'; await loadIndents();
+    } catch (x) { err.textContent = x.message; } finally { clearBtnLoading(btn, 'Send to Stores'); }
+  });
+}
+
+function openIndentDetail(no) {
+  const i = indentFind(no);
+  if (!i) return;
+  const ls = indentLinesOf(no);
+  const deciding = i.Status === 'Pending' && indentCan('approve');
+  const issuing = (i.Status === 'Approved' || i.Status === 'Part issued') && indentCan('issue');
+  const mineDept = state.session && i.Department === state.session.department;
+  const confirmable = Number(i.Issues) > Number(i.Confirmed_Issues || 0);
+  const rows = ls.map(function (l) {
+    const it = rmByCode(l.RM_Code), left = Math.max(0, Number(l.Qty_Approved || 0) - Number(l.Qty_Issued || 0));
+    let act = '';
+    if (deciding) act = '<td class="num"><input type="number" inputmode="decimal" min="0" step="any" data-approve="' + l.Line_ID + '" value="' + l.Qty_Requested + '"></td><td><label class="ind-rej"><input type="checkbox" data-reject="' + l.Line_ID + '"> Reject</label><input data-why="' + l.Line_ID + '" placeholder="Reason" maxlength="300" class="hidden"></td>';
+    else if (issuing) act = '<td class="num">' + (['Approved', 'Part issued'].indexOf(l.Line_Status) > -1 ? '<input type="number" inputmode="decimal" min="0" step="any" data-issue="' + l.Line_ID + '" value="' + Math.min(left, it ? Math.max(0, it.balance) : left) + '">' : '') + '</td>';
+    return '<tr class="' + (l.Line_Status === 'Rejected' || l.Line_Status === 'Cancelled' ? 'ind-off' : '') + '"><td><span class="mono">' + escapeHtml(l.RM_Code) + '</span><div class="muted">' + escapeHtml(l.RM_Name) + (l.Remarks ? ' · ' + escapeHtml(l.Remarks) : '') + '</div>' + (l.Reason ? '<div class="hint">' + escapeHtml(l.Reason) + '</div>' : '') + '</td>' +
+      '<td class="num">' + qtyPlain(l.Qty_Requested) + ' <span class="muted">' + escapeHtml(l.Unit) + '</span></td>' +
+      '<td class="num">' + (l.Qty_Approved === '' ? '—' : qtyPlain(l.Qty_Approved)) + '</td><td class="num">' + qtyPlain(l.Qty_Issued) + (Number(l.Qty_Returned) ? '<div class="muted">−' + qtyPlain(l.Qty_Returned) + ' back</div>' : '') + '</td>' +
+      '<td class="num">' + (it ? qtyPlain(it.balance) : '—') + '</td><td>' + indentBadge(l.Line_Status) + '</td>' + act + '</tr>';
+  }).join('');
+  const acts = [];
+  acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="print">Print slip</button>');
+  if (i.Status === 'Pending' && (i.Raised_By === (state.session && state.session.username) || indentCan('approve'))) acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="cancel">Cancel indent</button>');
+  if (deciding) acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="rejectAll">Reject all</button><button type="button" class="btn-primary btn-compact" data-ia="decide">Save decision</button>');
+  if (issuing) acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="short">Close the rest short</button><button type="button" class="btn-primary btn-compact" data-ia="issue">Issue</button>');
+  if (confirmable && (mineDept || indentCan('any'))) acts.push('<button type="button" class="btn-primary btn-compact" data-ia="received">Received</button>');
+  if (confirmable && indentCan('issue')) acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="slip">Signed slip filed</button>');
+  if (indentCan('issue') && ls.some(function (l) { return Number(l.Qty_Issued) > Number(l.Qty_Returned || 0); })) acts.push('<button type="button" class="btn-ghost btn-compact" data-ia="return">Return unused…</button>');
+  const m = indentModal(indentHead('INDENT', i.Indent_No, indentBadge(i.Status) + ' · ' + escapeHtml(i.Department) + ' · ' + (i.Batch_No ? 'batch <span class="mono">' + escapeHtml(i.Batch_No) + '</span> ' + escapeHtml(i.Product || '') : 'no batch: ' + escapeHtml(i.No_Batch_Reason))) +
+    '<div class="ind-meta muted">Raised by ' + escapeHtml(indentWho(i.Raised_By)) + ', ' + indentWhen(i.Raised_At) + (i.Required_By ? ' · needed by ' + indentDay(i.Required_By) : '') + (i.Priority === 'Urgent' ? ' · <b>Urgent</b>' : '') +
+      (i.Decided_By ? '<br>' + (i.Status === 'Rejected' ? 'Rejected' : 'Approved') + ' by ' + escapeHtml(indentWho(i.Decided_By)) + ', ' + indentWhen(i.Decided_At) + (i.Decision_Note ? ' — ' + escapeHtml(i.Decision_Note) : '') : '') +
+      (i.Received_By ? '<br>Received (' + escapeHtml(i.Receipt_Mode) + ') — ' + escapeHtml(indentWho(i.Received_By)) + ', ' + indentWhen(i.Received_At) : '') +
+      (i.Closed_Reason ? '<br>' + escapeHtml(i.Status === 'Cancelled' ? 'Cancelled' : 'Closed short') + ': ' + escapeHtml(i.Closed_Reason) : '') + (i.Remarks ? '<br>' + escapeHtml(i.Remarks) : '') + '</div>' +
+    '<div class="ind-table-wrap"><table class="ind-table"><thead><tr><th>Item</th><th class="num">Asked</th><th class="num">Approved</th><th class="num">Issued</th><th class="num">In stock</th><th>Status</th>' +
+      (deciding ? '<th class="num">Approve</th><th></th>' : issuing ? '<th class="num">Issue now</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    (deciding ? '<div class="field"><label for="indNote">Note (optional)</label><input id="indNote" maxlength="500"></div>' : '') +
+    '<div class="ind-ask hidden" id="indAsk"></div><div class="modal-error" id="indDErr"></div><div class="modal-actions ind-actions">' + acts.join('') + '</div>', true);
+  m.querySelectorAll('[data-reject]').forEach(function (c) { c.addEventListener('change', function () { m.querySelector('[data-why="' + c.dataset.reject + '"]').classList.toggle('hidden', !c.checked); m.querySelector('[data-approve="' + c.dataset.reject + '"]').disabled = c.checked; }); });
+  const err = m.querySelector('#indDErr');
+  const issueTxn = newClientTxnId();
+  async function run(btn, action, params, done) {
+    err.textContent = ''; setBtnLoading(btn, 'Saving…');
+    try { const r = await api(action, Object.assign({ indentNo: no }, params)); toast(done); await loadIndents(); openIndentDetail(no); if (action === 'issueIndent' && typeof refreshStockData === 'function') refreshStockData('rm'); return r; }
+    catch (x) { err.textContent = x.message; } finally { clearBtnLoading(btn); }
+  }
+  // A short question inside the dialog (a reason, or what came back).
+  function ask(html, okLabel, onOk) {
+    const box = m.querySelector('#indAsk');
+    box.innerHTML = html + '<div class="modal-actions"><button type="button" class="btn-ghost btn-compact" data-ask="no">Back</button><button type="button" class="btn-primary btn-compact" data-ask="ok">' + okLabel + '</button></div>';
+    box.classList.remove('hidden');
+    box.querySelector('[data-ask="no"]').addEventListener('click', function () { box.classList.add('hidden'); });
+    box.querySelector('[data-ask="ok"]').addEventListener('click', function (ev) { onOk(ev.currentTarget, box); });
+    const f = box.querySelector('input, select'); if (f) f.focus();
+  }
+  m.querySelector('.ind-actions').addEventListener('click', async function (e) {
+    const b = e.target.closest('[data-ia]'); if (!b) return;
+    const a = b.dataset.ia;
+    if (a === 'print') return printIndentSlip(no);
+    if (a === 'decide') return run(b, 'decideIndent', { note: (m.querySelector('#indNote') || {}).value || '', lines: ls.map(function (l) {
+      const rej = m.querySelector('[data-reject="' + l.Line_ID + '"]').checked;
+      return rej ? { lineId: l.Line_ID, reject: true, reason: m.querySelector('[data-why="' + l.Line_ID + '"]').value } : { lineId: l.Line_ID, qty: m.querySelector('[data-approve="' + l.Line_ID + '"]').value };
+    }) }, 'Decision saved.');
+    if (a === 'rejectAll') { const why = (m.querySelector('#indNote') || {}).value || ''; if (why.trim().length < 3) { err.textContent = 'Write the reason in Note, then Reject all.'; return; } return run(b, 'decideIndent', { rejectAll: true, note: why }, no + ' rejected.'); }
+    if (a === 'issue') {
+      const lines = Array.from(m.querySelectorAll('[data-issue]')).map(function (x) { return { lineId: x.dataset.issue, qty: Number(x.value) }; }).filter(function (x) { return x.qty > 0; });
+      if (!lines.length) { err.textContent = 'Enter the quantity to issue.'; return; }
+      return run(b, 'issueIndent', { lines: lines, clientTxnId: issueTxn }, 'Issued and posted to the RM ledger.');
+    }
+    if (a === 'received') return run(b, 'receiveIndent', { mode: 'app' }, 'Receipt confirmed.');
+    if (a === 'slip') return run(b, 'receiveIndent', { mode: 'slip' }, 'Signed slip recorded.');
+    if (a === 'cancel' || a === 'short') {
+      return ask('<div class="field"><label for="askWhy">' + (a === 'cancel' ? 'Why is the indent cancelled?' : 'Why won’t the rest be issued?') + '</label><input id="askWhy" maxlength="300"></div>',
+        a === 'cancel' ? 'Cancel indent' : 'Close the rest', function (btn, box) {
+          run(btn, 'closeIndent', { mode: a, reason: box.querySelector('#askWhy').value }, a === 'cancel' ? no + ' cancelled.' : 'The rest is closed.');
+        });
+    }
+    if (a === 'return') {
+      const opts = ls.filter(function (l) { return Number(l.Qty_Issued) > Number(l.Qty_Returned || 0); });
+      return ask('<div class="ind-form"><div class="field"><label for="askItem">Item that came back</label><select id="askItem">' + opts.map(function (l) { return '<option value="' + l.Line_ID + '">' + escapeHtml(l.RM_Code) + ' · up to ' + qtyPlain(Number(l.Qty_Issued) - Number(l.Qty_Returned || 0)) + ' ' + escapeHtml(l.Unit) + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label for="askQty">Quantity</label><input id="askQty" type="number" inputmode="decimal" min="0" step="any"></div><div class="field"><label for="askWhy">Why</label><input id="askWhy" maxlength="300" value="Left over"></div></div>',
+        'Post the return', function (btn, box) {
+          run(btn, 'returnIndent', { lineId: box.querySelector('#askItem').value, qty: Number(box.querySelector('#askQty').value), reason: box.querySelector('#askWhy').value, clientTxnId: newClientTxnId() }, 'Return posted to the RM ledger.');
+        });
+    }
+  });
+}
+
+// The issue slip: requested, approved and issued, with signature boxes.
+function printIndentSlip(no) {
+  const i = indentFind(no), ls = indentLinesOf(no);
+  const esc = escapeHtml;
+  const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(no) + '</title><style>' +
+    '@page{size:A4;margin:12mm}body{font:12px/1.4 Arial,sans-serif;color:#111}h1{font-size:16px;margin:0}table{width:100%;border-collapse:collapse;margin-top:10px}' +
+    'td,th{border:1px solid #444;padding:5px 6px;text-align:left;vertical-align:top}th{background:#eee}.r{text-align:right}.top{display:flex;justify-content:space-between;align-items:flex-start}.sig td{height:54px;vertical-align:bottom;width:25%}' +
+    '</style></head><body><div class="top"><div><h1>' + esc(typeof COMPANY_NAME === 'string' ? COMPANY_NAME : 'CALGAS') + '</h1><div>Material indent and issue slip</div></div><div style="text-align:right"><b style="font-size:15px">' + esc(no) + '</b><br>' + esc(indentWhen(i.Raised_At)) + '</div></div>' +
+    '<table><tr><td><b>Department</b><br>' + esc(i.Department) + '</td><td><b>Batch</b><br>' + (i.Batch_No ? esc(i.Batch_No) + ' · ' + esc(i.Product || i.Part_Code) + (i.Batch_Qty ? ' (' + i.Batch_Qty + ')' : '') : 'No batch: ' + esc(i.No_Batch_Reason)) + '</td><td><b>Needed by</b><br>' + esc(indentDay(i.Required_By) || '—') + (i.Priority === 'Urgent' ? ' · URGENT' : '') + '</td><td><b>Status</b><br>' + esc(i.Status) + '</td></tr></table>' +
+    '<table><thead><tr><th>#</th><th>Code</th><th>Item</th><th>Unit</th><th class="r">Asked</th><th class="r">Approved</th><th class="r">Issued</th><th>Remarks</th></tr></thead><tbody>' +
+    ls.map(function (l) { return '<tr><td>' + l.Line_No + '</td><td>' + esc(l.RM_Code) + '</td><td>' + esc(l.RM_Name) + '</td><td>' + esc(l.Unit) + '</td><td class="r">' + qtyPlain(l.Qty_Requested) + '</td><td class="r">' + (l.Qty_Approved === '' ? '' : qtyPlain(l.Qty_Approved)) + '</td><td class="r">' + qtyPlain(l.Qty_Issued) + '</td><td>' + esc([l.Remarks, l.Reason].filter(Boolean).join(' · ')) + '</td></tr>'; }).join('') +
+    '</tbody></table>' + (i.Remarks ? '<p>Remarks: ' + esc(i.Remarks) + '</p>' : '') +
+    '<table class="sig"><tr><td>Requested by<br><b>' + esc(indentWho(i.Raised_By)) + '</b></td><td>Approved by<br><b>' + esc(i.Decided_By ? indentWho(i.Decided_By) : '') + '</b></td><td>Issued by (Stores)</td><td>Received by</td></tr></table>' +
+    '<p style="font-size:10px;color:#555">Printed ' + esc(new Date().toLocaleString('en-IN')) + ' from Stock Management.</p></body></html>';
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+  setTimeout(function () { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(function () { f.remove(); }, 1500); }, 150);
+}
+
+// Batch Card Tracker's "Request material" opens #indent?batch=CMPL0057.
+function handleIndentLink() {
+  const m = location.hash.match(/^#indent(?:\?batch=([^&]+))?/);
+  if (!m) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!canIndents()) { toast('Your account can’t raise indents. Ask an Admin.', true); return; }
+  navigateTo('indents');
+  loadIndents().then(function () { openIndentForm({ batchNo: m[1] ? decodeURIComponent(m[1]) : '' }); });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const page = document.getElementById('page-indents');
+  if (!page) return;
+  page.addEventListener('click', function (e) {
+    const f = e.target.closest('#indentFilter [data-f]');
+    if (f) { indentView.filter = f.dataset.f; renderIndentsPage(); return; }
+    const card = e.target.closest('[data-ind]');
+    if (card) { openIndentDetail(card.dataset.ind); return; }
+    if (e.target.closest('#indentNewBtn')) { loadIndents().then(function () { openIndentForm({}); }); return; }
+    if (e.target.closest('#indentRefreshBtn')) loadIndents();
+  });
+  document.getElementById('indentDept').addEventListener('change', function (e) { indentView.dept = e.target.value; renderIndentsPage(); });
+});
+
 </script>
 </body>
 </html>
