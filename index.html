@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.30.0">
+<meta name="app-version" content="3.31.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -531,7 +531,7 @@
   .db-ledger-val { font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
   .health-bar { grid-column: 1 / -1; display: flex; gap: 2px; height: 8px; }
   .health-bar span { border-radius: 2px; min-width: 3px; }
-  .hb-ok { background: var(--ok); } .hb-low { background: var(--low); } .hb-critical { background: var(--critical); } .hb-none { background: var(--line); }
+  .hb-ok { background: var(--ok); } .hb-low { background: var(--low); } .hb-critical { background: var(--critical); } .hb-none { background: var(--line); } .hb-out { background: var(--none-ink); opacity: .45; }
   .db-ledger-counts, .db-ledger-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12px; color: var(--ink-soft); }
   .db-ledger-counts b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
   .db-ledger-counts i { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 5px; }
@@ -630,6 +630,7 @@
   .stat-sub .sub-sep { color: var(--ink-faint); opacity: 0.5; margin: 0 6px; }
   .stat-sub .sub-ok { color: var(--ok); }
   .stat-sub .sub-low { color: var(--low); }
+  .tool-sum .sub-low { color: var(--low); }
   .stat-sub .sub-critical { color: var(--critical); }
   .stat-sub .sub-muted { color: var(--ink-faint); }
 
@@ -739,6 +740,7 @@
   .status-low { background: var(--low-soft); color: var(--low); border-color: rgba(201, 154, 62, 0.3); }
   .status-critical { background: var(--critical-soft); color: var(--critical); border-color: rgba(217, 80, 58, 0.3); }
   .status-none { background: var(--none-soft); color: var(--none-ink); border-color: rgba(107, 114, 128, 0.2); }
+  .status-out { background: var(--none-soft); color: var(--none-ink); border-color: rgba(107, 114, 128, 0.35); border-style: dashed; }
 
   .health-pct { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; color: var(--ink-soft); margin-left: 10px; }
 
@@ -1486,6 +1488,13 @@
   .cost-sug { min-width: 0; font-size: 12.5px; }
   .chip-btn { background: var(--copper-soft); color: var(--copper); border-radius: 99px; padding: 5px 10px; font-size: 12px; font-weight: 600; text-align: left; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chip-btn:hover { background: var(--copper); color: #fff; }
+  /* A last price that looks like the price of a pack (3.31.0) */
+  .cost-sug .sug-meta { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 11.5px; }
+  .cost-sug.is-pack .chip-btn { background: var(--low-soft); color: var(--low); }
+  .cost-sug .sug-warn { display: block; margin-top: 4px; color: var(--low); font-size: 11.5px; font-weight: 600; }
+  .cost-sug .sug-div { display: inline-flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .cost-sug .sug-div button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 99px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .cost-sug .sug-div button:hover { border-color: var(--copper); color: var(--copper); }
   .tool-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .tool-table th, .tool-table td { padding: 8px 6px; border-bottom: 1px solid var(--line-soft); text-align: left; }
   .tool-table th { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -1567,6 +1576,41 @@
     .tool-bar > .seg { flex: 1 1 100%; }
     .tool-bar > .seg#reorderCover { flex: 0 1 auto; }
     .tool-spacer { display: none; }
+  }
+
+  /* Stock lists on a phone (3.31.0): search and a Filters button on top,
+     the rest folded under it; each item a card instead of a wide table row. */
+  .filter-toggle { display: none; }
+  .ft-count { font-weight: 700; color: var(--copper); }
+  @media (max-width: 780px) {
+    .page-grid .filter-bar .toolbar { grid-template-columns: 1fr auto; }
+    .page-grid .filter-bar .toolbar > input[type="search"] { grid-column: 1; }
+    .page-grid .filter-bar .filter-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 6px; grid-column: 2; width: auto !important; padding: 0 14px; white-space: nowrap; }
+    .page-grid .filter-bar .toolbar:not(.is-open) > :not(input[type="search"]):not(.filter-toggle):not(.btn-primary) { display: none !important; }
+    .page-grid .filter-bar .toolbar.is-open { grid-template-columns: 1fr 1fr; }
+    .page-grid .filter-bar .toolbar.is-open > input[type="search"] { grid-column: 1; }
+    .page-grid .filter-bar .toolbar.is-open > .filter-toggle { grid-column: 2; width: 100% !important; }
+    .page-grid .filter-bar .toolbar > .btn-primary { grid-column: 1 / -1; }
+    .page-grid .filter-bar .toolbar-hint { display: none; }
+
+    #page-rm > div:last-child, #page-fg > div:last-child, #page-trade > div:last-child { overflow-x: visible; margin: 0; padding: 0 0 16px; width: auto; }
+    #page-rm .table-scroll, #page-fg .table-scroll, #page-trade .table-scroll { max-height: none; overflow: visible; }
+    .table-scroll table.stock-table, table.stock-table { min-width: 0; width: 100%; }
+    .stock-table thead { display: none; }
+    .stock-table tbody tr { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: "name name name bal" "code code code status" "cat sub . act";
+                            gap: 4px 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .stock-table tbody td { display: block; padding: 0 !important; border: 0 !important; background: none !important; min-width: 0; }
+    .stock-table tbody td.empty { grid-column: 1 / -1; padding: 24px 0 !important; text-align: center; }
+    .stock-table .st-id { display: none; }
+    .stock-table .st-name { grid-area: name; font-weight: 650; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+    .stock-table .st-code { grid-area: code; font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+    .stock-table .st-bal { grid-area: bal; text-align: right; font-weight: 700; font-size: 14.5px; white-space: nowrap; }
+    .stock-table .st-status { grid-area: status; justify-self: end; white-space: nowrap; }
+    .stock-table .st-status .health-pct { margin-left: 6px; }
+    .stock-table .st-cat { grid-area: cat; }
+    .stock-table .st-sub { grid-area: sub; }
+    .stock-table .st-act { grid-area: act; justify-self: end; display: flex; gap: 4px; }
+    .stock-table tbody tr td:first-child { box-shadow: none !important; }
   }
 </style>
 </head>
@@ -1854,10 +1898,11 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
+          <button type="button" class="btn-ghost filter-toggle" data-ft="rm" aria-expanded="false" aria-controls="page-rm"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="rmCategoryFilter" multiple></select>
           <select id="rmStatusFilter" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
-            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
           <label class="check-inline"><input type="checkbox" id="rmShowInactive"> Show inactive</label>
           <button class="btn-ghost" id="rmExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
@@ -1871,7 +1916,7 @@
       </div>
       <div class="grid-panel">
         <div class="table-scroll">
-          <table>
+          <table class="stock-table">
             <thead><tr>
               <th class="sortable" data-col="idNo">ID No.</th>
               <th class="sortable" data-col="code">Code</th>
@@ -1893,11 +1938,12 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="fgSearch" placeholder="Search ID, code or name…">
+          <button type="button" class="btn-ghost filter-toggle" data-ft="fg" aria-expanded="false" aria-controls="page-fg"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="fgCategoryFilter" multiple></select>
           <select id="fgSubCategoryFilter" multiple></select>
           <select id="fgStatusFilter" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
-            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
           <label class="check-inline"><input type="checkbox" id="fgShowInactive"> Show inactive</label>
           <button class="btn-ghost" id="fgExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
@@ -1911,7 +1957,7 @@
       </div>
       <div class="grid-panel">
         <div class="table-scroll">
-          <table>
+          <table class="stock-table">
             <thead><tr>
               <th class="sortable" data-col="idNo">ID No.</th>
               <th class="sortable" data-col="code">Code</th>
@@ -1934,10 +1980,11 @@
       <div class="filter-bar">
         <div class="toolbar">
           <input type="search" id="tradeSearch" placeholder="Search ID, code or name…">
+          <button type="button" class="btn-ghost filter-toggle" data-ft="trade" aria-expanded="false" aria-controls="page-trade"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="tradeCategoryFilter" multiple></select>
           <select id="tradeStatusFilter" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
-            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="No Activity">No activity</option>
+            <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
           <label class="check-inline"><input type="checkbox" id="tradeShowInactive"> Show inactive</label>
           <button class="btn-ghost" id="tradeExportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 2v8m0 0L5 7m3 3l3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Export</button>
@@ -1951,7 +1998,7 @@
       </div>
       <div class="grid-panel">
         <div class="table-scroll">
-          <table>
+          <table class="stock-table">
             <thead><tr>
               <th class="sortable" data-col="idNo">ID No.</th>
               <th class="sortable" data-col="code">Code</th>
@@ -2097,7 +2144,7 @@
         </div>
         <div class="tool-sticky">
           <div class="tool-sum"><span id="costSummary"></span>
-            <span class="tool-sum-actions"><button type="button" class="btn-ghost btn-compact" id="costFillBtn">Fill in every last price</button><button type="button" class="btn-primary btn-compact" id="costSaveBtn">Save</button></span></div>
+            <span class="tool-sum-actions"><button type="button" class="btn-ghost btn-compact" id="costFillBtn" title="Fills the last price paid for every item shown, except those that look like a pack price">Fill in every last price</button><button type="button" class="btn-primary btn-compact" id="costSaveBtn">Save</button></span></div>
         </div>
         <div class="count-list" id="costList"></div>
       </div>
@@ -2524,7 +2571,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.30.0';
+const APP_VERSION = '3.31.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2763,7 +2810,8 @@ const STATUS_ICONS = {
   ok: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.3 8.2 7.1 10 10.7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   low: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 2.2 14.5 13.2a1 1 0 0 1-.87 1.5H2.37a1 1 0 0 1-.87-1.5L8 2.2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6.3V9.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r="0.9" fill="currentColor"/></svg>',
   critical: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M5.2 1.5h5.6l3.7 3.7v5.6l-3.7 3.7H5.2l-3.7-3.7V5.2l3.7-3.7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 5.2V8.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11" r="0.9" fill="currentColor"/></svg>',
-  none: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.3 8H10.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+  none: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.3 8H10.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  out: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M3.6 12.4 12.4 3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
 };
 
 /* =========================================================================
@@ -3345,6 +3393,7 @@ function statusClass(status) {
   if (status === 'OK') return 'ok';
   if (status === 'Low') return 'low';
   if (status === 'Critical') return 'critical';
+  if (status === 'Out of Stock') return 'out';
   return 'none';
 }
 function statusIcon(cls) { return STATUS_ICONS[cls] || STATUS_ICONS.none; }
@@ -4096,6 +4145,13 @@ function syncStockResetButton(kind) {
   const btn = document.getElementById(kind + 'ResetBtn');
   if (!btn) return;
   btn.disabled = !(stockFiltersOn(kind) || state[kind + 'ShowInactive']);
+  // The phone's Filters button says how many are on (search stays in view).
+  const ft = document.querySelector('.filter-toggle[data-ft="' + kind + '"] .ft-count');
+  if (ft) {
+    const n = (state[kind + 'Category'].length ? 1 : 0) + (state[kind + 'Status'].length ? 1 : 0) + (state[kind + 'ShowInactive'] ? 1 : 0) +
+              (uiConfig(kind).subCategoryField && state[kind + 'SubCategory'].length ? 1 : 0);
+    ft.textContent = n ? ' · ' + n : '';
+  }
 }
 
 function goToStockTab(kind, filterStatus) {
@@ -4130,9 +4186,11 @@ function mergeStock(master, stockList, config, includeInactive) {
       // an item well above its new threshold still reading "Low". Deriving
       // it keeps the label and the health % consistent by construction.
       // Mirrors computeStockStatus_ in Code.gs; keep the two in step.
+      // Nothing left counts as Critical only when a minimum is set; an item
+      // with no minimum is just "Out of Stock" (3.31.0), not an alarm.
       let status;
       if (!s) status = 'No Activity';
-      else if (balance <= 0) status = 'Critical';
+      else if (balance <= 0) status = reorder > 0 ? 'Critical' : 'Out of Stock';
       else if (reorder > 0 && balance <= reorder) status = 'Low';
       else status = 'OK';
       return {
@@ -4156,6 +4214,7 @@ function mergeStock(master, stockList, config, includeInactive) {
 // Both park at the end of a worst-first sort instead of masquerading as 0%.
 function healthSortKey_(r) {
   if (r.status === 'No Activity') return 1e13;
+  if (r.status === 'Out of Stock') return 1e11;
   if (r.balance <= 0) return -1;
   if (!(r.reorder > 0)) return 1e12;
   return r.balance / r.reorder;
@@ -4284,14 +4343,14 @@ function renderStockTable(config) {
     }
 
     return '<tr data-code="' + escapeHtml(r.code) + '" data-key="' + config.key + '"' + (r.active ? '' : ' class="row-inactive"') + '>' +
-      '<td class="mono">' + escapeHtml(r.idNo || '—') + '</td>' +
-      '<td class="mono">' + escapeHtml(r.code) + '</td>' +
-      '<td>' + escapeHtml(r.name || '') + (r.active ? '' : ' <span class="muted">(inactive)</span>') + '</td>' +
-      '<td><span class="tag' + tagExtra + '">' + escapeHtml(r.category || '—') + '</span></td>' +
-      (config.subCategoryField ? '<td><span class="tag">' + escapeHtml(r.subCategory || '—') + '</span></td>' : '') +
-      '<td class="mono num">' + formatQty(r.balance) + ' ' + escapeHtml(r.unit) + '</td>' +
-      '<td><span class="status status-' + statusClass(r.status) + '">' + statusIcon(statusClass(r.status)) + escapeHtml(r.status) + '</span>' + healthPctText + '</td>' +
-      '<td class="actions-cell"><button class="row-action" data-action="history" title="Transaction history">' + HISTORY_ICON + '</button>' + editBtn + '</td>' +
+      '<td class="mono st-id">' + escapeHtml(r.idNo || '—') + '</td>' +
+      '<td class="mono st-code">' + escapeHtml(r.code) + '</td>' +
+      '<td class="st-name">' + escapeHtml(r.name || '') + (r.active ? '' : ' <span class="muted">(inactive)</span>') + '</td>' +
+      '<td class="st-cat"><span class="tag' + tagExtra + '">' + escapeHtml(r.category || '—') + '</span></td>' +
+      (config.subCategoryField ? '<td class="st-sub"><span class="tag">' + escapeHtml(r.subCategory || '—') + '</span></td>' : '') +
+      '<td class="mono num st-bal">' + formatQty(r.balance) + ' ' + escapeHtml(r.unit) + '</td>' +
+      '<td class="st-status"><span class="status status-' + statusClass(r.status) + '">' + statusIcon(statusClass(r.status)) + escapeHtml(r.status) + '</span>' + healthPctText + '</td>' +
+      '<td class="actions-cell st-act"><button class="row-action" data-action="history" title="Transaction history">' + HISTORY_ICON + '</button>' + editBtn + '</td>' +
       '</tr>';
   }).join('');
 
@@ -4548,11 +4607,13 @@ function renderDashKpis(kinds, items, all, stats, ready) {
 
   const attention = all.filter(function (r) { return r.status === 'Low' || r.status === 'Critical'; });
   const crit = attention.filter(function (r) { return r.status === 'Critical'; }).length;
+  const outNoMin = all.filter(function (r) { return r.status === 'Out of Stock'; }).length;
   cards.push(kpiHtml({
     icon: DB_ICONS.alert, tone: attention.length ? 'warn' : 'ok', label: 'Needs attention', value: formatNum(attention.length), go: 'attention',
-    sub: attention.length
+    sub: (attention.length
       ? '<span class="' + (crit ? 'sub-critical' : 'sub-zero') + '">' + formatNum(crit) + ' critical</span> · <span class="' + (attention.length - crit ? 'sub-low' : 'sub-zero') + '">' + formatNum(attention.length - crit) + ' low</span>'
-      : '<span class="sub-ok">Every item is above its minimum</span>'
+      : '<span class="sub-ok">Every item is above its minimum</span>') +
+      (outNoMin ? '<br><span class="sub-zero" title="Out of stock, but no minimum quantity is set, so they don’t count as needing attention">+ ' + plural(outNoMin, 'item') + ' out of stock with no minimum</span>' : '')
   }));
 
   if (ready) {
@@ -4584,16 +4645,16 @@ function renderDashKpis(kinds, items, all, stats, ready) {
 
 function renderDashLedgers(kinds, items, stats, ready) {
   const costs = canSeeCosts();
-  const STATES = [['OK', 'ok', 'OK'], ['Low', 'low', 'low'], ['Critical', 'critical', 'critical'], ['No Activity', 'none', 'no activity']];
+  const STATES = [['OK', 'ok', 'OK'], ['Low', 'low', 'low'], ['Critical', 'critical', 'critical'], ['Out of Stock', 'out', 'out, no minimum'], ['No Activity', 'none', 'no activity']];
   document.getElementById('dbLedgers').innerHTML = kinds.map(function (k) {
     const rows = items[k];
-    const n = { OK: 0, Low: 0, Critical: 0, 'No Activity': 0 };
+    const n = { OK: 0, Low: 0, Critical: 0, 'Out of Stock': 0, 'No Activity': 0 };
     rows.forEach(function (r) { if (n[r.status] !== undefined) n[r.status]++; });
     const value = rows.reduce(function (s, r) { return s + (r.value || 0); }, 0);
     const bar = STATES.filter(function (s) { return n[s[0]] > 0; }).map(function (s) {
       return '<span class="hb-' + s[1] + '" style="flex:' + n[s[0]] + '" title="' + s[0] + ': ' + n[s[0]] + '"></span>';
     }).join('') || '<span class="hb-none" style="flex:1"></span>';
-    const counts = STATES.filter(function (s) { return n[s[0]] > 0 || s[0] !== 'No Activity'; }).map(function (s) {
+    const counts = STATES.filter(function (s) { return n[s[0]] > 0 || ['No Activity', 'Out of Stock'].indexOf(s[0]) < 0; }).map(function (s) {
       return '<span><i class="hb-' + s[1] + '"></i><b>' + formatNum(n[s[0]]) + '</b> ' + s[2] + '</span>';
     }).join('');
     const pk = stats.perKind[k];
@@ -5474,7 +5535,7 @@ function applyLocalStockUpdate(config, code, newBalance) {
   markLedgersStale();
   const list = state[config.stockKey]; const idx = list.findIndex(function (s) { return s[config.codeField] === code; });
   const master = state[config.masterKey].find(function (m) { return m[config.codeField] === code; }); const reorder = master ? Number(master[config.reorderField]) || 0 : 0;
-  const status = newBalance <= 0 ? 'Critical' : (reorder > 0 && newBalance <= reorder ? 'Low' : 'OK');
+  const status = newBalance <= 0 ? (reorder > 0 ? 'Critical' : 'Out of Stock') : (reorder > 0 && newBalance <= reorder ? 'Low' : 'OK');
   if (idx > -1) { list[idx].CurrentBalance = newBalance; list[idx].StockStatus = status; list[idx].LastUpdated = new Date().toISOString(); } 
   else { const row = { CurrentBalance: newBalance, StockStatus: status, LastUpdated: new Date().toISOString() }; row[config.codeField] = code; list.push(row); }
   invalidateMergeCache();
@@ -8431,6 +8492,16 @@ function costRows() {
     .sort(function (a, b) { return b.balance - a.balance || String(a.code).localeCompare(String(b.code)); });
   return { rows: rows, all: all.length, inStock: inStock.length };
 }
+// A last price that would make one item worth lakhs, or ₹1,000+ for a single
+// piece or metre, is usually the price of a pack (per 100 or per 1000) typed
+// as the unit price. Those aren't filled in automatically; the row offers
+// the divided prices instead (3.31.0).
+const COUNT_UNITS = /^(NOS|PCS|PC|NO|MTR|M|METER|METRE|SET|PAIR|ROLL|PKT|BOX)$/i;
+function looksLikePackPrice(i, p) {
+  if (!p) return false;
+  const value = Number(p.rate) * Math.max(0, Number(i.balance) || 0);
+  return value >= 1000000 || (COUNT_UNITS.test(String(i.unit || '')) && Number(p.rate) >= 1000 && value >= 200000);
+}
 function suggestionText(p) {
   if (!p) return '';
   const when = p.date ? formatDay(p.date) : '';
@@ -8455,12 +8526,14 @@ function renderCostsList() {
   const r = costRows();
   const prices = (costSuggest && costSuggest[costView.kind]) || {};
   const withSuggestion = r.rows.filter(function (i) { return prices[i.code]; }).length;
+  const packs = r.rows.filter(function (i) { return looksLikePackPrice(i, prices[i.code]); }).length;
   const edits = Object.keys(costView.edits).filter(function (k) { return k.indexOf(costView.kind + ':') === 0 && costView.edits[k] !== ''; }).length;
   document.getElementById('costSummary').innerHTML = '<b>' + formatNum(r.all) + '</b> ' + escapeHtml(config.label) + ' item' + (r.all === 1 ? '' : 's') + ' without a standard cost, <b>' +
-    formatNum(r.inStock) + '</b> of them in stock' + (costSuggest ? ' · last price known for <b>' + formatNum(withSuggestion) + '</b> shown here' : '');
+    formatNum(r.inStock) + '</b> of them in stock' + (costSuggest ? ' · last price known for <b>' + formatNum(withSuggestion) + '</b> shown here' : '') +
+    (packs ? ' · <span class="sub-low"><b>' + formatNum(packs) + '</b> look like a pack price — check those yourself</span>' : '');
   document.getElementById('costSaveBtn').textContent = edits ? 'Save ' + formatNum(edits) : 'Save';
   document.getElementById('costSaveBtn').disabled = !edits;
-  document.getElementById('costFillBtn').disabled = !withSuggestion;
+  document.getElementById('costFillBtn').disabled = !(withSuggestion - packs);
   const shown = r.rows.slice(0, 400);
   document.getElementById('costList').innerHTML = shown.length ? shown.map(function (i) {
     const k = costView.kind + ':' + i.code;
@@ -8469,7 +8542,15 @@ function renderCostsList() {
     return '<div class="cost-row' + (v !== '' ? ' is-edited' : '') + '">' +
       '<div class="cr-item"><span class="mono cr-code">' + escapeHtml(i.code) + '</span><span class="cr-name">' + escapeHtml(i.name || '') + '</span>' + (i.category ? '<span class="cr-cat">' + escapeHtml(i.category) + '</span>' : '') + '</div>' +
       '<div class="cr-sys"><span class="cr-lab">On hand</span><span class="cr-num">' + qtyPlain(i.balance) + ' ' + escapeHtml(i.unit) + '</span></div>' +
-      '<div class="cost-sug">' + (p ? '<button type="button" class="chip-btn" data-use="' + escapeHtml(i.code) + '" title="Use this price">' + escapeHtml(suggestionText(p)) + '</button>' : '<span class="sub-zero">No price on record</span>') + '</div>' +
+      (function () {
+        if (!p) return '<div class="cost-sug"><span class="sub-zero">No price on record</span></div>';
+        const pack = looksLikePackPrice(i, p), unit = escapeHtml(i.unit || '');
+        const adds = Number(p.rate) * Math.max(0, i.balance);
+        return '<div class="cost-sug' + (pack ? ' is-pack' : '') + '"><button type="button" class="chip-btn" data-use="' + escapeHtml(i.code) + '" title="Use this price">' + escapeHtml(suggestionText(p)) + '</button>' +
+          (pack ? '<span class="sug-warn">₹' + formatNum(p.rate) + ' per ' + unit + ' would make this stock worth ' + compactINR(adds) + ' — was it the price per 100 or per 1000?</span>' +
+                  '<span class="sug-div"><button type="button" data-use="' + escapeHtml(i.code) + '" data-div="100">₹' + formatNum(p.rate / 100) + ' (per 100)</button><button type="button" data-use="' + escapeHtml(i.code) + '" data-div="1000">₹' + formatNum(p.rate / 1000) + ' (per 1000)</button></span>'
+                : '<span class="sug-meta">Adds ' + compactINR(adds) + ' to the stock value</span>') + '</div>';
+      })() +
       '<div class="cr-count"><span class="cr-unit">₹</span><input type="number" inputmode="decimal" min="0" step="any" data-cost="' + escapeHtml(i.code) + '" value="' + escapeHtml(String(v)) + '" placeholder="Cost" aria-label="Standard cost for ' + escapeHtml(i.code) + '"></div>' +
       '</div>';
   }).join('') + (r.rows.length > shown.length ? '<div class="tool-more">Showing 400 of ' + formatNum(r.rows.length) + '. Save these, or search, to see the rest.</div>' : '')
@@ -8508,14 +8589,15 @@ function wireCostsPage() {
     const b = e.target.closest('[data-use]'); if (!b) return;
     const p = ((costSuggest || {})[costView.kind] || {})[b.dataset.use];
     if (!p) return;
-    costView.edits[costView.kind + ':' + b.dataset.use] = String(p.rate);
+    const div = Number(b.dataset.div) || 1;
+    costView.edits[costView.kind + ':' + b.dataset.use] = String(Math.round(p.rate / div * 10000) / 10000);
     renderCostsList();
   });
   document.getElementById('costFillBtn').addEventListener('click', function () {
     const prices = (costSuggest && costSuggest[costView.kind]) || {};
     costRows().rows.forEach(function (i) {
       const k = costView.kind + ':' + i.code;
-      if (prices[i.code] && (!hasOwn(costView.edits, k) || costView.edits[k] === '')) costView.edits[k] = String(prices[i.code].rate);
+      if (prices[i.code] && !looksLikePackPrice(i, prices[i.code]) && (!hasOwn(costView.edits, k) || costView.edits[k] === '')) costView.edits[k] = String(prices[i.code].rate);
     });
     renderCostsList();
   });
@@ -9479,6 +9561,17 @@ function printIndentSlip(no) {
   f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
   setTimeout(function () { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(function () { f.remove(); }, 1500); }, 150);
 }
+
+// On a phone the stock lists show the search box and a Filters button; the
+// filters, export, refresh and import open under it (3.31.0).
+document.addEventListener('click', function (e) {
+  const b = e.target.closest('.filter-toggle');
+  if (!b) return;
+  const bar = b.closest('.toolbar');
+  const open = !bar.classList.contains('is-open');
+  bar.classList.toggle('is-open', open);
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+});
 
 // Batch Card Tracker's "Request material" opens #indent?batch=CMPL0057.
 function handleIndentLink() {
