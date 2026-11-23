@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.32.0">
+<meta name="app-version" content="3.32.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -2571,7 +2571,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.32.0';
+const APP_VERSION = '3.32.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -5009,7 +5009,7 @@ function openTxnModal(key, code) {
 
   // Supplier list comes from the Dropdowns tab, in the tab's own order.
   const suppliers = (state.dropdowns && state.dropdowns.Supplier) || [];
-  document.getElementById('txnSupplier').innerHTML = '<option value="">— None —</option>' +
+  document.getElementById('txnSupplier').innerHTML = '<option value="">None</option>' +
     suppliers.map(function (s) { return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; }).join('');
 
   const dateInput = document.getElementById('txnDate');
@@ -9313,7 +9313,7 @@ function openIndentForm(pre) {
   const m = indentModal(indentHead('NEW INDENT', 'Ask Stores for material', 'Pick the batch it is for. Stores approves and issues it.') +
     '<div class="ind-form">' +
       '<div class="field"><label for="indDept">Department</label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + depts.map(function (x) { return '<option ' + (x === myDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">— Not for a batch</option></select><div class="hint" id="indBatchHint"></div></div>' +
+      '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">Not for a batch</option></select><div class="hint" id="indBatchHint"></div></div>' +
       '<div class="field hidden" id="indReasonWrap"><label for="indReason">Why isn’t it for a batch? <span class="req">*</span></label><input id="indReason" maxlength="300" placeholder="e.g. maintenance of winding machine M-2"></div>' +
       '<div class="field"><label for="indDue">Needed by</label><input type="date" id="indDue"></div>' +
       '<div class="field"><label>Priority</label><div class="seg" id="indPri"><button type="button" class="is-on" data-p="Normal">Normal</button><button type="button" data-p="Urgent">Urgent</button></div></div>' +
@@ -9382,7 +9382,7 @@ function openIndentForm(pre) {
     const keep = sel.value || wantBatch;
     batches = ((d && d.batches) || []).slice().sort(function (a, b) { return String(b.batchNo).localeCompare(String(a.batchNo)); });
     if (keep && !batches.some(function (b) { return b.batchNo === keep; })) batches.unshift({ batchNo: keep, product: '', part: '', qty: 0, step: 0, extra: true });
-    sel.innerHTML = '<option value="">— Not for a batch</option>' + batches.map(function (b) {
+    sel.innerHTML = '<option value="">Not for a batch</option>' + batches.map(function (b) {
       return '<option value="' + escapeHtml(b.batchNo) + '">' + escapeHtml(b.batchNo) + (b.extra ? '' : ' · ' + escapeHtml(b.product || b.part) + (b.qty ? ' (' + formatNum(b.qty) + ')' : '')) + '</option>';
     }).join('');
     sel.value = keep;
