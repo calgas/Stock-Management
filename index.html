@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.31.0">
+<meta name="app-version" content="3.32.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -2265,7 +2265,7 @@
         <div class="field"><label for="txnQty">Quantity</label><div class="input-with-unit"><input type="number" id="txnQty" step="any" required><span class="input-unit hidden" id="txnQtyUnit"></span></div><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
         <div class="field hidden" id="txnDateField"><label for="txnDate">Entry date</label><input type="date" id="txnDate"><div class="hint" id="txnDateHint">Today. Pick an earlier day only when the paperwork is late.</div></div>
-        <div class="field"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any" min="0"><div class="hint" id="txnRateHint"></div></div>
+        <div class="field" id="txnRateField"><label for="txnRate">Rate (optional)</label><input type="number" id="txnRate" step="any" min="0"><div class="hint" id="txnRateHint"></div></div>
 
         <div id="receiptFields" class="receipt-fields hidden span-2">
           <div class="receipt-fields-label" id="receiptFieldsLabel">Procurement details (Optional)</div>
@@ -2571,7 +2571,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.31.0';
+const APP_VERSION = '3.32.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -5322,9 +5322,11 @@ function renderTxnPrice(lastPrice) {
   const std = standardCost();
   const paid = lastPrice && lastPrice.rate ? lastPrice : null;
   const isReceipt = activeTxnConfig && (activeTxnConfig.inTypes || []).indexOf(document.getElementById('txnType').value) > -1;
+  // No rate box at all for someone who can't see rates (3.32.0).
+  document.getElementById('txnRateField').classList.toggle('hidden', !canSeeCosts());
   if (!canSeeCosts()) {
     head.textContent = ''; head.classList.add('hidden');
-    hint.textContent = isReceipt ? 'Type the invoice rate if you have it.' : '';
+    hint.textContent = ''; rateEl.value = '';
     return;
   }
 
@@ -5455,7 +5457,7 @@ async function handleTxnSubmit(e) {
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
   const payload = { code: code, txnType: txnType, qty: Number(document.getElementById('txnQty').value), department: document.getElementById('txnDept').value, reference: document.getElementById('txnReference').value, remarks: document.getElementById('txnRemarks').value };
   if (config.key === 'rm' && txnType === 'Issue') { payload.noIndentReason = payload.remarks; payload.remarks = ''; }
-  const rateRaw = document.getElementById('txnRate').value; if(rateRaw !== '') payload.rate = Number(rateRaw);
+  const rateRaw = document.getElementById('txnRate').value; if (rateRaw !== '' && canSeeCosts()) payload.rate = Number(rateRaw);
   if (entryDate) payload.date = entryDate;
   // The ID identifies this ENTRY, not this attempt. It was minted when the
   // form opened and is reused by every resend, so pressing Post again after
@@ -7617,10 +7619,12 @@ function can(key) {
   return !!(state.permissions && state.permissions[key]);
 }
 
-// Standard cost, rates and the last price paid are shown only to people with
-// "See costs and rates"; the backend leaves them out for everyone else.
+// Standard cost, sales price, rates, the last price paid and stock value are
+// shown only to people with "See costs, rates…" (by default Admin and the
+// Management tier, 3.32.0); the backend leaves them out for everyone else.
 function canSeeCosts() { return can('stock.cost.view'); }
-function visibleItemField(f) { return f.key !== 'StandardCost' || canSeeCosts(); }
+const COST_ITEM_FIELDS = ['StandardCost', 'SalesPrice'];
+function visibleItemField(f) { return COST_ITEM_FIELDS.indexOf(f.key) < 0 || canSeeCosts(); }
 
 function accessCatalog() { return (state.access && state.access.permissions) || []; }
 function accessTemplates() { return (state.access && state.access.templates) || {}; }
