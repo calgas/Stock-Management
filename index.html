@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.32.1">
+<meta name="app-version" content="3.33.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -100,6 +100,8 @@
   .freshness-label { color: var(--ink-faint); font-size: 12.5px; align-self: center; white-space: nowrap; }
 
   @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  /* Screens and cards arrive quickly and travel a few pixels, as in the Batch Card Tracker (3.33). */
+  @keyframes pageIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
   @keyframes modalPop { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
@@ -223,6 +225,12 @@
   .combo-option.is-selected { font-weight: 700; }
   .combo-option.is-selected::after { content: ' ✓'; color: var(--copper); }
   .combo-empty { padding: 12px; font-size: 13px; color: var(--ink-faint); text-align: center; }
+  /* A value not on the list yet, offered to add (3.33). */
+  .combo-option.combo-new { display: flex; flex-direction: column; gap: 1px; white-space: normal; border: 1px dashed var(--copper); margin-bottom: 4px; }
+  .combo-option.combo-new b { color: var(--copper-deep); font-weight: 700; }
+  .combo-option.combo-new small { color: var(--ink-faint); font-size: 11.5px; font-weight: 500; }
+  .combo-option.combo-new::after { content: none !important; }
+  .combo-hint { font-size: 12px; color: var(--ink-faint); margin-top: 6px; }
   /* Multi-select lists: a checkbox per option, the list stays open while
      you tick, and the top "All …" row clears every tick. */
   .combo-option.is-multi { display: flex; align-items: center; gap: 10px; }
@@ -382,7 +390,7 @@
 
   .theme-btn { padding: 8px; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; }
 
-  .page { flex: 1; overflow-y: auto; padding: 32px; animation: slideUpFade 0.5s var(--spring) forwards; content-visibility: auto; contain-intrinsic-size: auto 600px; }
+  .page { flex: 1; overflow-y: auto; padding: 32px; animation: pageIn 0.2s var(--ease) both; content-visibility: auto; contain-intrinsic-size: auto 600px; }
 
   /* ---------------------------------------------------------------------
      Data-grid pages (RM, FG, Ledger, Team)
@@ -480,7 +488,7 @@
   @keyframes dbSpin { to { transform: rotate(360deg); } }
 
   .db-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
-  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 16px; box-shadow: var(--shadow-sm); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 132px; animation: slideUpFade 0.45s var(--spring) backwards; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px 16px; box-shadow: var(--shadow-sm); position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; min-height: 132px; animation: pageIn 0.2s var(--ease) backwards; }
   .kpi:nth-child(2) { animation-delay: 0.04s; } .kpi:nth-child(3) { animation-delay: 0.08s; } .kpi:nth-child(4) { animation-delay: 0.12s; }
   .kpi.clickable { cursor: pointer; transition: transform 0.2s var(--spring), box-shadow 0.2s, border-color 0.2s; }
   .kpi.clickable:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--copper-soft); }
@@ -587,7 +595,7 @@
   .stat-card {
     background: var(--panel); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow);
-    transition: all 0.3s var(--spring); animation: slideUpFade 0.5s var(--spring) backwards;
+    transition: all 0.3s var(--spring); animation: pageIn 0.2s var(--ease) backwards;
     position: relative; overflow: hidden;
   }
   .stat-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--copper), var(--azure), var(--copper)); opacity: 0; transition: opacity 0.3s; }
@@ -689,7 +697,7 @@
   .sortable.asc::after { content: '↑'; opacity: 1; color: var(--copper); }
   .sortable.desc::after { content: '↓'; opacity: 1; color: var(--copper); }
 
-  tbody tr { background: var(--panel); box-shadow: 0 2px 6px rgba(28,32,36,0.04); transition: all 0.25s var(--ease); animation: slideUpFade 0.4s var(--spring) backwards; }
+  tbody tr { background: var(--panel); box-shadow: 0 2px 6px rgba(28,32,36,0.04); transition: all 0.25s var(--ease); }
   [data-theme="dark"] tbody tr { box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1px solid var(--line); }
 
   tbody tr:nth-child(1) { animation-delay: 0.05s; } tbody tr:nth-child(2) { animation-delay: 0.08s; } tbody tr:nth-child(3) { animation-delay: 0.11s; } tbody tr:nth-child(4) { animation-delay: 0.14s; } tbody tr:nth-child(5) { animation-delay: 0.17s; }
@@ -771,7 +779,7 @@
   .pagination .btn-ghost { padding: 6px 14px; }
   .pagination .btns { display: flex; gap: 10px; }
 
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; animation: slideUpFade 0.5s var(--spring) both; animation-delay: 0.22s; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; animation: pageIn 0.2s var(--ease) both; }
   .panel-head { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; padding: 20px 24px; border-bottom: 1px solid var(--line-soft); color: var(--ink); }
   .panel-head-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; background: none; border: none; cursor: pointer; font: inherit; text-align: left; transition: color 0.2s; }
   .panel-head-toggle:hover { color: var(--copper); }
@@ -851,8 +859,8 @@
   .ind-ask { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
   .ind-actions { flex-wrap: wrap; gap: 8px; }
   @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 44px 40px; grid-template-areas: "item item item" "qty unit rm" "note note note" "info info info"; } }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.3s var(--ease); }
-  .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.4s var(--spring) both; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.18s var(--ease); }
+  .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.22s var(--spring) both; }
   .modal.modal-wide { max-width: 760px; }
 
   /* Form modals get a wider frame and a two-column field grid on desktop.
@@ -1351,7 +1359,7 @@
     .modal {
       width: 100%; max-width: 100% !important; max-height: 92vh; border-radius: 20px 20px 0 0;
       padding: 10px 20px calc(16px + env(safe-area-inset-bottom));
-      animation: sheetSlideUp 0.35s var(--spring) both;
+      animation: sheetSlideUp 0.24s var(--spring) both;
       display: flex; flex-direction: column;
     }
     .modal-drag-handle { display: block; width: 40px; height: 4px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; flex: 0 0 auto; }
@@ -2270,7 +2278,7 @@
         <div id="receiptFields" class="receipt-fields hidden span-2">
           <div class="receipt-fields-label" id="receiptFieldsLabel">Procurement details (Optional)</div>
           <div class="receipt-grid">
-            <div class="field"><label for="txnSupplier">Supplier Name</label><select id="txnSupplier"></select></div>
+            <div class="field"><label for="txnSupplier">Supplier Name</label><div class="combo" data-combo><input type="text" class="combo-input" id="txnSupplier" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" placeholder="Pick one, or type a new one" data-options="[]" data-allow-new="1" data-new-list="Suppliers" maxlength="100"><button type="button" class="combo-toggle" tabindex="-1" aria-label="Show suppliers"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="combo-list hidden"></div></div><div class="combo-hint" id="txnSupplierHint"></div></div>
             <div class="field"><label for="txnInvoiceNo" id="txnInvoiceNoLabel">Invoice No</label><input type="text" id="txnInvoiceNo"></div>
             <div class="field"><label for="txnInvoiceDate">Invoice Date</label><input type="date" id="txnInvoiceDate"></div>
           </div>
@@ -2571,7 +2579,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.32.1';
+const APP_VERSION = '3.33.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -2761,7 +2769,7 @@ const FG_CONFIG_UI = {
     { key: 'Label_MRP', label: 'Label MRP', type: 'number', section: 'more' },
     { key: 'Label_Qty', label: 'Label qty', type: 'number', section: 'more' },
     { key: 'Rating_OLMFD', label: 'Rating (OL MFD)', type: 'text', section: 'more' },
-    { key: 'OLCustomer', label: 'OL customer', type: 'select', dropdownSource: 'OLCustomer', options: [], section: 'more' }
+    { key: 'OLCustomer', label: 'OL customer', type: 'select', dropdownSource: 'OLCustomer', allowNew: true, newList: 'OL customers', options: [], section: 'more' }
   ]
 };
 
@@ -2786,14 +2794,14 @@ const TRADE_CONFIG_UI = {
     { key: 'Trade_Name', label: 'Name', type: 'text', required: true },
     // A new category can be typed here: the list starts empty, and grows
     // from the Trade_Category column of the Dropdowns tab and from use.
-    { key: 'Category', label: 'Category', type: 'select', dropdownSource: 'Trade_Category', allowNew: true, options: [], required: true },
+    { key: 'Category', label: 'Category', type: 'select', dropdownSource: 'Trade_Category', allowNew: true, newList: 'trade categories', options: [], required: true },
     { key: 'Unit', label: 'Unit', type: 'select', dropdownSource: 'Unit', options: [], required: true },
     { key: 'HSN_Code', label: 'HSN code', type: 'text' },
     { key: 'GST_Percent', label: 'GST %', type: 'number' },
     { key: 'ReorderLevel', label: 'Minimum quantity', type: 'number' },
     { key: 'StandardCost', label: 'Purchase cost', type: 'number' },
     { key: 'SalesPrice', label: 'Sales price', type: 'number' },
-    { key: 'Supplier', label: 'Usual supplier', type: 'select', dropdownSource: 'Supplier', options: [], section: 'more' }
+    { key: 'Supplier', label: 'Usual supplier', type: 'select', dropdownSource: 'Supplier', allowNew: true, newList: 'Suppliers', options: [], section: 'more' }
   ]
 };
 const STOCK_KINDS = ['rm', 'fg', 'trade'];
@@ -2952,9 +2960,14 @@ function adoptLatestToken() {
   } catch (err) {}
 }
 
+// Asked for without anyone signed in, these are all the server answers.
+const NO_SESSION_ACTIONS = { login: 1, requestPasswordReset: 1, resetPasswordWithOtp: 1, version: 1, pushPeek: 1 };
 async function _apiRequest(action, params, attempt, afterUnknown) {
   attempt = attempt || 0;
   adoptLatestToken();
+  // Anything else asked while signed out (a timer that hadn't stopped yet)
+  // stays here rather than going to Google only to be refused.
+  if (!state.session && !NO_SESSION_ACTIONS[action]) { const e = new Error('Signed out \u2014 please sign in.'); e.signedOut = true; throw e; }
   const body = Object.assign({ action: action }, params);
   if (state.session && action !== 'login' && action !== 'requestPasswordReset' && action !== 'resetPasswordWithOtp') {
     body.token = state.session.token;
@@ -3023,7 +3036,10 @@ async function _apiRequest(action, params, attempt, afterUnknown) {
       return _apiRequest(action, params, attempt + 1, true);
     }
 
-    if (err.sessionRejected && state.session && action !== 'login' && action !== 'logout') {
+    // Only a refusal of the session in use ends it: a late reply to a request
+    // made before signing out and back in — or made while signed out, with no
+    // session at all — speaks for a session already gone.
+    if (err.sessionRejected && state.session && action !== 'login' && action !== 'logout' && body.token && body.token === state.session.token) {
       endSessionHere(err.message);
     }
     if (timedOut) {
@@ -3142,13 +3158,22 @@ function loadSession() {
     return session;
   } catch (err) { return null; }
 }
-function clearSession() {
+// The copies kept on this device for instant opening.
+function wipeDeviceCopies() {
+  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache', 'stock_boot_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  forgetLedgersOnDevice();
+}
+// Signing out wipes them, so a shared device never shows the last person's
+// figures. A session closed from elsewhere (this account signed in on
+// another device) keeps them: they are only ever shown again to the same
+// account after its password, and a different person signing in wipes them
+// first (3.33).
+function clearSession(opts) {
   state.session = null; localStorage.removeItem('stock_session');
   try { stopNotifications(); indentView.data = null; indentView.loadedAt = 0; } catch (e) {}
-  // The entries kept for instant opening go too — a shared device shouldn't
-  // show the last person's ledger.
-  ['stock_ldg_cache_rm', 'stock_ldg_cache_fg', 'stock_ldg_cache_trade', 'stock_hist_cache', 'stock_boot_cache'].forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+  if (!(opts && opts.keepDeviceCopy)) wipeDeviceCopies();
   ledgerComplete.rm = ledgerComplete.fg = ledgerComplete.trade = null;
+  ledgerWarming.rm = ledgerWarming.fg = ledgerWarming.trade = null;
   ledgerViews.rm = ledgerViews.fg = ledgerViews.trade = null;
   ledgerSeq++;  // a load still on its way belongs to the last person
 }
@@ -3319,11 +3344,24 @@ function escapeHtml(str) { return String(str == null ? '' : str).replace(/[&<>"'
 function lc(v) { return v === null || v === undefined ? '' : String(v).toLowerCase(); }
 function asText(v) { return v === null || v === undefined ? '' : String(v); }
 
-function formatNum(n) { n = Number(n) || 0; return n.toLocaleString('en-IN', { maximumFractionDigits: 2 }); }
+// One formatter per format, made once. toLocaleString() with options builds
+// a fresh Intl formatter on every call, which on a phone cost seconds across
+// a ledger of entries; the reused formatter gives exactly the same text.
+const FMT = {};
+function nf(opts) { const k = 'n' + JSON.stringify(opts || {}); return FMT[k] || (FMT[k] = new Intl.NumberFormat('en-IN', opts)); }
+function df(opts) { const k = 'd' + JSON.stringify(opts); return FMT[k] || (FMT[k] = new Intl.DateTimeFormat('en-IN', opts)); }
+const NF_NUM = nf({ maximumFractionDigits: 2 }), NF_QTY = nf({ maximumFractionDigits: 4 }), NF_INT = nf(), NF_RUPEES = nf({ minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const DF_DAY = df({ day: '2-digit', month: 'short', year: 'numeric' }), DF_DAY_SHORT = df({ day: '2-digit', month: 'short' });
+const DF_DAY_TIME = df({ day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const DF_D_MON = df({ day: 'numeric', month: 'short' }), DF_WD_D_MON = df({ weekday: 'short', day: 'numeric', month: 'short' });
+// A formatter throws on a date it can't read, where toLocale…() said so.
+function dfmt(f, d) { const x = d instanceof Date ? d : new Date(d); return isNaN(x.getTime()) ? 'Invalid Date' : f.format(x); }
+
+function formatNum(n) { n = Number(n) || 0; return NF_NUM.format(n); }
 // Quantities are NOT money and must not be rounded to two places: film is
 // issued to three decimals, so 0.504 has to read as 0.504, never 0.5.
 // Trailing zeros are still dropped, so whole numbers stay clean.
-function formatQty(n) { n = Number(n) || 0; return n.toLocaleString('en-IN', { maximumFractionDigits: 4 }); }
+function formatQty(n) { n = Number(n) || 0; return NF_QTY.format(n); }
 // A quantity is meaningless without its unit, so the two travel together
 // everywhere a quantity is shown.
 function qtyWithUnit(n, unit) {
@@ -3341,13 +3379,13 @@ function localDayISO(d) {
 function formatDay(d) {
   const x = /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? new Date(String(d) + 'T00:00:00') : new Date(d);
   if (isNaN(x.getTime())) return '—';
-  return x.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  return DF_DAY.format(x);
 }
 // '12 Nov', for tables where the year is plain from the rest of the list.
 function formatDayShort(d) {
   const x = /^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? new Date(String(d) + 'T00:00:00') : new Date(d);
   if (isNaN(x.getTime())) return '—';
-  return x.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+  return DF_DAY_SHORT.format(x);
 }
 // The day the stock moved, and whether it was typed in on a later day.
 function movementDate(r) { return r.Date || r.Timestamp || ''; }
@@ -3387,7 +3425,7 @@ function formatDateTime(d) {
   if (!d) return '—';
   const date = new Date(d);
   if (isNaN(date.getTime())) return '—';
-  return date.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return DF_DAY_TIME.format(date);
 }
 function statusClass(status) {
   if (status === 'OK') return 'ok';
@@ -3474,6 +3512,7 @@ function confirmDialog(message, opts) {
   document.getElementById('confirmMessage').textContent = message;
   const okBtn = document.getElementById('confirmOkBtn');
   okBtn.textContent = opts.confirmText || 'Confirm';
+  document.getElementById('confirmCancelBtn').textContent = opts.cancelText || 'Cancel';
   okBtn.className = opts.danger === false ? 'btn-primary btn-compact' : 'btn-danger';
   document.getElementById('confirmIconWrap').className = 'confirm-icon-wrap ' + (opts.danger === false ? 'tone-default' : 'tone-danger');
   document.getElementById('confirmModal').classList.remove('hidden');
@@ -3626,7 +3665,7 @@ async function init() {
       // session — signing someone out for Google's hiccup is what made
       // "sign out, reload, sign in" feel like the cure.
       if (err.sessionRejected) {
-        clearSession();
+        clearSession({ keepDeviceCopy: true });
         startupMessage = /another device/i.test(err.message)
           ? 'You were signed out here because this account signed in to Stock Management on another device.'
           : '';
@@ -3675,26 +3714,33 @@ async function boot(opts) {
 
   if (opts.cached) {
     populateCategoryFilters();
+    await restoreLedgersFromDevice();
     navigateTo('home');
     warmLedgers();
     startFreshnessInterval();
     afterSignIn();
     setLoaderProgress(100, 'Ready');
     await hideInitialLoader();
-    showAppProgress(40);
+    // Brought up to date behind the figures already showing, the way the
+    // Batch Card Tracker does it: the refresh button turns while it runs,
+    // and only what changed is drawn again.
+    const spin = document.getElementById('dbRefreshBtn');
+    if (spin) spin.classList.add('is-busy');
     refreshAllData().then(function () {
-      populateCategoryFilters();
+      const ch = lastBootstrapChanges || {};
+      const kinds = kindsChanged(ch);
+      if (kinds.length || ch.dropdowns) populateCategoryFilters();
       syncAccessUi();
       resolvePendingTxn();
       const shown = document.querySelector('.page:not(.hidden)');
       const id = shown ? shown.id.replace(/^page-/, '') : 'home';
-      if (id === 'home') renderHome();
-      if (STOCK_KINDS.indexOf(id) > -1) renderStockPage(id);
-      if (['count', 'reorder', 'costs'].indexOf(id) > -1) navigateTo(id);
+      if (id === 'home' && kinds.length) renderHome();
+      if (STOCK_KINDS.indexOf(id) > -1 && kinds.indexOf(id) > -1) renderStockPage(id);
+      if (['count', 'reorder', 'costs'].indexOf(id) > -1 && kinds.length) navigateTo(id);
       STOCK_KINDS.forEach(updateFreshnessLabel);
     }).catch(function (err) {
       if (!err.sessionRejected) toast('Showing the figures saved on this device — couldn’t refresh: ' + err.message, true);
-    }).finally(hideAppProgress);
+    }).finally(function () { if (spin) spin.classList.remove('is-busy'); });
     return;
   }
   setLoaderProgress(78, 'Fetching stock data…');
@@ -3714,6 +3760,7 @@ async function boot(opts) {
   // figures and wonders whether to enter it again.
   resolvePendingTxn();
   setLoaderProgress(94, 'Preparing dashboard…');
+  await restoreLedgersFromDevice();
   navigateTo('home');
   afterSignIn();
   startFreshnessInterval();
@@ -3747,6 +3794,7 @@ function syncItemButtons() {
   });
 }
 
+let lastBootstrapChanges = {};
 async function refreshAllData() {
   // One round trip instead of five-to-six parallel ones. Each separate
   // api() call pays its own session validation (a Sessions-sheet read) and
@@ -3755,7 +3803,7 @@ async function refreshAllData() {
   // faster — especially noticeable right after login, on slower
   // connections, and on every "Refresh" click.
   const data = await api('getBootstrap');
-  applyBootstrap(data);
+  lastBootstrapChanges = applyBootstrap(data);
   writeBootCache(data);
   warmLedgers();
 }
@@ -3768,9 +3816,16 @@ function applyBootstrap(data, at) {
     state.session.role = data.me.role; state.session.department = data.me.department;
     if (changed) saveSession(state.session);
   }
-  state.rmMaster = data.rmMaster; state.fgMaster = data.fgMaster; state.rmStock = data.rmStock; state.fgStock = data.fgStock; state.departments = data.departments;
+  // A list that came back exactly as it was is kept as it was, so nothing
+  // built from it has to be built again, and nothing on screen is redrawn.
+  const changed = {};
+  const take = function (field, rows) { if (sameRows(state[field], rows)) return; state[field] = rows; changed[field] = true; };
+  take('rmMaster', data.rmMaster || []); take('fgMaster', data.fgMaster || []);
+  take('rmStock', data.rmStock || []); take('fgStock', data.fgStock || []);
   // An older backend sends no Trade lists; the Trade pages are then simply empty.
-  state.tradeMaster = data.tradeMaster || []; state.tradeStock = data.tradeStock || [];
+  take('tradeMaster', data.tradeMaster || []); take('tradeStock', data.tradeStock || []);
+  state.departments = data.departments;
+  if (JSON.stringify(state.dropdowns || {}) !== JSON.stringify(data.dropdowns || {})) changed.dropdowns = true;
   state.dropdowns = data.dropdowns || {};
   // The last day of the newest closed financial year, '' while none is (3.26).
   state.ledgerClosedThrough = data.ledgerClosedThrough || '';
@@ -3780,8 +3835,27 @@ function applyBootstrap(data, at) {
   if (data.users) state.users = data.users;
   const when = at ? new Date(at) : new Date();
   state.rmLastUpdated = when; state.fgLastUpdated = when; state.tradeLastUpdated = when;
-  invalidateMergeCache();
+  if (Object.keys(changed).length) invalidateMergeCache();
   syncPermLinks();
+  return changed;
+}
+// Whether a list from the server says exactly what the one held does.
+function sameRows(a, b) {
+  if (a === b) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i], y = b[i];
+    if (x === y) continue;
+    if (!x || !y || typeof x !== 'object') return false;
+    const kx = Object.keys(x);
+    if (kx.length !== Object.keys(y).length) return false;
+    for (let j = 0; j < kx.length; j++) { if (x[kx[j]] !== y[kx[j]]) return false; }
+  }
+  return true;
+}
+// Which kinds of stock a set of changed lists touches.
+function kindsChanged(changed) {
+  return STOCK_KINDS.filter(function (k) { const c = uiConfig(k); return changed[c.masterKey] || changed[c.stockKey]; });
 }
 
 // Runs every time someone actually looks at the RM/FG page (see navigateTo)
@@ -3795,10 +3869,14 @@ async function refreshStockData(key) {
   if (state[lastField] && (Date.now() - state[lastField].getTime()) < STOCK_REFRESH_MIN_GAP_MS) return;
   try {
     const [master, stock] = await Promise.all([api(config.masterAction), api(config.stockAction)]);
-    state[config.masterKey] = master; state[config.stockKey] = stock; state[lastField] = new Date();
-    invalidateMergeCache();
-    renderStockPage(key);
-    renderHome();
+    state[lastField] = new Date();
+    // Nothing new: the page stays as it is, only "Updated" moves on.
+    if (!sameRows(state[config.masterKey], master) || !sameRows(state[config.stockKey], stock)) {
+      state[config.masterKey] = master; state[config.stockKey] = stock;
+      invalidateMergeCache();
+      renderStockPage(key);
+      renderHome();
+    }
     updateFreshnessLabel(key);
   } catch (err) {
     // Quiet failure on purpose — this runs in the background on every tab
@@ -3837,6 +3915,20 @@ async function handleLogin(e) {
     state.permissions = data.permissions || {};
     if (loader) { loader.classList.remove('hidden', 'loader-exit'); loader.setAttribute('aria-busy', 'true'); }
     setLoaderProgress(55, 'Signing you in…');
+    // Signing back in to the same account opens at once on the figures this
+    // device already holds; someone else's are wiped first.
+    const cached = readBootCache();
+    let held = null;
+    try { held = JSON.parse(localStorage.getItem(BOOT_CACHE_KEY) || 'null'); } catch (x) {}
+    if (!cached && (!held || held.user !== state.session.username)) wipeDeviceCopies();
+    if (cached) {
+      try {
+        applyBootstrap(cached.data, cached.at);
+        state.permissions = data.permissions || state.permissions;
+        await boot({ cached: true });
+        return;
+      } catch (x) { /* a normal start instead */ }
+    }
     await boot();
   } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, 'Sign in'); }
 }
@@ -3848,7 +3940,7 @@ function endSessionHere(message) {
   if (sessionEnding) return;
   sessionEnding = true;
   try { stopFreshnessInterval(); } catch (err) {}
-  clearSession();
+  clearSession({ keepDeviceCopy: true });
   document.querySelectorAll('.modal-backdrop').forEach(function (m) { m.classList.add('hidden'); });
   document.getElementById('appShell').classList.add('hidden');
   hideAllAuthScreens();
@@ -3989,14 +4081,24 @@ function navigateTo(page, kind) {
     initLedgerPage();
     if (!state.ledgerLoaded) loadLedgerPage();
     else {
-      // Shown at once; brought up to date quietly if it's been a while.
-      renderLedgerPage();
-      if (Date.now() - (state.ledgerLoadedAt || 0) > LEDGER_STALE_MS) loadLedgerPage({ background: true });
+      // Shown at once — the newest copy held — and brought up to date quietly
+      // if it's been a while.
+      const lk = state.ledgerKind, full = ledgerComplete[lk];
+      const plainNow = ledgerFiltersAreDefault(currentLedgerPageFilters());
+      if (plainNow && full && state.ledgerRows !== full.rows) refreshShownLedger(lk); else renderLedgerPage();
+      const at = plainNow && full ? full.at : state.ledgerLoadedAt;
+      if (plainNow && ledgerWarming[lk]) {
+        const sig0 = full && full.sig;
+        ledgerWarming[lk].then(function () {
+          const f = ledgerComplete[lk];
+          if (f && f.sig !== sig0 && state.ledgerKind === lk && !document.getElementById('page-ledger').classList.contains('hidden')) refreshShownLedger(lk);
+        });
+      } else if (Date.now() - (at || 0) > LEDGER_STALE_MS) loadLedgerPage({ background: true });
       else if (state.ledgerHasMore) loadRestOfLedger();  // left before it had loaded everything
     }
   }
   updateNavIndicator();
-  updateScrollTopBtn();
+  requestAnimationFrame(function () { setTimeout(updateScrollTopBtn, 0); });
 }
 function updateNavIndicator() {
   const indicator = document.getElementById('navIndicator');
@@ -4404,7 +4506,7 @@ function compactINR(n) {
   const trim = function (x, d) { return x.toFixed(d).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0+$/, '$1'); };
   if (a >= 1e7) return '₹' + trim(n / 1e7, 2) + ' Cr';
   if (a >= 1e5) return '₹' + trim(n / 1e5, 2) + ' L';
-  return '₹' + Math.round(n).toLocaleString('en-IN');
+  return '₹' + NF_INT.format(Math.round(n));
 }
 function compactNum(n) {
   n = Number(n) || 0;
@@ -4420,7 +4522,7 @@ function daysAgoText(t) {
   if (d < 730) return Math.round(d / 30.4) + ' months ago';
   return Math.round(d / 365) + ' years ago';
 }
-function shortDay(t) { return new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }
+function shortDay(t) { return dfmt(DF_D_MON, t); }
 
 // ---- the data -------------------------------------------------------------
 
@@ -4593,7 +4695,7 @@ function renderDashKpis(kinds, items, all, stats, ready) {
     const total = all.reduce(function (s, r) { return s + (r.value || 0); }, 0);
     const missing = all.filter(function (r) { return r.cost === null && r.balance > 0; }).length;
     cards.push(kpiHtml({
-      icon: DB_ICONS.value, label: 'Stock value', value: compactINR(total), title: '₹' + Math.round(total).toLocaleString('en-IN') + ' at standard cost', go: 'stock',
+      icon: DB_ICONS.value, label: 'Stock value', value: compactINR(total), title: '₹' + NF_INT.format(Math.round(total)) + ' at standard cost', go: 'stock',
       sub: missing ? (permOk(PAGE_PERMS.costs) ? '<button type="button" class="kpi-link" data-go="costs">' + plural(missing, 'item') + ' in stock with no standard cost &rarr;</button>' : plural(missing, 'item') + ' in stock with no standard cost') : 'At standard cost',
       extra: kinds.length > 1 ? mixBar(kinds.map(function (k) { return { kind: k, v: items[k].reduce(function (s, r) { return s + (r.value || 0); }, 0) }; })) : ''
     }));
@@ -4685,7 +4787,7 @@ function roundTopPath(x, y, w, h, r) {
     'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r) + 'V' + (y + h) + 'Z';
 }
 function bucketLabel(b, step) {
-  return step > 1 ? shortDay(b.start) + ' – ' + shortDay(b.end - DAY_MS) : new Date(b.start).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  return step > 1 ? shortDay(b.start) + ' – ' + shortDay(b.end - DAY_MS) : dfmt(DF_WD_D_MON, b.start);
 }
 
 function renderDashActivity(kinds, stats, ready) {
@@ -4921,19 +5023,22 @@ function dashLedgerArrived() {
 
 // A just-posted entry joins the history at once, so the dashboard counts it
 // without reloading the whole ledger.
-function noteLocalEntry(config, code, txnType, qty, department, txnId, day) {
+function noteLocalEntry(config, code, txnType, qty, department, txnId, day, extra) {
   const full = ledgerComplete[config.key];
   if (!full || !Array.isArray(full.rows) || !txnId) return;
   if (full.rows.some(function (r) { return r.txnId === txnId; })) return;
+  extra = extra || {};
   const master = (state[config.masterKey] || []).find(function (m) { return m[config.codeField] === code; }) || {};
-  const when = day ? new Date(day + 'T00:00:00').getTime() : Date.now();
-  full.rows.unshift({
-    ts: when, dateText: day ? formatDayShort(day) : formatDateTime(new Date()), dateISO: localDayISO(new Date(when)),
-    code: code, name: master[config.nameField] || '', category: master[config.subCategoryField || config.categoryField] || '',
-    txnId: txnId, attachCount: 0, row: 0, type: txnType, qty: Number(qty) || 0, unit: master[config.unitField] || '',
-    department: department || '', reference: '', supplier: '', invoiceNo: '', invoiceDate: '', remarks: '',
-    enteredBy: (state.session && state.session.username) || '', reversalOf: '', reversedBy: '', value: 0
-  });
+  const now = new Date().toISOString();
+  // In the shape the server sends, so it maps, shows and is kept like any other.
+  const raw = { TxnID: txnId, Date: day ? day + 'T00:00:00' : now, Timestamp: now, TxnType: txnType, Qty: Number(qty) || 0,
+                Unit: master[config.unitField] || '', Department: department || '', Reference: extra.reference || '',
+                Supplier: extra.supplier || '', InvoiceNo: extra.invoiceNo || '', InvoiceDate: extra.invoiceDate || '',
+                Remarks: extra.remarks || '', EnteredBy: (state.session && state.session.username) || '', AttachmentCount: 0 };
+  raw[config.codeField] = code;
+  full.rows.unshift(mapLedgerRows(config, [raw])[0]);
+  full.sig = ledgerSig(full.rows);
+  saveLedgerToDevice(config.key, full.rows);
 }
 
 function wireDashboard() {
@@ -4975,6 +5080,58 @@ function wireDashboard() {
 /* =========================================================================
    TRANSACTION MODAL
    ========================================================================= */
+// The suppliers offered on an entry: this item's last one first.
+function supplierOptions(kind, code) {
+  const out = [], seen = {};
+  const add = function (v) { v = String(v || '').replace(/\s+/g, ' ').trim(); const k = v.toLowerCase(); if (v && !seen[k]) { seen[k] = true; out.push(v); } };
+  const last = code && lastSuppliers(kind)[code];
+  if (last) add(last.name);
+  ((state.dropdowns && state.dropdowns.Supplier) || []).forEach(add);
+  const full = ledgerComplete[kind];
+  if (full && Array.isArray(full.rows)) full.rows.forEach(function (m) { add(m.supplier); });
+  return { list: out, last: last ? last.name : '' };
+}
+function fillSupplierBox(kind, code) {
+  const input = document.getElementById('txnSupplier');
+  const o = supplierOptions(kind, code);
+  input.dataset.options = JSON.stringify(o.list);
+  input.value = ''; input.dataset.lastValid = '';
+  document.getElementById('txnSupplierHint').textContent = o.last ? 'Last supplier for this item: ' + o.last : '';
+}
+// A new name that is nearly one already listed — "Acme Film" beside
+// "ACME Films" — is usually a slip, so it is asked about before saving.
+function squashName(v) { return String(v || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function nameDistance(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 3;
+  const prev = []; for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0]; prev[0] = i;
+    for (let j = 1; j <= b.length; j++) { const t = prev[j]; prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1)); diag = t; }
+  }
+  return prev[b.length];
+}
+function nearName(v, list) {
+  const q = squashName(v);
+  if (!q) return '';
+  let best = '', bestD = 3;
+  list.forEach(function (o) {
+    const k = squashName(o);
+    if (!k || k === q && String(o).toLowerCase() === String(v).toLowerCase()) return;
+    const d = k === q ? 0 : (q.length >= 4 && (k.indexOf(q) === 0 || q.indexOf(k) === 0) ? 1 : nameDistance(q, k));
+    if (d < bestD && (d <= 1 || q.length >= 6)) { best = o; bestD = d; }
+  });
+  return best;
+}
+// Names saved that the server added to a list: offered from now on.
+function noteLearned(learned) {
+  (learned || []).forEach(function (l) {
+    state.dropdowns = state.dropdowns || {};
+    const list = state.dropdowns[l.list] = state.dropdowns[l.list] || [];
+    if (!list.some(function (v) { return String(v).toLowerCase() === String(l.value).toLowerCase(); })) list.push(l.value);
+  });
+  if (learned && learned.length) { try { const c = JSON.parse(localStorage.getItem(BOOT_CACHE_KEY) || 'null'); if (c && c.data) { c.data.dropdowns = state.dropdowns; localStorage.setItem(BOOT_CACHE_KEY, JSON.stringify(c)); } } catch (e) {} }
+}
+
 function openTxnModal(key, code) {
   resetTxnAttachments();
   activeTxnConfig = uiConfig(key);
@@ -5007,10 +5164,10 @@ function openTxnModal(key, code) {
 
   ['txnQty', 'txnRate', 'txnReference', 'txnRemarks', 'txnSupplier', 'txnInvoiceNo', 'txnInvoiceDate', 'txnLotNo', 'txnExpiry', 'txnError', 'txnWarn'].forEach(id => { document.getElementById(id).value = ''; document.getElementById(id).textContent = ''; });
 
-  // Supplier list comes from the Dropdowns tab, in the tab's own order.
-  const suppliers = (state.dropdowns && state.dropdowns.Supplier) || [];
-  document.getElementById('txnSupplier').innerHTML = '<option value="">None</option>' +
-    suppliers.map(function (s) { return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; }).join('');
+  // Pick a supplier or type a new one (3.33): the Dropdowns tab's list in its
+  // own order, then any other name already on this ledger's receipts, with
+  // this item's last supplier first. A new name joins the list when saved.
+  fillSupplierBox(key, code);
 
   const dateInput = document.getElementById('txnDate');
   dateInput.max = localDayISO(new Date()); dateInput.value = localDayISO(new Date());
@@ -5292,13 +5449,13 @@ const priceCache = {};
 let txnRateTouched = false;
 
 function formatRupees(n) {
-  return '\u20b9' + Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  return '\u20b9' + NF_RUPEES.format(Number(n));
 }
 
 function shortDate(d) {
   const date = new Date(d);
   if (!d || isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  return DF_DAY.format(date);
 }
 
 // The item's Standard cost, or null when none is set. Zero is "not set", not
@@ -5452,6 +5609,20 @@ async function handleTxnSubmit(e) {
     : typeNow === 'Return to supplier' && !document.getElementById('txnReference').value.trim() ? 'Put the debit note or return challan number in Reference.'
     : '';
   if (missing) { document.getElementById('txnError').textContent = missing; return; }
+  // A supplier that is new but nearly one already listed is asked about once.
+  if (activeTxnConfig && (activeTxnConfig.supplierTypes || []).indexOf(typeNow) > -1) {
+    const supIn = document.getElementById('txnSupplier');
+    supIn.value = supIn.value.replace(/\s+/g, ' ').trim();
+    const opts = (function () { try { return JSON.parse(supIn.dataset.options || '[]'); } catch (x) { return []; } })();
+    const listed = opts.find(function (o) { return o.toLowerCase() === supIn.value.toLowerCase(); });
+    if (listed) supIn.value = listed;
+    else if (supIn.value) {
+      const near = nearName(supIn.value, opts);
+      if (near && !await confirmDialog('“' + supIn.value + '” is not on the supplier list yet. Did you mean “' + near + '”?', { title: 'New supplier?', confirmText: 'Save as typed', cancelText: 'Go back', danger: false })) {
+        supIn.focus(); return;
+      }
+    }
+  }
   const errEl = document.getElementById('txnError'); const btn = document.getElementById('txnSubmit');
   errEl.textContent = ''; setBtnLoading(btn, 'Posting…');
   const config = activeTxnConfig; const code = document.getElementById('txnCode').value; const txnType = document.getElementById('txnType').value;
@@ -5479,7 +5650,9 @@ async function handleTxnSubmit(e) {
   try {
     const result = await api(config.addAction, payload); applyLocalStockUpdate(config, code, result.newBalance);
     clearPendingTxn();
-    if (!result.duplicate) noteLocalEntry(config, code, txnType, payload.qty, payload.department, result.txnId, entryDate);
+    noteLearned(result.learned);
+    if (!result.duplicate) noteLocalEntry(config, code, txnType, payload.qty, payload.department, result.txnId, entryDate,
+      { supplier: result.supplier || payload.supplier, invoiceNo: payload.invoiceNo, invoiceDate: payload.invoiceDate, reference: payload.reference, remarks: payload.remarks || payload.noIndentReason });
     // A receipt at a stated rate is now the last price paid.
     if (payload.rate !== '' && payload.rate !== undefined && Number(payload.rate) > 0 &&
         config.inTypes && config.inTypes.indexOf(txnType) > -1) {
@@ -5489,7 +5662,8 @@ async function handleTxnSubmit(e) {
     state[config.key + 'LastUpdated'] = new Date(); updateFreshnessLabel(config.key);
     const postedMsg = result.duplicate
       ? 'Already recorded · ' + code + ' · balance ' + qtyWithUnit(result.newBalance, unit) + ' (no second entry made)'
-      : 'Posted ' + txnType + (entryDate ? ' dated ' + formatDay(entryDate) : '') + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit);
+      : 'Posted ' + txnType + (entryDate ? ' dated ' + formatDay(entryDate) : '') + ' · ' + code + ' · new balance ' + qtyWithUnit(result.newBalance, unit) +
+        (result.learned && result.learned.length ? ' · ' + result.learned.map(function (l) { return l.value; }).join(', ') + ' added to the supplier list' : '');
     if (result.warning) toast(result.warning, true);
     renderStockPage(config.key);
     renderHome();
@@ -6252,7 +6426,7 @@ function renderField_(f, val) {
     const missing = cur && opts.indexOf(cur) === -1;
     const listJson = escapeHtml(JSON.stringify(missing ? [cur].concat(opts) : opts));
     // allowNew: the list suggests, and a new value can be typed (Trade category).
-    const free = f.allowNew ? ' data-allow-new="1"' : '';
+    const free = f.allowNew ? ' data-allow-new="1" data-new-list="' + escapeHtml(f.newList || 'the list') + '" maxlength="100"' : '';
     return '<div class="field"><label for="' + id + '">' + f.label + (f.required ? ' *' : '') + '</label>' +
       '<div class="combo" data-combo>' +
       '<input type="text" class="combo-input" id="' + id + '" data-key="' + f.key + '" value="' + escapeHtml(cur) + '"' +
@@ -6279,10 +6453,16 @@ function renderComboList_(combo, filter) {
   const opts = comboOptions_(input);
   const q = String(filter || '').trim().toLowerCase();
   const shown = q ? opts.filter(function (o) { return String(o).toLowerCase().indexOf(q) > -1; }) : opts;
-  if (shown.length === 0) {
-    list.innerHTML = '<div class="combo-empty">' + (input.dataset.allowNew === '1' && q ? 'New: \u201c' + escapeHtml(String(filter).trim()) + '\u201d' : 'No match') + '</div>';
+  // A list that takes new values offers what was typed, when it isn't
+  // already there, as its own row: picked, or simply kept, it is added to
+  // the list when the form is saved (3.33).
+  const typed = String(filter || '').replace(/\s+/g, ' ').trim();
+  const offerNew = input.dataset.allowNew === '1' && typed && !opts.some(function (o) { return String(o).toLowerCase() === typed.toLowerCase(); });
+  const newRow = offerNew ? '<div class="combo-option combo-new' + (shown.length ? '' : ' is-active') + '" data-value="' + escapeHtml(typed) + '"><b>+ \u201c' + escapeHtml(typed) + '\u201d</b><small>New \u2014 added to ' + escapeHtml(input.dataset.newList || 'the list') + ' when you save</small></div>' : '';
+  if (shown.length === 0 && !newRow) {
+    list.innerHTML = '<div class="combo-empty">No match</div>';
   } else {
-    list.innerHTML = shown.map(function (o, i) {
+    list.innerHTML = newRow + shown.map(function (o, i) {
       const sel = String(o) === input.value ? ' is-selected' : '';
       return '<div class="combo-option' + sel + (i === 0 ? ' is-active' : '') + '" data-value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</div>';
     }).join('');
@@ -6300,7 +6480,12 @@ function closeCombo_(combo) {
 // combobox would quietly reintroduce the typo problem the curated list exists
 // to prevent.
 function enforceComboValue_(input) {
-  if (input.dataset.allowNew === '1') { input.value = input.value.trim(); input.dataset.lastValid = input.value; return; }
+  if (input.dataset.allowNew === '1') {
+    // Typed in another case or with extra spaces, a listed name is used as listed.
+    const v = input.value.replace(/\s+/g, ' ').trim();
+    const listed = comboOptions_(input).map(String).find(function (o) { return o.toLowerCase() === v.toLowerCase(); });
+    input.value = listed || v; input.dataset.lastValid = input.value; return;
+  }
   const opts = comboOptions_(input).map(String);
   if (input.value && opts.indexOf(input.value) === -1) {
     const ci = opts.find(function (o) { return o.toLowerCase() === input.value.toLowerCase(); });
@@ -6426,8 +6611,9 @@ async function handleItemSubmit(e) {
   const code = document.getElementById('itemCode').value.trim(); const params = {}; params[config.codeField] = code;
   document.querySelectorAll('#itemFieldsMain [data-key], #itemFieldsMore [data-key]').forEach(function (el) { params[el.dataset.key] = el.value; });
   try {
-    if (activeItemMode === 'add') { await api(config.addItemAction, params); const row = Object.assign({}, params); row.Active = true; state[config.masterKey].push(row); toast('Added ' + code); } 
-    else { await api(config.updateItemAction, params); const list = state[config.masterKey]; const idx = list.findIndex(function (m) { return m[config.codeField] === code; }); if (idx > -1) Object.assign(list[idx], params); toast('Saved ' + code); }
+    const addedNote = function (r) { return r && r.learned && r.learned.length ? ' · ' + r.learned.map(function (l) { return l.value; }).join(', ') + ' added to the list' : ''; };
+    if (activeItemMode === 'add') { const r = await api(config.addItemAction, params); Object.assign(params, (r && r.item) || {}); noteLearned(r && r.learned); const row = Object.assign({}, params); row.Active = true; if (r && r.idNo) row[config.idField] = r.idNo; state[config.masterKey].push(row); toast('Added ' + code + addedNote(r)); } 
+    else { const r = await api(config.updateItemAction, params); Object.assign(params, (r && r.item) || {}); noteLearned(r && r.learned); const list = state[config.masterKey]; const idx = list.findIndex(function (m) { return m[config.codeField] === code; }); if (idx > -1) Object.assign(list[idx], params); toast('Saved ' + code + addedNote(r)); }
     invalidateMergeCache();
     closeItemModal(); populateCategoryFilters(); renderStockPage(config.key); renderHome();
   } catch (err) { errEl.textContent = err.message; } finally { clearBtnLoading(btn, activeItemMode === 'add' ? 'Create item' : 'Save changes'); }
@@ -6900,6 +7086,65 @@ function setNote(el, text, onRetry) {
 }
 function setLedgerStatus(text, onRetry) { setNote(document.getElementById('ldgStatus'), text, onRetry); }
 
+// ---- Every entry, kept on this device (3.33) ----
+// The whole of each ledger, as the server sent it, in this browser's
+// database, so the Overview's movement cards and the Ledger open complete
+// the moment the app does, and are brought up to date quietly behind. Kept
+// per person and wiped at sign-out. Nothing here is ever sent anywhere.
+const LDB_NAME = 'stock-ledgers', LDB_STORE = 'ledgers', LDB_MAX_AGE = 14 * 86400000;
+let ldbHandle = null;
+function ldbOpen() {
+  if (ldbHandle) return ldbHandle;
+  ldbHandle = new Promise(function (resolve, reject) {
+    if (!window.indexedDB) return reject(new Error('no IndexedDB'));
+    const req = indexedDB.open(LDB_NAME, 1);
+    req.onupgradeneeded = function () { req.result.createObjectStore(LDB_STORE); };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { reject(req.error); };
+    req.onblocked = function () { reject(new Error('blocked')); };
+  });
+  ldbHandle.catch(function () { ldbHandle = null; });
+  return ldbHandle;
+}
+function ldbKey(kind) { return ((state.session && state.session.username) || '') + ':' + kind; }
+function ldbDo(mode, fn) {
+  return ldbOpen().then(function (db) {
+    return new Promise(function (resolve, reject) {
+      const tx = db.transaction(LDB_STORE, mode), st = tx.objectStore(LDB_STORE);
+      const req = fn(st);
+      tx.oncomplete = function () { resolve(req && req.result); };
+      tx.onerror = tx.onabort = function () { reject(tx.error); };
+    });
+  });
+}
+function saveLedgerToDevice(kind, rows) {
+  if (!state.session) return;
+  const config = uiConfig(kind);
+  const raw = rows.map(function (m) { return m.raw || rawFromMapped(config, m); });
+  ldbDo('readwrite', function (st) { return st.put({ at: Date.now(), user: state.session.username, rows: raw }, ldbKey(kind)); }).catch(function () {});
+}
+// At start: what this device held, at once. Never waits more than a moment.
+function restoreLedgersFromDevice() {
+  if (!state.session) return Promise.resolve();
+  const user = state.session.username;
+  const read = Promise.all(STOCK_KINDS.map(function (kind) {
+    if (ledgerComplete[kind]) return null;
+    return ldbDo('readonly', function (st) { return st.get(ldbKey(kind)); }).then(function (c) {
+      if (!c || c.user !== user || !Array.isArray(c.rows) || Date.now() - c.at > LDB_MAX_AGE || ledgerComplete[kind]) return;
+      // Shown as it is, and due a quiet refresh (at 0).
+      rememberCompleteLedger(kind, mapLedgerRows(uiConfig(kind), c.rows), { fromDevice: true });
+    }).catch(function () {});
+  }));
+  return Promise.race([read, new Promise(function (r) { setTimeout(r, 600); })]);
+}
+function forgetLedgersOnDevice() {
+  ldbDo('readwrite', function (st) { return st.clear(); }).catch(function () {});
+}
+// What a refresh is compared with, so one that brings nothing new redraws nothing.
+function ledgerSig(rows) {
+  try { return rows.length + ':' + JSON.stringify(rows.map(function (m) { return m.raw || m; })); } catch (e) { return String(Math.random()); }
+}
+
 function ledgerCacheKey(kind) { return 'stock_ldg_cache_' + kind; }
 function readLedgerCache(kind) {
   try { const c = JSON.parse(localStorage.getItem(ledgerCacheKey(kind)) || 'null'); return c && Array.isArray(c.rows) ? c : null; }
@@ -6976,9 +7221,15 @@ async function fetchRestOfLedger(config, filters, rows, stillWanted) {
   }
 }
 
-function rememberCompleteLedger(kind, rows) {
-  ledgerComplete[kind] = { rows: rows, at: Date.now() };
-  dashLedgerArrived();
+function rememberCompleteLedger(kind, rows, opts) {
+  opts = opts || {};
+  const prev = ledgerComplete[kind];
+  const sig = ledgerSig(rows);
+  ledgerComplete[kind] = { rows: rows, at: opts.fromDevice ? 0 : Date.now(), sig: sig };
+  if (!opts.fromDevice) { dashHistoryFailed[kind] = false; saveLedgerToDevice(kind, rows); }
+  // Only what changed is redrawn: a quiet refresh that finds the same
+  // entries leaves the screen alone.
+  if (!prev || prev.sig !== sig) dashLedgerArrived();
 }
 
 // ---- RM and FG, each with its own entries and filters ----
@@ -7030,6 +7281,16 @@ function markLedgersStale() {
   });
 }
 
+// A newer copy of the ledger on screen, swapped in where the reader is.
+function refreshShownLedger(kind) {
+  const full = ledgerComplete[kind];
+  if (!full || kind !== state.ledgerKind) return;
+  const page = state.ledgerPage;
+  showCompleteLedger(kind, full);
+  state.ledgerPage = page;
+  renderLedgerPage();
+}
+
 // The whole ledger, no filters, straight from memory.
 function showCompleteLedger(kind, full) {
   state.ledgerRows = full.rows; state.ledgerHasMore = false; state.ledgerLoaded = true;
@@ -7053,7 +7314,14 @@ async function loadLedgerPage(opts) {
   // quietly if it's been a while.
   if (plain && !opts.background && !opts.retry && ledgerComplete[kind]) {
     showCompleteLedger(kind, ledgerComplete[kind]);
-    if (Date.now() - ledgerComplete[kind].at > LEDGER_STALE_MS) loadLedgerPage({ background: true });
+    if (ledgerWarming[kind]) {
+      // The start-up refresh of this ledger is on its way: its answer is
+      // swapped in when it lands, if anything changed, rather than asked twice.
+      const sig0 = ledgerComplete[kind].sig;
+      ledgerWarming[kind].then(function () {
+        if (current() && ledgerComplete[kind] && ledgerComplete[kind].sig !== sig0) refreshShownLedger(kind);
+      });
+    } else if (Date.now() - ledgerComplete[kind].at > LEDGER_STALE_MS) loadLedgerPage({ background: true });
     return;
   }
 
@@ -7080,7 +7348,9 @@ async function loadLedgerPage(opts) {
   }
 
   if (!showingOld && !opts.retry) renderTableSkeleton('ldgTableBody', 8, 8);
-  setLedgerStatus(showingOld ? 'Refreshing…' : '');
+  // A quiet refresh behind a full table says nothing: the table is usable,
+  // and it changes only if something did.
+  setLedgerStatus(showingOld && !opts.background ? 'Refreshing…' : '');
   if (!opts.background) setBtnLoading(btn, 'Loading…', true);
   state.ledgerRefreshing = true;
   const retry = function () { loadLedgerPage({ retry: true, background: showingOld }); };
@@ -7098,14 +7368,23 @@ async function loadLedgerPage(opts) {
       if (!rows) return;
       hasMore = false;
     }
-    state.ledgerRows = mapLedgerRows(config, rows);
-    state.ledgerHasMore = hasMore;
-    state.ledgerLoaded = true; state.ledgerLoadedAt = Date.now();
-    if (!opts.background) state.ledgerPage = 1;
+    const mapped = mapLedgerRows(config, rows);
+    const same = opts.background && plain && !hasMore && ledgerComplete[kind] && ledgerComplete[kind].sig === ledgerSig(mapped)
+      && state.ledgerRows === ledgerComplete[kind].rows;
     if (plain) writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length > LEDGER_FIRST || hasMore);
-    if (plain && !hasMore) rememberCompleteLedger(kind, state.ledgerRows);
+    if (same) {
+      // Nothing new: the table on screen stays exactly as it is.
+      ledgerComplete[kind].at = Date.now(); state.ledgerLoadedAt = Date.now();
+      saveLedgerToDevice(kind, ledgerComplete[kind].rows);
+    } else {
+      state.ledgerRows = mapped;
+      state.ledgerHasMore = hasMore;
+      state.ledgerLoaded = true; state.ledgerLoadedAt = Date.now();
+      if (!opts.background) state.ledgerPage = 1;
+      if (plain && !hasMore) rememberCompleteLedger(kind, state.ledgerRows);
+      renderLedgerPage();
+    }
     setLedgerStatus('');
-    renderLedgerPage();
     shown = true;
   } catch (err) {
     if (!current()) return;
@@ -7210,16 +7489,25 @@ function warmLedgers() {
       // The Ledger page is already loading this one in full.
       if (ledgerRest && ledgerRest.kind === kind && ledgerFiltersAreDefault(currentLedgerPageFilters())) return;
       const config = uiConfig(kind);
-      const always = function () { return true; };
+      // An answer that lands after a sign-out belongs to the last person.
+      const who = state.session && state.session.token;
+      const always = function () { return !!state.session && state.session.token === who; };
       const p = api(config.ledgerAction, { limit: LEDGER_CHUNK })
         .then(function (rows) { return rows.length >= LEDGER_CHUNK ? fetchRestOfLedger(config, {}, rows, always) : rows; })
         .then(function (rows) {
+          if (!rows || !always()) return 'gone';
           writeLedgerCache(kind, rows.slice(0, LEDGER_FIRST), rows.length > LEDGER_FIRST);
           rememberCompleteLedger(kind, mapLedgerRows(config, rows));
           return true;
         })
         .catch(function () { return false; })
-        .then(function (ok) { ledgerWarming[kind] = null; if (!ok) dashLedgerFailed(kind); return ok; });
+        .then(function (ok) {
+          if (ledgerWarming[kind] !== p) return false;  // signed out meanwhile; the next sign-in loads its own
+          ledgerWarming[kind] = null;
+          if (ok === 'gone') return false;
+          if (!ok) dashLedgerFailed(kind);
+          return ok;
+        });
       ledgerWarming[kind] = p;
     });
   }, 1500);
@@ -8612,7 +8900,10 @@ function wireCostsPage() {
 const DD_NAMES = { RM_Category: 'RM categories', FG_Family: 'FG families', FG_Category: 'FG categories', Trade_Category: 'Trade categories',
                    Unit: 'Units', Supplier: 'Suppliers', OLCustomer: 'OL customers', Holidays: 'Holidays', 'Weekly Off': 'Weekly off days' };
 const DD_HINTS = { Holidays: 'No automatic mail goes out on these days.', 'Weekly Off': 'Day names, like Sunday. No automatic mail goes out on them.',
-                   Unit: 'Used by RM, FG and Trade items.' };
+                   Unit: 'Used by RM, FG and Trade items.',
+                   Supplier: 'A new supplier typed on an entry or an item is added here when it is saved.',
+                   OLCustomer: 'A new OL customer typed on an FG item is added here when it is saved.',
+                   Trade_Category: 'A new category typed on a Trade item is added here when it is saved.' };
 const ddView = { data: null, list: null, renaming: null, loading: null };
 function ddLabel(name) { return DD_NAMES[name] || name.replace(/_/g, ' '); }
 async function renderDropdownsPage(force) {
@@ -9242,8 +9533,8 @@ function syncIndentBadge() {
 }
 const INDENT_TONE = { 'Pending': 'warn', 'Approved': 'info', 'Part issued': 'info', 'Issued': 'ok', 'Received': 'ok', 'Rejected': 'bad', 'Cancelled': 'mute', 'Closed short': 'mute' };
 function indentBadge(s) { return '<span class="ind-st is-' + (INDENT_TONE[s] || 'mute') + '">' + escapeHtml(s) + '</span>'; }
-function indentDay(v) { return v ? new Date(v).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : ''; }
-function indentWhen(v) { return v ? new Date(v).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''; }
+function indentDay(v) { return v ? dfmt(DF_DAY_SHORT, v) : ''; }
+function indentWhen(v) { return v ? dfmt(DF_DAY_TIME, v) : ''; }
 function indentWho(u) { const x = (state.users || []).filter(function (y) { return String(y.Username || y.username).toLowerCase() === String(u).toLowerCase(); })[0]; return x ? (x.Name || x.name || u) : u; }
 function rmItems() { return mergeStock(state.rmMaster || [], state.rmStock || [], uiConfig('rm'), false); }
 function rmByCode(code) { return rmItems().filter(function (i) { return String(i.code).toUpperCase() === String(code || '').trim().toUpperCase(); })[0]; }
