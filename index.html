@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.33.0">
+<meta name="app-version" content="3.33.1">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -482,6 +482,13 @@
   .seg button:hover { color: var(--ink); background: var(--hover-surface); }
   .seg button.is-on { background: var(--ink); color: var(--panel); }
   .seg button i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  /* A count on a filter button: a small upright pill, not text squeezed into a dot. */
+  .seg-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+    background: var(--line-soft); color: var(--ink-soft); font-size: 11.5px; font-weight: 700; font-style: normal; line-height: 1; font-variant-numeric: tabular-nums; }
+  .seg button.is-on .seg-n { background: color-mix(in srgb, var(--panel) 22%, transparent); color: inherit; }
+  .seg-n.is-hot, .seg button.is-on .seg-n.is-hot { background: var(--copper); color: #fff; }
+  .ind-draft-note { font-size: 13px; color: var(--ink-soft); background: var(--copper-soft); border-radius: 8px; padding: 8px 12px; margin: 0 0 14px; }
+  .ind-draft-note .link-btn { margin-left: 6px; }
   .db-refresh { width: 38px; height: 38px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-soft); display: inline-grid; place-items: center; box-shadow: var(--shadow-sm); }
   .db-refresh:hover { color: var(--copper); }
   .db-refresh.is-busy svg { animation: dbSpin 0.9s linear infinite; }
@@ -778,6 +785,16 @@
   .pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; font-size: 13.5px; font-weight: 500; color: var(--ink-soft); background: var(--paper); border-top: 1px solid var(--line); }
   .pagination .btn-ghost { padding: 6px 14px; }
   .pagination .btns { display: flex; gap: 10px; }
+  /* First / Previous / page box / Next / Last (3.33.1). */
+  .pagination { flex-wrap: wrap; gap: 10px; }
+  .pagination .pager { align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pg-jump { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+  .pg-jump input { width: 64px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink);
+    font: inherit; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+  .pg-jump input::-webkit-outer-spin-button, .pg-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pg-jump input:focus { outline: none; border-color: var(--copper); box-shadow: 0 0 0 3px var(--copper-soft); }
+  .pg-jump b { font-variant-numeric: tabular-nums; }
+  @media (max-width: 780px) { .pagination .pg-end { padding: 6px 10px; } .pagination { justify-content: center; } }
 
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; animation: pageIn 0.2s var(--ease) both; }
   .panel-head { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; padding: 20px 24px; border-bottom: 1px solid var(--line-soft); color: var(--ink); }
@@ -1064,6 +1081,10 @@
   .iv-scroll img { max-width: 100%; max-height: 100%; cursor: zoom-in; }
   .iv-scroll.is-zoomed { align-items: flex-start; justify-content: flex-start; }
   .iv-scroll.is-zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+  /* The preview, enlarged, while the full picture arrives (3.33.1). */
+  .iv-scroll img.is-preview { width: min(100%, 1100px); height: auto; filter: blur(1.5px); cursor: progress; }
+  .iv-loading { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: rgba(0,0,0,.65); color: #fff;
+    font-size: 12.5px; padding: 7px 12px; border-radius: 999px; pointer-events: none; }
 
   /* Which app's switches are showing. */
   .app-switch { display: inline-flex; gap: 4px; padding: 3px; margin: 6px 0 10px; border: 1px solid var(--line);
@@ -1937,7 +1958,7 @@
             <tbody id="rmTableBody"></tbody>
           </table>
         </div>
-          <div class="pagination"><span id="rmPageInfo"></span><div class="btns"><button class="btn-ghost" id="rmPrevBtn">Previous</button><button class="btn-ghost" id="rmNextBtn">Next</button></div></div>
+          <div class="pagination"><span id="rmPageInfo"></span><div class="btns pager"><button class="btn-ghost pg-end" id="rmFirstBtn" title="First page" aria-label="First page">&laquo; First</button><button class="btn-ghost" id="rmPrevBtn" aria-label="Previous page">&lsaquo; Previous</button><label class="pg-jump">Page <input type="number" id="rmPageInput" min="1" step="1" inputmode="numeric" aria-label="Page number"> of <b id="rmPageCount">1</b></label><button class="btn-ghost" id="rmNextBtn" aria-label="Next page">Next &rsaquo;</button><button class="btn-ghost pg-end" id="rmLastBtn" title="Last page" aria-label="Last page">Last &raquo;</button></div></div>
       </div>
     </section>
 
@@ -1979,7 +2000,7 @@
             <tbody id="fgTableBody"></tbody>
           </table>
         </div>
-          <div class="pagination"><span id="fgPageInfo"></span><div class="btns"><button class="btn-ghost" id="fgPrevBtn">Previous</button><button class="btn-ghost" id="fgNextBtn">Next</button></div></div>
+          <div class="pagination"><span id="fgPageInfo"></span><div class="btns pager"><button class="btn-ghost pg-end" id="fgFirstBtn" title="First page" aria-label="First page">&laquo; First</button><button class="btn-ghost" id="fgPrevBtn" aria-label="Previous page">&lsaquo; Previous</button><label class="pg-jump">Page <input type="number" id="fgPageInput" min="1" step="1" inputmode="numeric" aria-label="Page number"> of <b id="fgPageCount">1</b></label><button class="btn-ghost" id="fgNextBtn" aria-label="Next page">Next &rsaquo;</button><button class="btn-ghost pg-end" id="fgLastBtn" title="Last page" aria-label="Last page">Last &raquo;</button></div></div>
       </div>
     </section>
 
@@ -2019,7 +2040,7 @@
             <tbody id="tradeTableBody"></tbody>
           </table>
         </div>
-          <div class="pagination"><span id="tradePageInfo"></span><div class="btns"><button class="btn-ghost" id="tradePrevBtn">Previous</button><button class="btn-ghost" id="tradeNextBtn">Next</button></div></div>
+          <div class="pagination"><span id="tradePageInfo"></span><div class="btns pager"><button class="btn-ghost pg-end" id="tradeFirstBtn" title="First page" aria-label="First page">&laquo; First</button><button class="btn-ghost" id="tradePrevBtn" aria-label="Previous page">&lsaquo; Previous</button><label class="pg-jump">Page <input type="number" id="tradePageInput" min="1" step="1" inputmode="numeric" aria-label="Page number"> of <b id="tradePageCount">1</b></label><button class="btn-ghost" id="tradeNextBtn" aria-label="Next page">Next &rsaquo;</button><button class="btn-ghost pg-end" id="tradeLastBtn" title="Last page" aria-label="Last page">Last &raquo;</button></div></div>
       </div>
     </section>
 
@@ -2066,7 +2087,7 @@
             <tbody id="ldgTableBody"></tbody>
           </table>
         </div>
-          <div class="pagination"><span id="ldgPageInfo"></span><div class="btns"><button class="btn-ghost" id="ldgPrevBtn">Previous</button><button class="btn-ghost" id="ldgNextBtn">Next</button></div></div>
+          <div class="pagination"><span id="ldgPageInfo"></span><div class="btns pager"><button class="btn-ghost pg-end" id="ldgFirstBtn" title="First page" aria-label="First page">&laquo; First</button><button class="btn-ghost" id="ldgPrevBtn" aria-label="Previous page">&lsaquo; Previous</button><label class="pg-jump">Page <input type="number" id="ldgPageInput" min="1" step="1" inputmode="numeric" aria-label="Page number"> of <b id="ldgPageCount">1</b></label><button class="btn-ghost" id="ldgNextBtn" aria-label="Next page">Next &rsaquo;</button><button class="btn-ghost pg-end" id="ldgLastBtn" title="Last page" aria-label="Last page">Last &raquo;</button></div></div>
       </div>
     </section>
 
@@ -2110,7 +2131,7 @@
       <div class="page-head"><h2>Indents</h2><p>Raw material asked for by production, against a batch: approved, issued and received.</p></div>
       <div class="page-doc-body tool-page">
         <div class="tool-bar">
-          <div class="seg" id="indentFilter" role="group" aria-label="Show"><button type="button" data-f="me">Needs me <i></i></button><button type="button" data-f="open">Open <i></i></button><button type="button" data-f="all">All <i></i></button></div>
+          <div class="seg" id="indentFilter" role="group" aria-label="Show"><button type="button" data-f="me">Needs me <span class="seg-n"></span></button><button type="button" data-f="open">Open <span class="seg-n"></span></button><button type="button" data-f="all">All <span class="seg-n"></span></button></div>
           <select id="indentDept" class="hidden" aria-label="Department"></select>
           <span class="tool-spacer"></span>
           <span class="tool-actions"><button type="button" class="btn-ghost btn-compact" id="indentRefreshBtn">Refresh</button><button type="button" class="btn-primary btn-compact hidden" id="indentNewBtn">New indent</button></span>
@@ -2336,6 +2357,7 @@
     <button type="button" class="iv-btn" id="ivClose" aria-label="Close">✕</button>
   </div>
   <div class="iv-scroll" id="ivScroll"><img id="ivImg" alt=""></div>
+  <div class="iv-loading hidden" id="ivLoading" aria-live="polite"></div>
 </div>
 
 <div id="itemModal" class="modal-backdrop hidden">
@@ -2579,7 +2601,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.33.0';
+const APP_VERSION = '3.33.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -4413,6 +4435,36 @@ function applyStockFilters_(config, rows) {
   return rows;
 }
 
+// The page buttons under a table: what can be pressed, and where you are.
+function syncPager(prefix, page, totalPages, more) {
+  const g = function (x) { return document.getElementById(prefix + x); };
+  if (!g('FirstBtn')) return;
+  g('FirstBtn').disabled = g('PrevBtn').disabled = page <= 1;
+  g('NextBtn').disabled = page >= totalPages && !more;
+  g('LastBtn').disabled = page >= totalPages && !more;
+  const box = g('PageInput');
+  if (document.activeElement !== box) box.value = page;
+  box.max = totalPages;
+  g('PageCount').textContent = formatNum(totalPages) + (more ? '+' : '');
+}
+// A new page starts at the top of the table, not where the last one was left.
+function tableToTop(bodyId) {
+  const body = document.getElementById(bodyId);
+  const box = body && body.closest('.table-scroll');
+  if (box && box.scrollTop) box.scrollTop = 0;
+  const page = body && body.closest('.page');
+  if (page && page.scrollTop > 200 && window.innerWidth <= 780) page.scrollTop = 0;
+}
+// The page box: Enter or leaving it goes to that page; nonsense is put back.
+function wirePageBox(prefix, go) {
+  const box = document.getElementById(prefix + 'PageInput');
+  if (!box) return;
+  const apply = function () { const n = Math.floor(Number(box.value)); if (n >= 1) go(n); else box.value = ''; };
+  box.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply(); box.blur(); } });
+  box.addEventListener('change', apply);
+  box.addEventListener('focus', function () { box.select(); });
+}
+
 function renderStockTable(config) {
   const k = config.key;
   syncStockResetButton(k);
@@ -4463,7 +4515,7 @@ function renderStockTable(config) {
   bodyEl.innerHTML = bodyHtml || ('<tr><td colspan="' + colCount + '" class="empty">' + emptyStateMessage(config, showInactive) + '</td></tr>');
 
   document.getElementById(k + 'PageInfo').textContent = total === 0 ? '0 items' : ('Showing ' + (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' of ' + total);
-  document.getElementById(k + 'PrevBtn').disabled = page <= 1; document.getElementById(k + 'NextBtn').disabled = page >= totalPages;
+  syncPager(k, page, totalPages, false);
 }
 
 /* =========================================================================
@@ -5742,6 +5794,107 @@ let lastResolvedTxn = null; // what a lost-reply check found
 let attachView = null;      // the file viewer's entry and its files
 const attachFileCache = {}; // opened files, by ID, so a second look is instant
 
+/* ---- Files open quickly (3.33.1) ----
+   Each entry's list of files (names and small previews) is kept on this
+   device, and those on the Ledger page being shown are fetched together in
+   the background, so a paperclip opens at once and is checked quietly
+   behind. The files themselves start downloading the moment the list opens
+   and are kept on the device too, and a photo shows from its preview while
+   the full picture arrives. All of it goes at sign-out. */
+const attachLists = {};     // 'rm:TXN' -> { items, at }
+let attachBulkOff = false;  // an older backend without getAttachmentsBulk
+const attachBulkWant = {};  // ledger -> { txnId: true } waiting to be asked
+let attachBulkTimer = null, attachListsSaveTimer = null;
+function attachKey(ledger, txnId) { return String(ledger).toLowerCase() + ':' + txnId; }
+function rememberAttachList(ledger, txnId, items) {
+  attachLists[attachKey(ledger, txnId)] = { items: items, at: Date.now() };
+  clearTimeout(attachListsSaveTimer);
+  attachListsSaveTimer = setTimeout(function () {
+    if (!state.session) return;
+    const user = state.session.username;
+    // The newest 400 entries' lists are plenty to keep.
+    const keep = {};
+    Object.keys(attachLists).sort(function (a, b) { return attachLists[b].at - attachLists[a].at; }).slice(0, 400).forEach(function (k) { keep[k] = attachLists[k]; });
+    ldbDo('readwrite', function (st) { return st.put({ at: Date.now(), lists: keep }, user); }, LDB_ATTACH).catch(function () {});
+  }, 500);
+}
+function prefetchAttachLists(ledger, txnIds) {
+  if (attachBulkOff || !state.session || !txnIds.length) return;
+  const want = attachBulkWant[ledger] = attachBulkWant[ledger] || {};
+  txnIds.forEach(function (t) { const c = attachLists[attachKey(ledger, t)]; if (!c || Date.now() - c.at > 10 * 60000) want[t] = true; });
+  clearTimeout(attachBulkTimer);
+  attachBulkTimer = setTimeout(function () {
+    Object.keys(attachBulkWant).forEach(function (L) {
+      const ids = Object.keys(attachBulkWant[L]).slice(0, 100);
+      delete attachBulkWant[L];
+      if (!ids.length) return;
+      api('getAttachmentsBulk', { ledger: L.toUpperCase(), txnIds: ids }).then(function (got) {
+        Object.keys(got || {}).forEach(function (t) { rememberAttachList(L, t, got[t] || []); });
+      }).catch(function (err) { if (/Unknown action/i.test(err.message || '')) attachBulkOff = true; });
+    });
+  }, 250);
+}
+
+const FILE_CACHE = 'stock-files', FILE_CACHE_MAX = 80;
+function fileCacheUrl(id) { return 'https://stock.files/' + encodeURIComponent((state.session && state.session.username) || '') + '/' + encodeURIComponent(id); }
+function forgetFilesOnDevice() {
+  Object.keys(attachFileCache).forEach(function (id) { try { URL.revokeObjectURL(attachFileCache[id].url); } catch (e) {} delete attachFileCache[id]; });
+  Object.keys(attachLists).forEach(function (k) { delete attachLists[k]; });
+  if ('caches' in window) caches.delete(FILE_CACHE).catch(function () {});
+}
+async function fileFromDevice(id) {
+  if (!('caches' in window)) return null;
+  try {
+    const hit = await (await caches.open(FILE_CACHE)).match(fileCacheUrl(id));
+    if (!hit) return null;
+    const blob = await hit.blob();
+    return { url: URL.createObjectURL(blob), fileName: decodeURIComponent(hit.headers.get('X-File-Name') || 'file'), mimeType: blob.type };
+  } catch (e) { return null; }
+}
+async function fileToDevice(id, blob, fileName) {
+  if (!('caches' in window)) return;
+  try {
+    const c = await caches.open(FILE_CACHE);
+    await c.put(fileCacheUrl(id), new Response(blob, { headers: { 'Content-Type': blob.type, 'X-File-Name': encodeURIComponent(fileName) } }));
+    const keys = await c.keys();
+    for (let i = 0; i < keys.length - FILE_CACHE_MAX; i++) await c.delete(keys[i]);  // the oldest go first
+  } catch (e) {}
+}
+// One download per file however many times it is asked for meanwhile.
+const attachFileLoads = {};
+function loadAttachFile(id, retry) {
+  if (attachFileCache[id]) return Promise.resolve(attachFileCache[id]);
+  if (attachFileLoads[id] && !retry) return attachFileLoads[id];
+  const who = state.session && state.session.token;
+  const p = (async function () {
+    let f = await fileFromDevice(id);
+    if (!f) {
+      const got = await api('getAttachmentFile', retry ? { attachmentId: id, _try: Date.now() } : { attachmentId: id });
+      const bin = atob(got.data);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: got.mimeType });
+      if (!state.session || state.session.token !== who) throw new Error('Signed out.');
+      fileToDevice(id, blob, got.fileName);
+      f = { url: URL.createObjectURL(blob), fileName: got.fileName, mimeType: got.mimeType };
+    }
+    attachFileCache[id] = f;
+    return f;
+  })();
+  attachFileLoads[id] = p;
+  p.then(function () { delete attachFileLoads[id]; }, function () { delete attachFileLoads[id]; });
+  return p;
+}
+// When an entry's files are on screen, they start coming at once, photos
+// first, two at a time, so opening one is usually immediate.
+function prefetchAttachFiles(items) {
+  const todo = items.filter(function (a) { return !attachFileCache[a.attachmentId] && (Number(a.size) || 0) <= 6 * 1048576; })
+    .sort(function (a, b) { return (a.mimeType === 'application/pdf') - (b.mimeType === 'application/pdf'); }).slice(0, 6);
+  let next = 0;
+  const run = function () { if (next >= todo.length) return; const a = todo[next++]; loadAttachFile(a.attachmentId).catch(function () {}).then(run); };
+  run(); run();
+}
+
 function formatBytes(n) {
   n = Number(n) || 0;
   return n >= 1048576 ? (Math.round(n / 104857.6) / 10) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
@@ -5979,10 +6132,12 @@ async function openAttachModal(ledger, txnId, department) {
   document.getElementById('attachAddStatus').textContent = '';
   document.getElementById('attachRetryBtn').classList.add('hidden');
   document.getElementById('attachAddWrap').classList.toggle('hidden', !canAttachTo(ledger, department));
-  document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">Loading…</div>';
+  const held = attachLists[attachKey(ledger, txnId)];
+  if (held) { attachView.items = held.items.slice(); renderAttachGrid(); prefetchAttachFiles(attachView.items); }
+  else document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">Loading…</div>';
   renderAttachPending();
   document.getElementById('attachModal').classList.remove('hidden');
-  await loadAttachView();
+  await loadAttachView(!!held);
 }
 
 function closeAttachModal() {
@@ -5990,16 +6145,19 @@ function closeAttachModal() {
   if (attachView && !attachView.busy) releaseAttachItems(attachView.pending);
 }
 
-async function loadAttachView() {
+async function loadAttachView(quiet) {
   const v = attachView;
   try {
     const items = await api('getAttachments', { ledger: v.ledger.toUpperCase(), txnId: v.txnId }) || [];
+    rememberAttachList(v.ledger, v.txnId, items);
     if (attachView !== v) return;
-    v.items = items;
-    renderAttachGrid();
+    const ids = function (list) { return list.map(function (a) { return a.attachmentId; }).join(','); };
+    // Shown already from what this device held: redrawn only if it changed.
+    if (!quiet || ids(items) !== ids(v.items)) { v.items = items; renderAttachGrid(); }
+    prefetchAttachFiles(items);
     noteAttachCount(v.ledger, v.txnId, items.length);
   } catch (err) {
-    if (attachView === v) document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">' + escapeHtml(err.message) + '</div>';
+    if (attachView === v && !quiet) document.getElementById('attachGrid').innerHTML = '<div class="attach-empty">' + escapeHtml(err.message) + '</div>';
   }
 }
 
@@ -6083,43 +6241,59 @@ async function openAttachment(id, retry) {
     } catch (e) { win = null; }
   }
   let f = attachFileCache[id];
+  // A photo opens at once on its preview; the full picture replaces it
+  // the moment it is here (usually already on its way).
+  const preview = !f && !isPdf && /^[A-Za-z0-9+\/=]+$/.test(a.thumb || '');
+  if (preview) showImage({ url: 'data:image/jpeg;base64,' + a.thumb, fileName: a.fileName, preview: true, id: id });
   if (!f) {
-    status.textContent = 'Opening ' + a.fileName + '…';
+    if (!preview) status.textContent = 'Opening ' + a.fileName + '…';
     const slow = slowNotice(function (text, again) { setNote(status, text, again); }, function () { openAttachment(id, true); });
     try {
-      const got = await api('getAttachmentFile', retry ? { attachmentId: id, _try: Date.now() } : { attachmentId: id });
-      const bin = atob(got.data);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      f = attachFileCache[id] = { url: URL.createObjectURL(new Blob([bytes], { type: got.mimeType })), fileName: got.fileName, mimeType: got.mimeType };
+      f = await loadAttachFile(id, retry);
       slow.done();
       status.textContent = '';
     } catch (err) {
       slow.done();
       if (win) win.close();
       status.textContent = '';
+      if (preview) { const lo = document.getElementById('ivLoading'); if (lo) lo.textContent = 'Couldn\u2019t load the full picture \u2014 ' + err.message; }
       document.getElementById('attachError').textContent = err.message;
       return;
     }
   }
-  if (!isPdf) { showImage(f); return; }
+  if (!isPdf) {
+    // Closed, or moved on to another photo, meanwhile: leave it be.
+    if (preview && (document.getElementById('imageViewer').classList.contains('hidden') || ivShowing !== id)) return;
+    showImage(Object.assign({ id: id }, f));
+    return;
+  }
   if (!inlinePdf) { saveBlob(f); status.textContent = 'Saved ' + f.fileName + ' \u2014 open it from your downloads.'; return; }
   if (win && !win.closed) { win.location.href = f.url; return; }
   if (!window.open(f.url, '_blank')) saveBlob(f);
 }
 
+let ivShowing = null;
 function showImage(f) {
-  document.getElementById('ivImg').src = f.url;
+  const img = document.getElementById('ivImg');
+  const wasPreview = img.classList.contains('is-preview') && ivShowing === f.id;
+  img.src = f.url;
+  img.classList.toggle('is-preview', !!f.preview);
+  ivShowing = f.id || null;
   document.getElementById('ivName').textContent = f.fileName;
   const dl = document.getElementById('ivDownload');
-  dl.href = f.url; dl.setAttribute('download', f.fileName);
-  document.getElementById('ivScroll').classList.remove('is-zoomed');
+  // Only the real file is offered for download, never its preview.
+  dl.classList.toggle('hidden', !!f.preview);
+  if (!f.preview) { dl.href = f.url; dl.setAttribute('download', f.fileName); }
+  document.getElementById('ivLoading').classList.toggle('hidden', !f.preview);
+  document.getElementById('ivLoading').textContent = 'Loading the full picture\u2026';
+  if (!wasPreview) document.getElementById('ivScroll').classList.remove('is-zoomed');
   document.getElementById('imageViewer').classList.remove('hidden');
 }
 
 function closeImage() {
   document.getElementById('imageViewer').classList.add('hidden');
   document.getElementById('ivImg').removeAttribute('src');
+  ivShowing = null;
 }
 
 async function removeAttachmentUi(id) {
@@ -6330,6 +6504,7 @@ async function loadLedgerRows(opts) {
     tbody.innerHTML = rows.map(function (r) { return renderLedgerRow(r); }).join('');
     syncLedgerActionColumns();
     renderLedgerStock();
+    prefetchAttachLists(config.key, rows.filter(function (r) { return Number(r.AttachmentCount) > 0 && r.TxnID; }).map(function (r) { return r.TxnID; }));
     await checkLedgerAgreement(rows, !!(filters.dateFrom || filters.dateTo || filters.enteredBy), 100, stockNow, filters);
   } catch (err) {
     if (seq !== histSeq) return;
@@ -7019,8 +7194,11 @@ function initLedgerPage() {
     renderLedgerPage();
     if (state.ledgerSearch) ensureAllLedgerLoaded();
   }, 150));
-  document.getElementById('ldgPrevBtn').addEventListener('click', function () { state.ledgerPage--; renderLedgerPage(); });
-  document.getElementById('ldgNextBtn').addEventListener('click', onLedgerNext);
+  document.getElementById('ldgPrevBtn').addEventListener('click', function () { state.ledgerPage--; renderLedgerPage(); tableToTop('ldgTableBody'); });
+  document.getElementById('ldgNextBtn').addEventListener('click', function () { onLedgerNext().then(function () { tableToTop('ldgTableBody'); }); });
+  document.getElementById('ldgFirstBtn').addEventListener('click', function () { state.ledgerPage = 1; renderLedgerPage(); tableToTop('ldgTableBody'); });
+  document.getElementById('ldgLastBtn').addEventListener('click', function () { goToLedgerPage(1e9); });
+  wirePageBox('ldg', goToLedgerPage);
   document.getElementById('ldgExportBtn').addEventListener('click', exportLedgerPageToExcel);
 
   document.querySelectorAll('#page-ledger th.sortable').forEach(function (th) {
@@ -7091,15 +7269,23 @@ function setLedgerStatus(text, onRetry) { setNote(document.getElementById('ldgSt
 // database, so the Overview's movement cards and the Ledger open complete
 // the moment the app does, and are brought up to date quietly behind. Kept
 // per person and wiped at sign-out. Nothing here is ever sent anywhere.
-const LDB_NAME = 'stock-ledgers', LDB_STORE = 'ledgers', LDB_MAX_AGE = 14 * 86400000;
+const LDB_NAME = 'stock-ledgers', LDB_STORE = 'ledgers', LDB_ATTACH = 'attach', LDB_MAX_AGE = 14 * 86400000;
 let ldbHandle = null;
 function ldbOpen() {
   if (ldbHandle) return ldbHandle;
   ldbHandle = new Promise(function (resolve, reject) {
     if (!window.indexedDB) return reject(new Error('no IndexedDB'));
-    const req = indexedDB.open(LDB_NAME, 1);
-    req.onupgradeneeded = function () { req.result.createObjectStore(LDB_STORE); };
-    req.onsuccess = function () { resolve(req.result); };
+    const req = indexedDB.open(LDB_NAME, 2);
+    req.onupgradeneeded = function () {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(LDB_STORE)) db.createObjectStore(LDB_STORE);
+      if (!db.objectStoreNames.contains(LDB_ATTACH)) db.createObjectStore(LDB_ATTACH);  // 3.33.1: entries' file lists
+    };
+    req.onsuccess = function () {
+      // A newer copy of the app opening it elsewhere is let in rather than blocked.
+      req.result.onversionchange = function () { req.result.close(); ldbHandle = null; };
+      resolve(req.result);
+    };
     req.onerror = function () { reject(req.error); };
     req.onblocked = function () { reject(new Error('blocked')); };
   });
@@ -7107,10 +7293,11 @@ function ldbOpen() {
   return ldbHandle;
 }
 function ldbKey(kind) { return ((state.session && state.session.username) || '') + ':' + kind; }
-function ldbDo(mode, fn) {
+function ldbDo(mode, fn, store) {
+  store = store || LDB_STORE;
   return ldbOpen().then(function (db) {
     return new Promise(function (resolve, reject) {
-      const tx = db.transaction(LDB_STORE, mode), st = tx.objectStore(LDB_STORE);
+      const tx = db.transaction(store, mode), st = tx.objectStore(store);
       const req = fn(st);
       tx.oncomplete = function () { resolve(req && req.result); };
       tx.onerror = tx.onabort = function () { reject(tx.error); };
@@ -7135,10 +7322,15 @@ function restoreLedgersFromDevice() {
       rememberCompleteLedger(kind, mapLedgerRows(uiConfig(kind), c.rows), { fromDevice: true });
     }).catch(function () {});
   }));
-  return Promise.race([read, new Promise(function (r) { setTimeout(r, 600); })]);
+  const lists = ldbDo('readonly', function (st) { return st.get(user); }, LDB_ATTACH).then(function (c) {
+    if (c && c.lists && state.session && state.session.username === user) Object.keys(c.lists).forEach(function (k) { if (!attachLists[k]) attachLists[k] = c.lists[k]; });
+  }).catch(function () {});
+  return Promise.race([Promise.all([read, lists]), new Promise(function (r) { setTimeout(r, 600); })]);
 }
 function forgetLedgersOnDevice() {
   ldbDo('readwrite', function (st) { return st.clear(); }).catch(function () {});
+  ldbDo('readwrite', function (st) { return st.clear(); }, LDB_ATTACH).catch(function () {});
+  forgetFilesOnDevice();
 }
 // What a refresh is compared with, so one that brings nothing new redraws nothing.
 function ledgerSig(rows) {
@@ -7462,6 +7654,19 @@ async function ensureAllLedgerLoaded() {
   if (state.ledgerHasMore) await loadRestOfLedger();
 }
 
+// A page further than what has loaded yet waits for the rest of the ledger.
+async function goToLedgerPage(n) {
+  const pages = function () { return Math.max(1, Math.ceil(filteredLedgerRows().length / LEDGER_PAGE_SIZE)); };
+  if (n > pages() && state.ledgerHasMore) {
+    const btn = document.getElementById('ldgLastBtn');
+    setBtnLoading(btn, 'Loading…', true);
+    try { await loadRestOfLedger(); } finally { clearBtnLoading(btn); }
+  }
+  state.ledgerPage = Math.min(Math.max(1, n), pages());
+  renderLedgerPage();
+  tableToTop('ldgTableBody');
+}
+
 async function onLedgerNext() {
   const lastPage = function () { return Math.max(1, Math.ceil(filteredLedgerRows().length / LEDGER_PAGE_SIZE)); };
   if (state.ledgerPage < lastPage()) { state.ledgerPage++; renderLedgerPage(); return; }
@@ -7552,8 +7757,7 @@ function renderLedgerPage() {
     tbody.innerHTML = '<tr><td colspan="8" class="empty">' + (state.ledgerLoaded ? 'No transactions match these filters.' : 'Loading…') + '</td></tr>';
     document.getElementById('ldgPageInfo').textContent = '0 transactions';
     document.getElementById('ldgCount').textContent = '';
-    document.getElementById('ldgPrevBtn').disabled = true;
-    document.getElementById('ldgNextBtn').disabled = true;
+    syncPager('ldg', 1, 1, false);
     return;
   }
 
@@ -7581,8 +7785,8 @@ function renderLedgerPage() {
   // While older entries are still arriving the count says "1100+" rather
   // than claiming the loaded rows are all there is.
   document.getElementById('ldgCount').textContent = '';
-  document.getElementById('ldgPrevBtn').disabled = state.ledgerPage <= 1;
-  document.getElementById('ldgNextBtn').disabled = state.ledgerPage >= totalPages && !state.ledgerHasMore;
+  syncPager('ldg', state.ledgerPage, totalPages, state.ledgerHasMore);
+  prefetchAttachLists(state.ledgerKind, rows.slice(start, start + LEDGER_PAGE_SIZE).filter(function (r) { return r.attachCount > 0 && r.txnId; }).map(function (r) { return r.txnId; }));
 }
 
 async function exportLedgerPageToExcel() {
@@ -9455,8 +9659,12 @@ function wireStockPageEvents(kind) {
   if (config.subCategoryField) id('SubCategoryFilter').addEventListener('change', function (e) { state[kind + 'SubCategory'] = selectedValuesOf(e.target); state[kind + 'Page'] = 1; render(); });
   id('StatusFilter').addEventListener('change', function (e) { state[kind + 'Status'] = selectedValuesOf(e.target); state[kind + 'Page'] = 1; render(); });
   id('ShowInactive').addEventListener('change', function (e) { state[kind + 'ShowInactive'] = e.target.checked; state[kind + 'Page'] = 1; render(); });
-  id('PrevBtn').addEventListener('click', function () { state[kind + 'Page']--; render(); });
-  id('NextBtn').addEventListener('click', function () { state[kind + 'Page']++; render(); });
+  const turn = function (n) { state[kind + 'Page'] = n; render(); tableToTop(kind + 'TableBody'); };
+  id('PrevBtn').addEventListener('click', function () { turn(state[kind + 'Page'] - 1); });
+  id('NextBtn').addEventListener('click', function () { turn(state[kind + 'Page'] + 1); });
+  id('FirstBtn').addEventListener('click', function () { turn(1); });
+  id('LastBtn').addEventListener('click', function () { turn(1e9); });  // the table settles on its last page
+  wirePageBox(kind, turn);
 
   // Wire up column sorting
   id('TableBody').parentElement.querySelectorAll('th.sortable').forEach(function (th) {
@@ -9564,7 +9772,10 @@ function renderIndentsPage() {
   const counts = { me: list.filter(indentTodo).length, open: list.filter(function (i) { return open.indexOf(i.Status) > -1; }).length, all: list.length };
   document.querySelectorAll('#indentFilter [data-f]').forEach(function (b) {
     b.classList.toggle('is-on', b.dataset.f === indentView.filter);
-    b.querySelector('i').textContent = counts[b.dataset.f];
+    const n = b.querySelector('.seg-n');
+    n.textContent = formatNum(counts[b.dataset.f]);
+    // What waits for you stands out while there is any.
+    n.classList.toggle('is-hot', b.dataset.f === 'me' && counts.me > 0);
   });
   list = list.filter(function (i) { return indentView.filter === 'all' ? true : indentView.filter === 'open' ? open.indexOf(i.Status) > -1 : !!indentTodo(i); });
   body.innerHTML = list.length ? list.map(function (i) {
@@ -9584,11 +9795,39 @@ function indentModal(html, wide) {
   const bg = document.createElement('div');
   bg.className = 'modal-backdrop'; bg.id = 'indentModal';
   bg.innerHTML = '<div class="modal" style="max-width:' + (wide ? 820 : 520) + 'px"><div class="modal-drag-handle" aria-hidden="true"></div>' + html + '</div>';
-  bg.addEventListener('click', function (e) { if (e.target === bg || e.target.closest('[data-x]')) closeIndentModal(); });
+  // Closed only by its own Cancel or \u2715: a click beside the form (or one that
+  // lands there as a drop-down list closes) never throws away what was typed (3.33.1).
+  bg.addEventListener('click', function (e) { const x = e.target.closest('[data-x]'); if (x) closeIndentModal(x.dataset.x === 'cancel' ? 'cancel' : 'x'); });
   document.body.appendChild(bg);
   return bg;
 }
-function closeIndentModal() { indentFormRefill = null; const m = document.getElementById('indentModal'); if (m) m.remove(); }
+function closeIndentModal(how) {
+  indentFormRefill = null;
+  const m = document.getElementById('indentModal');
+  if (m && m.dataset.draft) { if (how === 'cancel') dropIndentDraft(); else saveIndentDraftNow(); }
+  if (m) m.remove();
+}
+// ---- What was typed on a new indent, kept until it is sent or cancelled ----
+function indentDraftKey() { return 'stock_indent_draft:' + ((state.session && state.session.username) || ''); }
+function readIndentDraft() {
+  try { const d = JSON.parse(localStorage.getItem(indentDraftKey()) || 'null'); return d && Date.now() - d.at < 3 * 86400000 ? d : null; } catch (e) { return null; }
+}
+function dropIndentDraft() { try { localStorage.removeItem(indentDraftKey()); } catch (e) {} }
+let indentDraftTimer = null;
+function saveIndentDraftNow() {
+  clearTimeout(indentDraftTimer);
+  const m = document.getElementById('indentModal');
+  if (!m || !m.dataset.draft) return;
+  const v = function (sel) { const el = m.querySelector(sel); return el ? el.value : ''; };
+  const lines = Array.from(m.querySelectorAll('#indLines .ind-line')).map(function (r) {
+    return { code: r.querySelector('[data-k="code"]').value, qty: r.querySelector('[data-k="qty"]').value, remarks: r.querySelector('[data-k="remarks"]').value };
+  }).filter(function (l) { return l.code || l.qty || l.remarks; });
+  const d = { at: Date.now(), dept: v('#indDept'), batch: v('#indBatch'), reason: v('#indReason'), due: v('#indDue'),
+              priority: (m.querySelector('#indPri .is-on') || {}).dataset ? m.querySelector('#indPri .is-on').dataset.p : 'Normal', remarks: v('#indRemarks'), lines: lines };
+  if (!lines.length && !d.batch && !d.reason && !d.due && !d.remarks && d.priority === 'Normal') { dropIndentDraft(); return; }
+  try { localStorage.setItem(indentDraftKey(), JSON.stringify(d)); } catch (e) {}
+}
+function saveIndentDraftSoon() { clearTimeout(indentDraftTimer); indentDraftTimer = setTimeout(saveIndentDraftNow, 400); }
 function indentHead(eyebrow, title, sub) {
   return '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(eyebrow) + '</div><h3>' + escapeHtml(title) + '</h3>' + (sub ? '<div class="muted">' + sub + '</div>' : '') + '</div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>';
 }
@@ -9613,8 +9852,12 @@ function openIndentForm(pre) {
     '<div id="indLines"></div><button type="button" class="btn-ghost btn-compact" id="indAddLine">+ Add item</button>' +
     '<div class="field" style="margin-top:12px"><label for="indRemarks">Remarks</label><input id="indRemarks" maxlength="500"></div>' +
     '<div class="modal-error" id="indErr"></div>' +
-    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x>Cancel</button><button type="button" class="btn-primary" id="indSend">Send to Stores</button></div>', true);
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-primary" id="indSend">Send to Stores</button></div>', true);
   const lines = m.querySelector('#indLines');
+  // A form left part-filled — closed with \u2715, by a swipe, or the app
+  // closed — opens again as it was. Cancel throws it away (3.33.1).
+  const draft = pre.batchNo ? null : readIndentDraft();
+  m.dataset.draft = '1';
   // Each item is picked from the app's own dropdown (type to filter, one item
   // per line), like Category and the other lists.
   const itemOptions = '<option value="">Pick an item</option>' + items.slice().sort(function (a, b) { return String(a.code).localeCompare(String(b.code)); }).map(function (i) {
@@ -9655,9 +9898,30 @@ function openIndentForm(pre) {
   addLine();
   m.querySelector('#indAddLine').addEventListener('click', function () { const r = addLine(); const box = r.querySelector('.combo-input'); if (box) box.focus(); });
   const sel = m.querySelector('#indBatch');
+  if (draft) {
+    const deptSel = m.querySelector('#indDept');
+    if (draft.dept && Array.from(deptSel.options).some(function (o) { return o.value === draft.dept; }) && !deptSel.disabled) deptSel.value = draft.dept;
+    m.querySelector('#indReason').value = draft.reason || '';
+    m.querySelector('#indDue').value = draft.due || '';
+    m.querySelector('#indRemarks').value = draft.remarks || '';
+    m.querySelectorAll('#indPri button').forEach(function (x) { x.classList.toggle('is-on', x.dataset.p === (draft.priority || 'Normal')); });
+    (draft.lines || []).forEach(function (l, n) {
+      const row = n === 0 ? lines.querySelector('.ind-line') : addLine();
+      const c = row.querySelector('[data-k="code"]');
+      if (l.code && rmByCode(l.code)) { c.value = rmByCode(l.code).code; c.dispatchEvent(new Event('change')); }
+      row.querySelector('[data-k="qty"]').value = l.qty || '';
+      row.querySelector('[data-k="remarks"]').value = l.remarks || '';
+      row.querySelector('[data-k="qty"]').dispatchEvent(new Event('input'));
+    });
+    const note = document.createElement('div');
+    note.className = 'ind-draft-note';
+    note.innerHTML = 'Opened as you left it ' + escapeHtml(timeAgo(new Date(draft.at))) + '. <button type="button" class="link-btn" id="indDraftClear">Start again</button>';
+    m.querySelector('.ind-form').before(note);
+    note.querySelector('#indDraftClear').addEventListener('click', function () { dropIndentDraft(); m.dataset.draft = ''; openIndentForm(); });
+  }
   enhanceSelect_(m.querySelector('#indDept'));
   enhanceSelect_(sel);
-  const wantBatch = pre.batchNo ? String(pre.batchNo).trim().toUpperCase() : '';
+  const wantBatch = pre.batchNo ? String(pre.batchNo).trim().toUpperCase() : (draft && draft.batch) || '';
   function syncBatch() {
     const b = batches.filter(function (x) { return x.batchNo === sel.value; })[0];
     m.querySelector('#indReasonWrap').classList.toggle('hidden', !!sel.value);
@@ -9684,7 +9948,10 @@ function openIndentForm(pre) {
   fillBatches();
   indentFormRefill = fillBatches;
   if (!indentView.data || Date.now() - indentView.loadedAt > 60000) loadIndents(true);
-  m.querySelectorAll('#indPri button').forEach(function (b) { b.addEventListener('click', function () { m.querySelectorAll('#indPri button').forEach(function (x) { x.classList.toggle('is-on', x === b); }); }); });
+  m.querySelectorAll('#indPri button').forEach(function (b) { b.addEventListener('click', function () { m.querySelectorAll('#indPri button').forEach(function (x) { x.classList.toggle('is-on', x === b); }); saveIndentDraftSoon(); }); });
+  m.addEventListener('input', saveIndentDraftSoon);
+  m.addEventListener('change', saveIndentDraftSoon);
+  m.addEventListener('click', function (e) { if (e.target.closest('[data-rm], #indAddLine')) saveIndentDraftSoon(); });
   const clientTxnId = newClientTxnId();
   m.querySelector('#indSend').addEventListener('click', async function (e) {
     const err = m.querySelector('#indErr'); err.textContent = '';
@@ -9704,6 +9971,7 @@ function openIndentForm(pre) {
       const r = await api('raiseIndent', { department: m.querySelector('#indDept').value, batchNo: sel.value, noBatchReason: m.querySelector('#indReason').value,
         requiredBy: m.querySelector('#indDue').value, priority: (m.querySelector('#indPri .is-on') || {}).dataset.p, remarks: m.querySelector('#indRemarks').value,
         lines: rows.map(function (r) { return { code: rmByCode(r.code).code, qty: r.qty, remarks: r.remarks }; }), clientTxnId: clientTxnId });
+      m.dataset.draft = ''; dropIndentDraft(); clearTimeout(indentDraftTimer);
       closeIndentModal(); toast(r.indent.Indent_No + ' sent to Stores.');
       indentView.filter = 'open'; await loadIndents();
     } catch (x) { err.textContent = x.message; } finally { clearBtnLoading(btn, 'Send to Stores'); }
