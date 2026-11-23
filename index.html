@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.33.2">
+<meta name="app-version" content="3.33.3">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -56,6 +56,9 @@
   }
 
   /* Dark — graphite instrument housing */
+  /* Built-in parts of boxes (date-picker icons, spinners, scrollbars) follow the theme. */
+  :root { color-scheme: light; }
+  [data-theme="dark"] { color-scheme: dark; }
   [data-theme="dark"] {
     --paper: #14171c; --panel: #1b2028;
     --ink: #eceef2; --ink-soft: #a9afba; --ink-faint: #6b7280;
@@ -842,6 +845,12 @@
   .ind-qty { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
   .ind-li-act input[type="number"] { width: 120px; }
   .ind-li-act input[data-why] { flex: 1 1 200px; min-width: 0; }
+  /* The approve and issue boxes look like every other box, in both themes (3.33.2). */
+  .ind-li-act input[type="number"], .ind-li-act input[data-why] {
+    min-height: 38px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--line-soft); color: var(--ink);
+    font: inherit; font-size: 14px; font-weight: 600; transition: border-color .15s, box-shadow .15s; }
+  .ind-li-act input[type="number"] { text-align: right; font-variant-numeric: tabular-nums; }
+  .ind-li-act input[type="number"]:focus, .ind-li-act input[data-why]:focus { outline: none; background: var(--panel); border-color: var(--copper); box-shadow: 0 0 0 3px var(--copper-soft); }
   .ind-li .hint.warn, .ind-li-act .hint.warn { color: #c0392b; }
   .ind-off { opacity: .55; } .ind-rej { white-space: nowrap; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; } .ind-rej input { width: auto; margin: 0; }
   @media (max-width: 520px) { .ind-li-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ind-li-act input[type="number"] { width: 110px; } }
@@ -2621,7 +2630,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.33.2';
+const APP_VERSION = '3.33.3';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
