@@ -24,7 +24,7 @@
 // of being stuck on an old cached one. Keep this in step with APP_VERSION
 // in index.html.
 const CACHE_PREFIX = 'calgas-shell-';
-const CACHE_VERSION = CACHE_PREFIX + 'v57';
+const CACHE_VERSION = CACHE_PREFIX + 'v58';
 const APP_SHELL = [
   './',
   './index.html',
