@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#f3f0ea" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="app-version" content="3.33.3">
+<meta name="app-version" content="3.34.0">
 <link rel="manifest" href="./manifest.json">
 <title>Stock Management</title>
 <link rel="icon" href="./logo/icon-192.png">
@@ -814,6 +814,16 @@
   /* Modals */
   /* Indents (3.29.0) */
   .ind-list { display: flex; flex-direction: column; gap: 10px; }
+  .ind-table-wrap { padding: 0; overflow-x: auto; }
+  .ind-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
+  .ind-table th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; font-weight: 700; color: var(--ink-faint, var(--ink-soft)); text-transform: uppercase; letter-spacing: .06em; padding: 12px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .ind-table td { padding: 11px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink); }
+  .ind-table tbody tr { cursor: pointer; }
+  .ind-table tbody tr:hover td { background: var(--line-soft); }
+  .ind-table tbody tr:focus-visible { outline: 2px solid var(--copper); outline-offset: -2px; }
+  .ind-table tbody tr.is-todo td:first-child { box-shadow: inset 3px 0 0 var(--copper); }
+  .ind-table tbody tr:last-child td { border-bottom: 0; }
+  .ind-table .nowrap { white-space: nowrap; }
   .ind-card { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 14px 16px; }
   .ind-card:hover { border-color: var(--accent, #b5652e); }
   .ind-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -865,8 +875,10 @@
   .notif-head h4 { margin: 0; font-size: 15px; flex: 1; color: var(--ink); }
   .notif-head .btn-compact { padding: 6px 10px !important; font-size: 12.5px !important; }
   .notif-list { overflow-y: auto; flex: 1; overscroll-behavior: contain; }
-  .notif-item { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; font: inherit; color: var(--ink);
-                padding: 11px 16px 11px 30px; cursor: pointer; position: relative; }
+  .notif-item { position: relative; display: flex; align-items: flex-start; border-bottom: 1px solid var(--line-soft); }
+  .notif-item .notif-open { display: block; flex: 1; min-width: 0; text-align: left; border: 0; background: transparent; font: inherit; color: var(--ink); cursor: pointer; padding: 11px 6px 11px 30px; }
+  .notif-x { flex: 0 0 30px; width: 30px; height: 30px; margin: 8px 8px 0 0; border: 0; border-radius: 8px; background: transparent; color: var(--ink-soft); font-size: 13px; cursor: pointer; opacity: .55; }
+  .notif-x:hover, .notif-x:focus-visible { opacity: 1; background: var(--critical-soft); color: var(--critical); }
   .notif-item:hover { background: var(--line-soft); }
   .notif-item.is-unread::before { content: ''; position: absolute; left: 13px; top: 17px; width: 8px; height: 8px; border-radius: 50%; background: var(--copper); }
   .notif-item b { display: block; font-size: 13.5px; }
@@ -1191,6 +1203,22 @@
   .conn-badge.conn-offline .conn-dot { background: var(--critical); }
   .conn-badge.conn-syncing { background: var(--copper-soft); color: var(--copper-deep); }
   .conn-badge.conn-syncing .conn-dot { background: var(--copper); animation: pulseFade 1s ease infinite; }
+  button.conn-badge { border: 0; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+  button.conn-badge:hover { filter: brightness(0.97); box-shadow: 0 0 0 2px var(--copper-soft); }
+  .sync-wrap { position: relative; display: inline-flex; }
+  .sync-panel { width: 400px; }
+  .sync-list { overflow-y: auto; flex: 1; overscroll-behavior: contain; padding: 4px 0 8px; }
+  .sync-sub { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint, var(--ink-soft)); }
+  .sync-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 16px; }
+  .sync-row b { display: block; font-size: 13px; color: var(--ink); font-weight: 600; }
+  .sync-row span { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 1px; line-height: 1.4; }
+  .sync-ic { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; display: inline-flex !important; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 0 !important; }
+  .sync-row.is-ok .sync-ic { background: rgba(46,160,90,.15); color: #23854a; }
+  .sync-row.is-bad .sync-ic { background: var(--critical-soft); color: var(--critical); }
+  .sync-row.is-wait .sync-ic { background: var(--low-soft, rgba(214,137,16,.16)); color: var(--low, #b8740c); }
+  .sync-row.is-run .sync-ic { background: var(--copper-soft); }
+  .sync-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--copper); border-right-color: transparent; animation: spin .8s linear infinite; display: inline-block !important; margin: 0 !important; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Install prompt — a custom banner rather than the native browser
      prompt, since iOS Safari never fires one at all; this covers both
@@ -1857,7 +1885,8 @@
         <p id="topbarTitleSub"></p>
       </div>
       <div class="user-badge">
-        <span class="conn-badge conn-online" id="connBadge"></span>
+        <div class="sync-wrap"><button type="button" class="conn-badge conn-online" id="connBadge" aria-haspopup="dialog" aria-expanded="false"></button>
+          <div class="notif-panel sync-panel hidden" id="syncPanel" role="dialog" aria-label="What is syncing"></div></div>
         <div class="zoom-ctl" role="group" aria-label="Zoom">
           <button type="button" class="zoom-btn" id="zoomOutBtn" title="Zoom out" aria-label="Zoom out"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
           <button type="button" class="zoom-level" id="zoomResetBtn" title="Back to 100%" aria-label="Zoom 100%, press to reset">100%</button>
@@ -1970,7 +1999,7 @@
           <input type="search" id="rmSearch" placeholder="Search ID, code or name…">
           <button type="button" class="btn-ghost filter-toggle" data-ft="rm" aria-expanded="false" aria-controls="page-rm"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="rmCategoryFilter" multiple></select>
-          <select id="rmStatusFilter" multiple>
+          <select id="rmStatusFilter" data-sort="none" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
             <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
@@ -2011,7 +2040,7 @@
           <button type="button" class="btn-ghost filter-toggle" data-ft="fg" aria-expanded="false" aria-controls="page-fg"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="fgCategoryFilter" multiple></select>
           <select id="fgSubCategoryFilter" multiple></select>
-          <select id="fgStatusFilter" multiple>
+          <select id="fgStatusFilter" data-sort="none" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
             <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
@@ -2052,7 +2081,7 @@
           <input type="search" id="tradeSearch" placeholder="Search ID, code or name…">
           <button type="button" class="btn-ghost filter-toggle" data-ft="trade" aria-expanded="false" aria-controls="page-trade"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Filters<span class="ft-count"></span></button>
           <select id="tradeCategoryFilter" multiple></select>
-          <select id="tradeStatusFilter" multiple>
+          <select id="tradeStatusFilter" data-sort="none" multiple>
             <option value="All">All statuses</option><option value="NeedsAttention">Needs attention</option>
             <option value="OK">OK</option><option value="Low">Low</option><option value="Critical">Critical</option><option value="Out of Stock">Out of stock (no minimum)</option><option value="No Activity">No activity</option>
           </select>
@@ -2089,13 +2118,13 @@
       <div class="page-head"><h2 id="ldgHeading">RM Ledger</h2><p id="ldgSub">Every raw-material transaction, newest first.</p></div>
       <div class="filter-bar">
         <div class="toolbar">
-          <select id="ldgKind" class="hidden" aria-hidden="true" tabindex="-1">
+          <select id="ldgKind" data-sort="none" class="hidden" aria-hidden="true" tabindex="-1">
             <option value="rm">Raw Material</option>
             <option value="fg">Finished Goods</option>
             <option value="trade">Trade</option>
           </select>
           <input type="search" id="ldgSearch" placeholder="Search code, name, reference, remarks…">
-          <select id="ldgTypeFilter" multiple></select>
+          <select id="ldgTypeFilter" data-sort="none" multiple></select>
           <select id="ldgCatFilter" multiple></select>
           <select id="ldgDeptFilter" multiple></select>
         </div>
@@ -2175,6 +2204,7 @@
           <div class="seg" id="indentFilter" role="group" aria-label="Show"><button type="button" data-f="me">Needs me <span class="seg-n"></span></button><button type="button" data-f="open">Open <span class="seg-n"></span></button><button type="button" data-f="all">All <span class="seg-n"></span></button></div>
           <select id="indentDept" class="hidden" aria-label="Department"></select>
           <span class="tool-spacer"></span>
+          <div class="seg" id="indentMode" role="group" aria-label="View"><button type="button" data-v="table">Table</button><button type="button" data-v="cards">Cards</button></div>
           <span class="tool-actions"><button type="button" class="btn-ghost btn-compact" id="indentRefreshBtn">Refresh</button><button type="button" class="btn-primary btn-compact hidden" id="indentNewBtn">New indent</button></span>
         </div>
         <div id="indentList" class="ind-list"></div>
@@ -2331,7 +2361,7 @@
     <form id="txnForm">
       <input type="hidden" id="txnCode"><input type="hidden" id="txnKey">
       <div class="form-grid">
-        <div class="field"><label for="txnType">Transaction type</label><select id="txnType" class="no-combo" required></select><div class="hint lot-hint hidden" id="txnLotHint"></div></div>
+        <div class="field"><label for="txnType">Transaction type</label><select id="txnType" data-sort="none" class="no-combo" required></select><div class="hint lot-hint hidden" id="txnLotHint"></div></div>
         <div class="field"><label for="txnQty">Quantity</label><div class="input-with-unit"><input type="number" id="txnQty" step="any" required><span class="input-unit hidden" id="txnQtyUnit"></span></div><div class="hint" id="txnQtyHint"></div><div class="modal-warn field-warn" id="txnWarn"></div></div>
         <div class="field"><label for="txnDept">Department</label><select id="txnDept" required></select></div>
         <div class="field hidden" id="txnDateField"><label for="txnDate">Entry date</label><input type="date" id="txnDate"><div class="hint" id="txnDateHint">Today. Pick an earlier day only when the paperwork is late.</div></div>
@@ -2436,7 +2466,7 @@
         <div class="field"><label for="userFormName">Name</label><input type="text" id="userFormName" required></div>
         <div class="field"><label for="userUsername">Username</label><input type="text" id="userUsername" required></div>
         <div class="field"><label for="userRole">Role</label>
-          <select id="userRole" required></select>
+          <select id="userRole" data-sort="none" required></select>
           <input type="text" id="userRoleNew" class="hidden" placeholder="Name the new role, e.g. Shift Incharge" maxlength="40" style="margin-top:8px">
         </div>
         <div class="field" id="userDeptField"><label for="userDept">Department</label><select id="userDept"></select></div>
@@ -2539,7 +2569,7 @@
       <button class="modal-close" id="tierModalClose" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="field"><label for="tierCategory">Tier</label><select id="tierCategory"></select></div>
+      <div class="field"><label for="tierCategory">Tier</label><select id="tierCategory" data-sort="none"></select></div>
       <div class="hint" id="tierWhoLine"></div>
       <div class="app-switch" id="tierAppSwitch"></div>
       <div id="tierPermGrid" class="perm-grid"></div>
@@ -2563,7 +2593,7 @@
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="field"><label for="fixType">Transaction type</label><select id="fixType"></select></div>
+        <div class="field"><label for="fixType">Transaction type</label><select id="fixType" data-sort="none"></select></div>
         <div class="field"><label for="fixQty">Quantity</label><input type="number" id="fixQty" step="any"></div>
         <div class="field"><label for="fixDept">Department</label><select id="fixDept"></select></div>
         <div class="field"><label for="fixReference">Reference</label><input type="text" id="fixReference"></div>
@@ -2630,7 +2660,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.33.3';
+const APP_VERSION = '3.34.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3122,7 +3152,9 @@ async function api(action, params) {
   const cacheKey = action + ':' + JSON.stringify(params);
   if (_inflight.has(cacheKey)) return _inflight.get(cacheKey);
   setConnSyncing(true);
-  const promise = _apiRequest(action, params).finally(function () { _inflight.delete(cacheKey); setConnSyncing(false); });
+  const job = syncStart(action, params);
+  const promise = _apiRequest(action, params).then(function (d) { syncEnd(job, true); return d; }, function (e) { syncEnd(job, false, e && e.message); throw e; })
+    .finally(function () { _inflight.delete(cacheKey); setConnSyncing(false); });
   _inflight.set(cacheKey, promise);
   return promise;
 }
@@ -3150,7 +3182,9 @@ const MUTATING_ACTIONS = {
   sendFeedback: true, postStockCount: true, setStandardCosts: true, sendReorderList: true, saveDropdownList: true,
   // 3.29-3.30: indents and notifications
   raiseIndent: true, decideIndent: true, issueIndent: true, closeIndent: true, receiveIndent: true, returnIndent: true,
-  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true, testPush: true
+  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true, testPush: true,
+  // 3.34: removing notifications, and the pushes sent after a save
+  dismissNotifications: true, sendPendingPush: true
 };
 
 // Writes that are safe to send again when a reply is lost, because a second
@@ -3168,7 +3202,9 @@ const REPEATABLE_WRITES = {
   // A count carries its own ID, and costs are absolute values.
   postStockCount: true, setStandardCosts: true,
   // Marking read and saving or removing a device set values.
-  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true
+  markNotificationsRead: true, savePushSubscription: true, removePushSubscription: true,
+  // Removing a notification sets a value; pending pushes are marked before sending.
+  dismissNotifications: true, sendPendingPush: true
 };
 
 // Waits before each retry when Google's reply isn't ours. Its hiccups tend
@@ -3489,6 +3525,89 @@ function toggleTheme(forceDark) {
    every api() call.
    ========================================================================= */
 let _inFlightCount = 0;
+/* What "Syncing…" is doing (3.34.0): every call to the server is listed while
+   it runs, in plain words, with how long it has taken; the last few finished
+   ones stay below with a tick or the reason they failed. Tap the badge. */
+const syncLog = { seq: 0, running: [], done: [], timer: null };
+const SYNC_KIND = { RM: 'RM', FG: 'FG', Trade: 'Trade' };
+function syncLabel(action, p) {
+  p = p || {};
+  const m = action.match(/^(add|update|reverse|delete)(RM|FG|Trade)Transaction$/);
+  if (m) {
+    const what = [p.txnType, p.code, p.qty !== undefined && p.qty !== '' ? qtyPlain(p.qty) : ''].filter(Boolean).join(' ');
+    return { add: 'Saving ', update: 'Saving a correction to ', reverse: 'Reversing ', 'delete': 'Removing ' }[m[1]] + 'an ' + SYNC_KIND[m[2]] + ' entry' + (what ? ' · ' + what : '');
+  }
+  const ledger = action.match(/^get(RM|FG|Trade)Ledger$/);
+  if (ledger) return 'Loading the ' + SYNC_KIND[ledger[1]] + ' ledger' + (p.beforeRow ? ' (older entries)' : '');
+  const no = p.indentNo ? ' ' + p.indentNo : '';
+  const words = {
+    getBootstrap: 'Loading items, stock and lists', getIndents: 'Loading indents', raiseIndent: 'Sending the indent to Stores',
+    decideIndent: 'Saving the decision on' + no, issueIndent: 'Issuing' + no + ' — posting to the RM ledger',
+    receiveIndent: 'Confirming' + no + ' was received', closeIndent: (p.mode === 'cancel' ? 'Cancelling' : 'Closing the rest of') + no,
+    returnIndent: 'Posting a return against' + no, getNotifications: 'Checking notifications', markNotificationsRead: 'Marking notifications read',
+    dismissNotifications: p.all ? 'Clearing notifications' : 'Removing a notification', sendPendingPush: 'Sending phone notifications',
+    savePushSubscription: 'Turning on notifications on this device', removePushSubscription: 'Turning off notifications on this device',
+    testPush: 'Sending a test notification', getAttachments: 'Listing the entry’s files', getAttachmentsBulk: 'Checking which entries have files',
+    uploadAttachment: 'Uploading a file', removeAttachment: 'Removing a file', checkTransaction: 'Checking an entry the network dropped',
+    getDropdowns: 'Loading the drop-down lists', saveDropdownList: 'Saving a drop-down list', postStockCount: 'Posting the stock count',
+    setStandardCosts: 'Saving standard costs', sendFeedback: 'Sending feedback', getUsers: 'Loading the team', version: 'Checking for a new version',
+    login: 'Signing in', logout: 'Signing out', whoAmI: 'Checking your sign-in', changePassword: 'Changing your password'
+  };
+  if (words[action]) return words[action];
+  const plain = action.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+  return plain.charAt(0).toUpperCase() + plain.slice(1);
+}
+function syncStart(action, params) {
+  const job = { id: ++syncLog.seq, action: action, label: syncLabel(action, params), at: Date.now() };
+  syncLog.running.push(job);
+  if (isSyncOpen()) renderSyncPanel();
+  return job;
+}
+function syncEnd(job, ok, error) {
+  syncLog.running = syncLog.running.filter(function (j) { return j !== job; });
+  job.ms = Date.now() - job.at; job.ok = ok; job.error = ok ? '' : String(error || 'Failed');
+  // Quiet background reads that went fine aren't worth keeping in the list.
+  syncLog.done.unshift(job);
+  syncLog.done = syncLog.done.slice(0, 12);
+  if (isSyncOpen()) renderSyncPanel();
+}
+function isSyncOpen() { const p = document.getElementById('syncPanel'); return !!p && !p.classList.contains('hidden'); }
+function syncSecs(ms) { return ms < 1000 ? ms + ' ms' : (ms / 1000).toFixed(ms < 10000 ? 1 : 0) + ' s'; }
+function renderSyncPanel() {
+  const p = document.getElementById('syncPanel');
+  if (!p) return;
+  const now = Date.now(), pending = typeof loadPendingTxn === 'function' ? loadPendingTxn() : null;
+  const run = syncLog.running.slice().sort(function (a, b) { return a.at - b.at; });
+  const head = !navigator.onLine ? 'Offline — nothing can reach the server' : run.length ? 'Syncing ' + run.length + (run.length === 1 ? ' thing' : ' things') : 'Everything is saved';
+  p.innerHTML = '<div class="notif-head"><h4>' + escapeHtml(head) + '</h4><button type="button" class="icon-btn" data-sync="close" aria-label="Close">&#10005;</button></div>' +
+    '<div class="sync-list">' +
+      (pending ? '<div class="sync-row is-wait"><span class="sync-ic">!</span><div><b>Waiting to confirm: ' + escapeHtml(describePendingTxn(pending)) + '</b><span>The network dropped while it was saving. It is checked again when the connection is back; don’t enter it again.</span></div></div>' : '') +
+      (run.length ? run.map(function (j) {
+        const t = now - j.at;
+        return '<div class="sync-row is-run"><span class="sync-ic"><span class="sync-spin"></span></span><div><b>' + escapeHtml(j.label) + '</b><span>' + syncSecs(t) + (t > 12000 ? ' — Google is slow right now; it carries on by itself' : '') + '</span></div></div>';
+      }).join('') : '<div class="sync-row is-ok"><span class="sync-ic">✓</span><div><b>Nothing waiting</b><span>' + (navigator.onLine ? 'All your changes have reached the server.' : 'Changes wait until the connection is back.') + '</span></div></div>') +
+      (syncLog.done.length ? '<div class="sync-sub">Just now</div>' + syncLog.done.map(function (j) {
+        return '<div class="sync-row ' + (j.ok ? 'is-ok' : 'is-bad') + '"><span class="sync-ic">' + (j.ok ? '✓' : '✕') + '</span><div><b>' + escapeHtml(j.label) + '</b><span>' + (j.ok ? 'Done in ' + syncSecs(j.ms) : escapeHtml(j.error)) + ' · ' + escapeHtml(notifAgo(j.at + j.ms)) + '</span></div></div>';
+      }).join('') : '') +
+    '</div>';
+  clearTimeout(syncLog.timer);
+  if (run.length) syncLog.timer = setTimeout(function () { if (isSyncOpen()) renderSyncPanel(); }, 1000);
+}
+function toggleSyncPanel(open) {
+  const p = document.getElementById('syncPanel'), b = document.getElementById('connBadge');
+  if (!p) return;
+  if (open === undefined) open = p.classList.contains('hidden');
+  if (open) { renderSyncPanel(); p.classList.remove('hidden'); } else { p.classList.add('hidden'); clearTimeout(syncLog.timer); }
+  if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+document.addEventListener('DOMContentLoaded', function () {
+  const b = document.getElementById('connBadge'), p = document.getElementById('syncPanel');
+  if (!b || !p) return;
+  b.addEventListener('click', function (e) { e.stopPropagation(); toggleSyncPanel(); });
+  p.addEventListener('click', function (e) { e.stopPropagation(); if (e.target.closest('[data-sync="close"]')) toggleSyncPanel(false); });
+  document.addEventListener('click', function () { if (isSyncOpen()) toggleSyncPanel(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isSyncOpen()) toggleSyncPanel(false); });
+});
 function setConnSyncing(active) {
   _inFlightCount += active ? 1 : -1;
   if (_inFlightCount < 0) _inFlightCount = 0;
@@ -3506,6 +3625,8 @@ function updateConnBadge() {
   } else {
     el.className = 'conn-badge conn-online';
   }
+  el.title = 'See what is being saved or loaded';
+  if (isSyncOpen()) renderSyncPanel();
 }
 window.addEventListener('online', function () {
   updateConnBadge();
@@ -5356,7 +5477,10 @@ function supplierOptions(kind, code) {
   ((state.dropdowns && state.dropdowns.Supplier) || []).forEach(add);
   const full = ledgerComplete[kind];
   if (full && Array.isArray(full.rows)) full.rows.forEach(function (m) { add(m.supplier); });
-  return { list: out, last: last ? last.name : '' };
+  // A–Z after this item's last supplier (3.34.0).
+  const first = last ? out.slice(0, 1) : [], rest = last ? out.slice(1) : out;
+  rest.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
+  return { list: first.concat(rest), last: last ? last.name : '' };
 }
 function fillSupplierBox(kind, code) {
   const input = document.getElementById('txnSupplier');
@@ -8140,8 +8264,16 @@ function enhanceSelect_(select) {
 
   // The "All …" entry of a filter: value '' or 'All'.
   function isAllValue(v) { return v === '' || v === 'All'; }
+  // A–Z by default (3.34.0): the "All …" / "Pick …" row first, then the
+  // rest in alphabetical order (numbers in names count as numbers, so
+  // CMPL0009 comes before CMPL0010). Lists with an order of their own
+  // (statuses, entry types, roles) carry data-sort="none".
   function optionsOf() {
-    return Array.from(select.options).map(function (o) { return { value: o.value, text: o.textContent, selected: o.selected }; });
+    const all = Array.from(select.options).map(function (o) { return { value: o.value, text: o.textContent, selected: o.selected }; });
+    if (select.dataset.sort === 'none') return all;
+    const top = all.filter(function (o) { return isAllValue(o.value); });
+    const rest = all.filter(function (o) { return !isAllValue(o.value); }).sort(function (a, b) { return a.text.localeCompare(b.text, undefined, { numeric: true, sensitivity: 'base' }); });
+    return top.concat(rest);
   }
   function picked() { return Array.from(select.options).filter(function (o) { return o.selected && !isAllValue(o.value); }); }
   // What the closed box shows for a multi-select: "All categories", one
@@ -9917,20 +10049,53 @@ function makeTablesResizable() {
    receiver confirms in the app, or Stores records the signed slip.
    =========================================================================== */
 const INDENT_PERMS = ['stock.indent.raise', 'stock.indent.any', 'stock.indent.approve', 'stock.indent.issue'];
-const indentView = { filter: 'me', dept: '', data: null, loadedAt: 0, loading: null };
+const indentView = { filter: 'me', dept: '', data: null, loadedAt: 0, loading: null, loadingFrom: 0, savedAt: 0,
+  // Table or cards (3.34.0): the table unless this device chose cards; phones start on cards.
+  mode: (function () { try { return localStorage.getItem('stock_indent_view') || (window.innerWidth < 700 ? 'cards' : 'table'); } catch (e) { return 'table'; } })() };
 let indentFormRefill = null;   // set while the New indent form is open
 function canIndents() { return INDENT_PERMS.some(function (k) { return can(k); }); }
 function indentCan(k) { return !!(indentView.data && indentView.data.can && indentView.data.can[k]); }
 async function loadIndents(quiet) {
   if (!canIndents()) return;
-  if (indentView.loading) return indentView.loading;
-  indentView.loading = api('getIndents', {}).then(function (d) {
+  // A load already under way is reused, unless it started before a save
+  // (its figures would undo what the save just showed).
+  if (indentView.loading && indentView.loadingFrom >= indentView.savedAt) return indentView.loading;
+  const from = Date.now();
+  indentView.loadingFrom = from;
+  const p = api('getIndents', indentView.savedAt ? { after: indentView.savedAt } : {}).then(function (d) {
+    if (from < indentView.savedAt) return;
     indentView.data = d; indentView.loadedAt = Date.now();
     syncIndentBadge();
     if (indentFormRefill) indentFormRefill();
     if (!document.getElementById('page-indents').classList.contains('hidden')) renderIndentsPage();
-  }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { indentView.loading = null; });
-  return indentView.loading;
+  }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { if (indentView.loading === p) indentView.loading = null; });
+  indentView.loading = p;
+  return p;
+}
+// A save's reply carries the indent (and its lines): the list and the open
+// indent show it at once; the full list follows quietly behind (3.34.0).
+function mergeIndentReply(r) {
+  if (!r || !indentView.data) return;
+  const d = indentView.data;
+  indentView.savedAt = Date.now();
+  if (r.indent) {
+    const k = d.indents.findIndex(function (i) { return i.Indent_No === r.indent.Indent_No; });
+    if (k > -1) d.indents[k] = Object.assign({}, d.indents[k], r.indent); else d.indents.push(r.indent);
+  }
+  (r.lines || (r.line ? [r.line] : [])).forEach(function (l) {
+    const k = d.lines.findIndex(function (x) { return x.Line_ID === l.Line_ID; });
+    if (k > -1) d.lines[k] = Object.assign({}, d.lines[k], l); else d.lines.push(l);
+  });
+  syncIndentBadge();
+  if (!document.getElementById('page-indents').classList.contains('hidden')) renderIndentsPage();
+}
+// After any indent save: phone notifications go out, and the list catches up.
+function afterIndentSave(no) {
+  api('sendPendingPush', {}).catch(function () {});
+  loadIndents(true).then(function () {
+    const m = document.getElementById('indentModal');
+    if (no && m && m.dataset.ind === no && !m.dataset.touched && indentFind(no)) openIndentDetail(no);
+  });
 }
 function indentLinesOf(no) { return ((indentView.data && indentView.data.lines) || []).filter(function (l) { return l.Indent_No === no; }).sort(function (a, b) { return a.Line_No - b.Line_No; }); }
 function indentFind(no) { return ((indentView.data && indentView.data.indents) || []).filter(function (i) { return i.Indent_No === no; })[0]; }
@@ -9985,6 +10150,25 @@ function renderIndentsPage() {
     n.classList.toggle('is-hot', b.dataset.f === 'me' && counts.me > 0);
   });
   list = list.filter(function (i) { return indentView.filter === 'all' ? true : indentView.filter === 'open' ? open.indexOf(i.Status) > -1 : !!indentTodo(i); });
+  document.querySelectorAll('#indentMode [data-v]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.v === indentView.mode); });
+  body.classList.toggle('is-table', indentView.mode === 'table');
+  if (indentView.mode === 'table' && list.length) {
+    // One line per indent (3.34.0); a click opens it, as a card does.
+    body.innerHTML = '<div class="db-card ind-table-wrap"><table class="ind-table"><thead><tr><th>Indent</th><th>Status</th><th>Department</th><th>Batch · product</th><th>Items</th><th>Raised by</th><th>Raised</th><th>Needed by</th><th>Next</th></tr></thead><tbody>' +
+      list.map(function (i) {
+        const ls = indentLinesOf(i.Indent_No), todo = indentTodo(i);
+        const late = i.Required_By && open.indexOf(i.Status) > -1 && i.Required_By < new Date().setHours(0, 0, 0, 0);
+        const items = ls.slice(0, 2).map(function (l) { return '<span class="mono">' + escapeHtml(l.RM_Code) + '</span> ' + qtyPlain(l.Qty_Requested) + ' ' + escapeHtml(l.Unit); }).join(', ') + (ls.length > 2 ? ' <span class="muted">+' + (ls.length - 2) + ' more</span>' : '');
+        return '<tr data-ind="' + escapeHtml(i.Indent_No) + '" tabindex="0"' + (todo ? ' class="is-todo"' : '') + '><td class="mono nowrap"><b>' + escapeHtml(i.Indent_No) + '</b></td>' +
+          '<td>' + indentBadge(i.Status) + (i.Priority === 'Urgent' ? ' <span class="ind-st is-bad">Urgent</span>' : '') + '</td>' +
+          '<td>' + escapeHtml(i.Department) + '</td>' +
+          '<td>' + (i.Batch_No ? '<span class="mono">' + escapeHtml(i.Batch_No) + '</span> <span class="muted">' + escapeHtml(i.Product || i.Part_Code) + (i.Batch_Qty ? ' (' + formatNum(i.Batch_Qty) + ')' : '') + '</span>' : '<i class="muted">No batch:</i> ' + escapeHtml(i.No_Batch_Reason)) + '</td>' +
+          '<td>' + items + '</td><td>' + escapeHtml(indentWho(i.Raised_By)) + '</td><td class="muted nowrap">' + indentWhen(i.Raised_At) + '</td>' +
+          '<td class="nowrap' + (late ? ' ind-late' : '') + '">' + (i.Required_By ? indentDay(i.Required_By) : '<span class="muted">—</span>') + '</td>' +
+          '<td>' + (todo ? '<b class="ind-todo">' + todo + '</b>' : '<span class="muted">—</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    return;
+  }
   body.innerHTML = list.length ? list.map(function (i) {
     const ls = indentLinesOf(i.Indent_No), todo = indentTodo(i);
     const late = i.Required_By && open.indexOf(i.Status) > -1 && i.Required_By < new Date().setHours(0, 0, 0, 0);
@@ -10039,17 +10223,38 @@ function indentHead(eyebrow, title, sub) {
   return '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(eyebrow) + '</div><h3>' + escapeHtml(title) + '</h3>' + (sub ? '<div class="muted">' + sub + '</div>' : '') + '</div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>';
 }
 
+// The department a new indent starts on (3.34.0). Someone from a listed
+// department raises for their own. Others (Production managers, Admin) get
+// the department of the batch's current stage — Winding, Spray, Short
+// Clearance, Assembly-kVAr or -MFD, QA — or else the one they used last;
+// never simply the first in the list, which sent indents to Design.
+function indentDeptKey() { return 'stock_indent_dept:' + ((state.session && state.session.username) || ''); }
+function rememberIndentDept(v) { try { if (v) localStorage.setItem(indentDeptKey(), v); } catch (e) {} }
+function recalledIndentDept() { try { return localStorage.getItem(indentDeptKey()) || ''; } catch (e) { return ''; } }
+function indentDeptForBatch(b, depts) {
+  if (!b || b.extra) return '';
+  const stage = Math.min(8, Math.floor((Number(b.step) || 0) / 2) + 1);
+  const kvar = /KVAR/i.test(b.product || '') || /\dK\d/i.test(b.part || '');
+  const want = stage === 1 ? 'Winding' : stage <= 3 ? 'Spray' : stage === 4 ? 'Short Clearance' : stage <= 7 ? (kvar ? 'Assembly-kVAr' : 'Assembly-MFD') : 'QA';
+  return depts.indexOf(want) > -1 ? want : '';
+}
+const INDENT_STAGE_NAMES = ['Winding', 'Spray', 'Heat Stabilizing', 'Short Clearing', 'Welding & Soldering', 'Pouring & Seaming', 'Testing & Packing', 'Final Audit'];
+
 // New indent. pre.batchNo comes from Batch Card Tracker's "Request material".
 function openIndentForm(pre) {
   pre = pre || {};
   const anyDept = can('stock.indent.any') || (state.session && state.session.role === 'Admin');
   const depts = stockDepartments().map(function (x) { return x.name; });
   const myDept = state.session ? state.session.department : '';
+  const ownListed = depts.indexOf(myDept) > -1;
+  const recalled = recalledIndentDept();
+  const startDept = ownListed ? myDept : (depts.indexOf(recalled) > -1 ? recalled : '');
+  let deptTouched = false;
   let batches = [];
   const items = rmItems();
   const m = indentModal(indentHead('NEW INDENT', 'Ask Stores for material', 'Pick the batch it is for. Stores approves and issues it.') +
     '<div class="ind-form">' +
-      '<div class="field"><label for="indDept">Department</label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + depts.map(function (x) { return '<option ' + (x === myDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="indDept">Department <span class="req">*</span></label><select id="indDept" ' + (anyDept ? '' : 'disabled') + '>' + (startDept ? '' : '<option value="">Pick the department</option>') + depts.map(function (x) { return '<option ' + (x === startDept ? 'selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select><div class="hint" id="indDeptHint">' + (!ownListed && startDept ? 'The department you used last.' : '') + '</div></div>' +
       '<div class="field"><label for="indBatch">For batch</label><select id="indBatch"><option value="">Not for a batch</option></select><div class="hint" id="indBatchHint"></div></div>' +
       '<div class="field hidden" id="indReasonWrap"><label for="indReason">Why isn’t it for a batch? <span class="req">*</span></label><input id="indReason" maxlength="300" placeholder="e.g. maintenance of winding machine M-2"></div>' +
       '<div class="field"><label for="indDue">Needed by</label><input type="date" id="indDue"></div>' +
@@ -10107,7 +10312,7 @@ function openIndentForm(pre) {
   const sel = m.querySelector('#indBatch');
   if (draft) {
     const deptSel = m.querySelector('#indDept');
-    if (draft.dept && Array.from(deptSel.options).some(function (o) { return o.value === draft.dept; }) && !deptSel.disabled) deptSel.value = draft.dept;
+    if (draft.dept && Array.from(deptSel.options).some(function (o) { return o.value === draft.dept; }) && !deptSel.disabled) { deptSel.value = draft.dept; deptTouched = true; m.querySelector('#indDeptHint').textContent = ''; }
     m.querySelector('#indReason').value = draft.reason || '';
     m.querySelector('#indDue').value = draft.due || '';
     m.querySelector('#indRemarks').value = draft.remarks || '';
@@ -10127,10 +10332,20 @@ function openIndentForm(pre) {
     note.querySelector('#indDraftClear').addEventListener('click', function () { dropIndentDraft(); m.dataset.draft = ''; openIndentForm(); });
   }
   enhanceSelect_(m.querySelector('#indDept'));
+  m.querySelector('#indDept').addEventListener('change', function () { deptTouched = true; m.querySelector('#indDeptHint').textContent = ''; if (/department/.test(m.querySelector('#indErr').textContent)) m.querySelector('#indErr').textContent = ''; });
   enhanceSelect_(sel);
   const wantBatch = pre.batchNo ? String(pre.batchNo).trim().toUpperCase() : (draft && draft.batch) || '';
   function syncBatch() {
     const b = batches.filter(function (x) { return x.batchNo === sel.value; })[0];
+    // The batch's stage decides the department, until someone picks one.
+    if (!ownListed && !deptTouched && anyDept) {
+      const d = indentDeptForBatch(b, depts), deptSel = m.querySelector('#indDept');
+      if (d) {
+        deptSel.value = d;
+        const st = Math.min(8, Math.floor((Number(b.step) || 0) / 2) + 1);
+        m.querySelector('#indDeptHint').textContent = 'From ' + b.batchNo + '’s stage now: ' + INDENT_STAGE_NAMES[st - 1] + '. Change it if the material is for another department.';
+      }
+    }
     m.querySelector('#indReasonWrap').classList.toggle('hidden', !!sel.value);
     m.querySelector('#indBatchHint').textContent = !indentView.data ? 'Loading the open batches…'
       : b && b.extra ? 'Not in the open batches; it’s checked when you send.'
@@ -10163,6 +10378,7 @@ function openIndentForm(pre) {
   m.querySelector('#indSend').addEventListener('click', async function (e) {
     const err = m.querySelector('#indErr'); err.textContent = '';
     const rows = Array.from(lines.querySelectorAll('.ind-line')).map(function (r) { return { code: r.querySelector('[data-k="code"]').value.trim(), qty: Number(r.querySelector('[data-k="qty"]').value), remarks: r.querySelector('[data-k="remarks"]').value.trim() }; }).filter(function (r) { return r.code || r.qty; });
+    if (!m.querySelector('#indDept').value) { err.textContent = 'Pick the department the material is for.'; return; }
     if (!rows.length) { err.textContent = 'Add at least one item.'; return; }
     const bad = rows.filter(function (r) { return !rmByCode(r.code); })[0];
     if (bad) { err.textContent = (bad.code || 'An item') + ' isn’t an active RM item. Pick it from the list.'; return; }
@@ -10179,8 +10395,9 @@ function openIndentForm(pre) {
         requiredBy: m.querySelector('#indDue').value, priority: (m.querySelector('#indPri .is-on') || {}).dataset.p, remarks: m.querySelector('#indRemarks').value,
         lines: rows.map(function (r) { return { code: rmByCode(r.code).code, qty: r.qty, remarks: r.remarks }; }), clientTxnId: clientTxnId });
       m.dataset.draft = ''; dropIndentDraft(); clearTimeout(indentDraftTimer);
+      rememberIndentDept(m.querySelector('#indDept').value);
       closeIndentModal(); toast(r.indent.Indent_No + ' sent to Stores.');
-      indentView.filter = 'open'; await loadIndents();
+      indentView.filter = 'open'; mergeIndentReply(r); renderIndentsPage(); afterIndentSave();
     } catch (x) { err.textContent = x.message; } finally { clearBtnLoading(btn, 'Send to Stores'); }
   });
 }
@@ -10247,7 +10464,12 @@ function openIndentDetail(no) {
   const issueTxn = newClientTxnId();
   async function run(btn, action, params, done) {
     err.textContent = ''; setBtnLoading(btn, 'Saving…');
-    try { const r = await api(action, Object.assign({ indentNo: no }, params)); toast(done); await loadIndents(); openIndentDetail(no); if (action === 'issueIndent' && typeof refreshStockData === 'function') refreshStockData('rm'); return r; }
+    try {
+      const r = await api(action, Object.assign({ indentNo: no }, params));
+      mergeIndentReply(r); toast(done); openIndentDetail(no); afterIndentSave(no);
+      if ((action === 'issueIndent' || action === 'returnIndent') && typeof refreshStockData === 'function') refreshStockData('rm');
+      return r;
+    }
     catch (x) { err.textContent = x.message; } finally { clearBtnLoading(btn); }
   }
   // A short question inside the dialog (a reason, or what came back).
@@ -10359,12 +10581,15 @@ document.addEventListener('DOMContentLoaded', function () {
   page.addEventListener('click', function (e) {
     const f = e.target.closest('#indentFilter [data-f]');
     if (f) { indentView.filter = f.dataset.f; renderIndentsPage(); return; }
+    const v = e.target.closest('#indentMode [data-v]');
+    if (v) { indentView.mode = v.dataset.v; try { localStorage.setItem('stock_indent_view', v.dataset.v); } catch (x) {} renderIndentsPage(); return; }
     const card = e.target.closest('[data-ind]');
     if (card) { openIndentDetail(card.dataset.ind); return; }
     if (e.target.closest('#indentNewBtn')) { openIndentForm({}); return; }
     if (e.target.closest('#indentRefreshBtn')) loadIndents();
   });
   document.getElementById('indentDept').addEventListener('change', function (e) { indentView.dept = e.target.value; renderIndentsPage(); });
+  page.addEventListener('keydown', function (e) { const r = e.target.closest && e.target.closest('tr[data-ind]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openIndentDetail(r.dataset.ind); } });
 });
 
 /* ===========================================================================
@@ -10440,12 +10665,26 @@ function renderNotifPanel() {
   if (!p) return;
   const items = notifView.items;
   p.innerHTML = '<div class="notif-head"><h4>Notifications</h4>' + (notifView.unread ? '<button type="button" class="btn-ghost btn-compact" data-nf="all">Mark all read</button>' : '') +
+    (items.length ? '<button type="button" class="btn-ghost btn-compact" data-nf="clear">Clear all</button>' : '') +
     '<button type="button" class="icon-btn" data-nf="close" aria-label="Close">&#10005;</button></div>' +
     '<div class="notif-list">' + (items.length ? items.map(function (n) {
-      return '<button type="button" class="notif-item' + (n.Read_At ? '' : ' is-unread') + '" data-nid="' + escapeHtml(n.ID) + '"><b>' + escapeHtml(n.Title) + '</b>' +
-        (n.Body ? '<span>' + escapeHtml(n.Body) + '</span>' : '') + '<time>' + escapeHtml(notifAgo(n.Created_At)) + '</time></button>';
+      // The ✕ removes it from the list for good (3.34.0).
+      return '<div class="notif-item' + (n.Read_At ? '' : ' is-unread') + '" data-nid="' + escapeHtml(n.ID) + '"><button type="button" class="notif-open"><b>' + escapeHtml(n.Title) + '</b>' +
+        (n.Body ? '<span>' + escapeHtml(n.Body) + '</span>' : '') + '<time>' + escapeHtml(notifAgo(n.Created_At)) + '</time></button>' +
+        '<button type="button" class="notif-x" data-nx="' + escapeHtml(n.ID) + '" title="Remove" aria-label="Remove this notification">&#10005;</button></div>';
     }).join('') : '<div class="notif-empty">' + (notifView.loadedAt ? 'Nothing yet. Indent requests, approvals and issues for you show up here.' : 'Loading…') + '</div>') + '</div>' +
     '<div class="notif-foot">' + pushFootHtml() + '</div>';
+}
+// The ✕ on one (ids) or Clear all (null): gone from the list at once, and from the server behind it.
+function dismissNotifs(ids) {
+  const gone = notifView.items.filter(function (x) { return !ids || ids.indexOf(x.ID) > -1; });
+  notifView.items = ids ? notifView.items.filter(function (x) { return ids.indexOf(x.ID) === -1; }) : [];
+  notifView.unread = Math.max(0, notifView.unread - gone.filter(function (x) { return !x.Read_At; }).length);
+  syncNotifBadge();
+  if (isNotifOpen()) renderNotifPanel();
+  api('dismissNotifications', ids ? { ids: ids } : { all: true }).then(function (d) {
+    if (d && typeof d.unread === 'number') { notifView.unread = d.unread; syncNotifBadge(); }
+  }).catch(function (e) { toast(e.message, true); loadNotifications(true); });
 }
 function markNotifRead(ids) {
   let n = 0;
@@ -10471,6 +10710,8 @@ function openNotifLink(link) {
   });
 }
 async function onNotifPanelClick(e) {
+  const x = e.target.closest('[data-nx]');
+  if (x) { dismissNotifs([x.dataset.nx]); return; }
   const item = e.target.closest('[data-nid]');
   if (item) {
     const n = notifView.items.filter(function (x) { return x.ID === item.dataset.nid; })[0];
@@ -10485,6 +10726,7 @@ async function onNotifPanelClick(e) {
   const a = b.dataset.nf;
   if (a === 'close') toggleNotifPanel(false);
   else if (a === 'all') markNotifRead(null);
+  else if (a === 'clear') dismissNotifs(null);
   else if (a === 'on') enablePush(b);
   else if (a === 'off') disablePush(b);
   else if (a === 'test') {
