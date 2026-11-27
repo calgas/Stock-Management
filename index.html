@@ -1501,6 +1501,10 @@
   .tool-progress { height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
   .tool-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--copper), var(--azure)); transition: width 0.25s var(--ease); }
   .tool-empty { padding: 28px 16px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  .field input.is-derived, .field input[readonly] { background-color: transparent !important; border: 1px dashed var(--line) !important; color: var(--ink-soft); cursor: default; box-shadow: none !important; }
+  .pc-gst3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pc-gst3 label { display: flex; align-items: center; gap: 8px; margin: 0 !important; font-size: 12px; font-weight: 700; color: var(--ink-faint); text-transform: none; letter-spacing: 0; }
+  .pc-gst3 input { min-width: 0; }
   /* Part codes (3.35.0) */
   .pc-new { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
   .pc-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 14px; }
@@ -2052,7 +2056,7 @@
           <button class="btn-ghost" id="rmRefreshBtn">Refresh</button>
           <span class="freshness-label" id="rmFreshness"></span>
           <button class="btn-ghost hidden add-btn-spacer" id="rmImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
-          <button class="btn-primary btn-compact hidden" id="rmAddItemBtn">+ Add RM item</button>
+          <button class="btn-primary btn-compact hidden" id="rmAddItemBtn" title="New RM items are made in Part codes">+ New RM code</button>
         </div>
         <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       </div>
@@ -2716,7 +2720,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.35.0';
+const APP_VERSION = '3.35.1';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3077,6 +3081,10 @@ const RM_CONFIG_UI = {
     { key: 'Unit', label: 'Unit', type: 'select', dropdownSource: 'Unit', options: [], required: true },
     { key: 'HSN_Code', label: 'HSN code', type: 'text' },
     { key: 'GST_Percent', label: 'GST %', type: 'number' },
+    // 3.35.1: worked out from GST % (IGST = GST, CGST = SGST = half).
+    { key: 'IGST', label: 'IGST %', type: 'number', readonly: true },
+    { key: 'CGST', label: 'CGST %', type: 'number', readonly: true },
+    { key: 'SGST', label: 'SGST %', type: 'number', readonly: true },
     { key: 'ReorderLevel', label: 'Minimum quantity', type: 'number' },
     { key: 'StandardCost', label: 'Standard cost', type: 'number' },
     { key: 'ShelfLifeDays', label: 'Shelf life (days)', type: 'number', section: 'more' }
@@ -4205,6 +4213,13 @@ function syncAccessUi() {
 function syncItemButtons() {
   STOCK_KINDS.forEach(function (k) {
     const config = uiConfig(k);
+    // RM items are made only in Part codes (3.35.1): the button goes there,
+    // for whoever may make codes; RM has no bulk import.
+    if (k === 'rm') {
+      document.getElementById('rmAddItemBtn').classList.toggle('hidden', !can('stock.partcodes'));
+      document.getElementById('rmImportBtn').classList.add('hidden');
+      return;
+    }
     document.getElementById(k + 'AddItemBtn').classList.toggle('hidden', !canEditItems(config));
     document.getElementById(k + 'ImportBtn').classList.toggle('hidden', !(canEditItems(config) && can('stock.import')));
   });
@@ -7011,7 +7026,7 @@ function renderField_(f, val) {
       '</div></div>';
   }
 
-  return '<div class="field"><label for="' + id + '">' + f.label + (f.required ? ' *' : '') + '</label><input type="' + f.type + '" id="' + id + '" data-key="' + f.key + '" value="' + escapeHtml(val) + '"' + (f.placeholder ? ' placeholder="' + escapeHtml(f.placeholder) + '"' : '') + (f.required ? ' required' : '') + (f.type === 'number' ? ' step="any"' : '') + '></div>';
+  return '<div class="field"><label for="' + id + '">' + f.label + (f.required ? ' *' : '') + '</label><input type="' + f.type + '" id="' + id + '" data-key="' + f.key + '" value="' + escapeHtml(val) + '"' + (f.placeholder ? ' placeholder="' + escapeHtml(f.placeholder) + '"' : '') + (f.readonly ? ' readonly tabindex="-1" class="is-derived" title="Worked out from GST %"' : '') + (f.required ? ' required' : '') + (f.type === 'number' ? ' step="any"' : '') + '></div>';
 }
 
 /* Searchable-combobox behaviour, delegated so it covers fields rendered at
@@ -7145,6 +7160,18 @@ document.addEventListener('keydown', function (e) {
     enforceComboValue_(input); closeCombo_(combo);
   }
 });
+// IGST, CGST and SGST from GST % (3.35.1), the same as the backend works them out.
+function gstSplit(v) {
+  if (v === '' || v === null || v === undefined || isNaN(Number(v))) return { IGST: '', CGST: '', SGST: '' };
+  const g = Number(v), h = Math.round(g / 2 * 1000) / 1000;
+  return { IGST: g, CGST: h, SGST: h };
+}
+function fillItemGstSplit() {
+  const gst = document.getElementById('itemField_GST_Percent');
+  if (!gst || !document.getElementById('itemField_IGST')) return;
+  const sp = gstSplit(gst.value.trim());
+  ['IGST', 'CGST', 'SGST'].forEach(function (k) { document.getElementById('itemField_' + k).value = sp[k]; });
+}
 function openItemModal(key, code) {
   const config = uiConfig(key); const master = state[config.masterKey];
   
@@ -7172,12 +7199,14 @@ function openItemModal(key, code) {
   let mainHtml = '', moreHtml = '';
   config.itemFields.filter(visibleItemField).forEach(function (f) { const val = item && item[f.key] !== undefined && item[f.key] !== null ? item[f.key] : ''; const html = renderField_(f, val); if (f.section === 'more') moreHtml += html; else mainHtml += html; });
   document.getElementById('itemFieldsMain').innerHTML = mainHtml; document.getElementById('itemFieldsMore').innerHTML = moreHtml; document.getElementById('itemFieldsMoreWrap').classList.toggle('hidden', !moreHtml);
+  fillItemGstSplit();
 
   const deleteBtn = document.getElementById('itemDeleteBtn');
   if (isEdit && can(config.retirePerm)) { const active = isActiveValue(item.Active); deleteBtn.classList.remove('hidden'); deleteBtn.textContent = active ? 'Deactivate' : 'Reactivate'; deleteBtn.classList.toggle('positive', !active); deleteBtn.dataset.mode = active ? 'deactivate' : 'reactivate'; } else { deleteBtn.classList.add('hidden'); }
   document.getElementById('itemSubmit').textContent = isEdit ? 'Save changes' : 'Create item'; document.getElementById('itemError').textContent = '';
   document.getElementById('itemModal').classList.remove('hidden'); document.getElementById('itemCode').focus();
 }
+document.addEventListener('input', function (e) { if (e.target && e.target.id === 'itemField_GST_Percent') fillItemGstSplit(); });
 function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); activeItemConfig = null; activeItemMode = null; activeItemCode = null; }
 async function handleItemSubmit(e) {
   e.preventDefault(); const config = activeItemConfig; const errEl = document.getElementById('itemError'); const btn = document.getElementById('itemSubmit');
@@ -9513,7 +9542,7 @@ function wireCostsPage() {
 // (types, sizes in use, detail codes) is held by the backend; the code and
 // name are built here as the sheet's formulas did, for the preview, and
 // again by the backend when it is made.
-const pcView = { data: null, loading: null, tab: 'new', cat: '', search: '', f: { cat: '', type: '', size: '', detail: '', newDetail: '', newMeaning: '', unit: '', min: '', hsn: '', gst: '' }, txn: null, busy: false };
+const pcView = { data: null, loading: null, tab: 'new', cat: '', search: '', f: { cat: '', type: '', size: '', detail: '', newDetail: '', newMeaning: '', unit: '', min: '', hsn: '', gst: '18' }, txn: null, busy: false };
 function pcAz(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
 function pcSizeNorm(v) {
   return String(v == null ? '' : v).toUpperCase().replace(/\s+/g, '').replace(/[×*]/g, 'X')
@@ -9648,6 +9677,7 @@ function renderPcNew() {
       '<div class="field"><label for="pcfMin">Minimum quantity</label><input id="pcfMin" type="number" inputmode="decimal" min="0" step="any" value="' + escapeHtml(f.min) + '" placeholder="Reorder level"></div>' +
       '<div class="field"><label for="pcfHsn">HSN code</label><input id="pcfHsn" maxlength="20" inputmode="numeric" value="' + escapeHtml(f.hsn) + '"></div>' +
       '<div class="field"><label for="pcfGst">GST %</label><input id="pcfGst" type="number" inputmode="decimal" min="0" max="28" step="any" value="' + escapeHtml(f.gst) + '"></div>' +
+      (function () { const sp = gstSplit(String(f.gst).trim()); return '<div class="field full"><label>IGST · CGST · SGST %</label><div class="pc-gst3">' + ['IGST', 'CGST', 'SGST'].map(function (k) { return '<label>' + k + '<input id="pcf' + k + '" type="number" readonly tabindex="-1" class="is-derived" title="Worked out from GST %" value="' + escapeHtml(sp[k]) + '"></label>'; }).join('') + '</div><div class="hint">From GST %: IGST is the full rate, CGST and SGST half each.</div></div>'; })() +
     '</div></div>' +
     '<div class="db-card pc-prev" id="pcPrev"></div></div>';
   ['pcfCat', 'pcfType', 'pcfDetail', 'pcfUnit'].forEach(function (id) { const el = document.getElementById(id); if (el) enhanceSelect_(el); });
@@ -9666,6 +9696,7 @@ function renderPcPreview() {
     '<div class="pc-readable">' + escapeHtml(t ? b.readable : 'CC-category-type-size-detail') + '</div>' +
     '<div class="pc-name">' + escapeHtml(b.name || (t ? 'The name builds itself from ' + (t.Name_Prefix || t.Type_Name) : 'Pick the category and type')) + '</div>' +
     (t ? '<div class="pc-facts"><span>Becomes <b>' + escapeHtml(pcNextId()) + '</b></span><span>Category <b>' + escapeHtml(t.Category_Name) + '</b></span>' + (f.unit ? '<span>Unit <b>' + escapeHtml(f.unit) + '</b></span>' : '') +
+      (String(f.gst).trim() !== '' ? '<span>GST <b>' + escapeHtml(String(f.gst).trim()) + '%</b> (CGST ' + escapeHtml(String(gstSplit(f.gst.trim()).CGST)) + ' + SGST ' + escapeHtml(String(gstSplit(f.gst.trim()).SGST)) + ')</span>' : '') +
       (b.newDetail ? '<span>New ' + escapeHtml((t.Detail_Label || 'detail').toLowerCase()) + ' <b>' + escapeHtml(b.detail) + '</b></span>' : '') + '</div>' : '') +
     check +
     (ready && (probs.length || b.warnings.length) ? '<ul class="pc-msgs">' + probs.map(function (p) { return '<li class="is-bad">' + escapeHtml(p) + '</li>'; }).join('') + b.warnings.map(function (w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') + '</ul>' : '') +
@@ -9754,8 +9785,7 @@ function renderPcIndex() {
           '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-ghost btn-compact" data-pcnew="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '"' + (t.Approval === 'Proposed' ? ' disabled' : '') + '>New code</button> <button type="button" class="btn-ghost btn-compact" data-pcedit="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '">Edit</button></td></tr>';
       }).join('') + '</tbody></table></div></div>';
   }).join('') +
-  '<div class="tool-sum" style="margin-top:8px"><span class="muted">Brought in from the RM Part Code Master sheet. Bringing it in again replaces types, sizes and detail codes here with the sheet’s.</span>' +
-  '<button type="button" class="btn-ghost btn-compact" id="pcReimport">Bring in again…</button></div>';
+  '<div class="tool-sum" style="margin-top:8px"><span class="muted">The index is kept here. A size or detail code used for the first time joins it when its code is made; types and detail codes are added with Add a type and Edit.</span></div>';
 }
 // Add or edit a type. On a type with codes, its category and codes stay.
 function openPcTypeForm(key) {
@@ -9865,7 +9895,12 @@ function wirePartCodesPage() {
     if (id === 'pcfDetail') { pcReadForm(); f.detail = e.target.value; if (f.detail !== '__new') { f.newDetail = ''; f.newMeaning = ''; } renderPcNew(); if (f.detail === '__new') document.getElementById('pcfNewDetail').focus(); return; }
     if (id === 'pcfUnit') { f.unit = e.target.value; renderPcPreview(); }
   });
-  body.addEventListener('input', function (e) { if (/^pcf/.test(e.target.id)) { pcReadForm(); renderPcPreview(); } });
+  body.addEventListener('input', function (e) {
+    if (!/^pcf/.test(e.target.id)) return;
+    pcReadForm();
+    if (e.target.id === 'pcfGst') { const sp = gstSplit(e.target.value.trim()); ['IGST', 'CGST', 'SGST'].forEach(function (k) { const el = document.getElementById('pcf' + k); if (el) el.value = sp[k]; }); }
+    renderPcPreview();
+  });
   body.addEventListener('keydown', function (e) { if (e.key === 'Enter' && /^pcf/.test(e.target.id) && e.target.tagName === 'INPUT') { e.preventDefault(); const b = document.getElementById('pcCreate'); if (b && !b.disabled) pcCreate(); } });
   body.addEventListener('click', function (e) {
     if (e.target.closest('#pcCreate')) { pcCreate(); return; }
@@ -10453,7 +10488,7 @@ function wireStockPageEvents(kind) {
   });
   id('RefreshBtn').addEventListener('click', async function () { const btn = this; setBtnLoading(btn, 'Refreshing…', true); try { await refreshAllData(); render(); renderHome(); updateFreshnessLabel(kind); toast('Refreshed.'); } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); } });
   id('ExportBtn').addEventListener('click', function () { exportToExcel(config); });
-  id('AddItemBtn').addEventListener('click', function () { openItemModal(kind, null); });
+  id('AddItemBtn').addEventListener('click', function () { if (kind === 'rm') { pcView.tab = 'new'; navigateTo('partcodes'); return; } openItemModal(kind, null); });
   id('ImportBtn').addEventListener('click', function () { openImportModal(kind); });
 }
 
