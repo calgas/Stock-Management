@@ -1501,6 +1501,47 @@
   .tool-progress { height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
   .tool-progress span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--copper), var(--azure)); transition: width 0.25s var(--ease); }
   .tool-empty { padding: 28px 16px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  /* Part codes (3.35.0) */
+  .pc-new { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+  .pc-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0 14px; }
+  .pc-form .field { margin-bottom: 16px; }
+  .pc-form .field.full { grid-column: 1 / -1; }
+  .pc-form .field label .pc-rule { text-transform: none; letter-spacing: 0; font-weight: 600; margin-left: 6px; color: var(--ink-faint); }
+  .pc-newdet { display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin-top: 8px; }
+  .pc-prev { position: sticky; top: 12px; }
+  .pc-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+  .pc-code { font-family: var(--font-mono); font-size: 26px; font-weight: 700; letter-spacing: .02em; color: var(--ink); margin: 6px 0 2px; word-break: break-all; }
+  .pc-code.is-empty { color: var(--ink-faint); }
+  .pc-readable { font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); }
+  .pc-name { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 12px; }
+  .pc-facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; }
+  .pc-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-top: 14px; }
+  .pc-check.is-ok { background: var(--ok-soft); color: var(--ok); }
+  .pc-check.is-new { background: var(--copper-soft); color: var(--copper-deep); }
+  .pc-check.is-bad { background: var(--critical-soft); color: var(--critical); }
+  .pc-msgs { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; }
+  .pc-msgs li { padding: 6px 0 6px 18px; position: relative; color: var(--ink-soft); }
+  .pc-msgs li::before { content: ''; position: absolute; left: 4px; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: var(--low); }
+  .pc-msgs li.is-bad { color: var(--critical); } .pc-msgs li.is-bad::before { background: var(--critical); }
+  .pc-prev .btn-primary { margin-top: 16px; }
+  .pc-table-wrap { padding: 0; overflow-x: auto; }
+  .pc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pc-table th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; padding: 11px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .pc-table td { padding: 9px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink); }
+  .pc-table tr.is-off td { color: var(--ink-faint); }
+  .pc-table .mono { white-space: nowrap; }
+  .pc-cat { margin-bottom: 14px; }
+  .pc-cat-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .pc-cat-head h3 { margin: 0; font-size: 15px; } .pc-cat-head .mono { color: var(--copper-deep); font-weight: 700; }
+  .pc-chip { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--line-soft); color: var(--ink-soft); white-space: nowrap; }
+  .pc-chip.is-prop { background: var(--low-soft); color: var(--low); }
+  .pc-chip.is-req { background: var(--copper-soft); color: var(--copper-deep); }
+  .pc-dets { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
+  .pc-dets span { font-size: 12px; padding: 3px 8px; border-radius: 6px; background: var(--line-soft); }
+  .pc-dets b { font-family: var(--font-mono); }
+  .pc-example { font-size: 12.5px; color: var(--ink-soft); background: var(--line-soft); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 16px; }
+  .pc-example b { font-family: var(--font-mono); color: var(--ink); }
+  @media (max-width: 900px) { .pc-new { grid-template-columns: 1fr; } .pc-prev { position: static; } }
   .tool-more { text-align: center; font-size: 12.5px; color: var(--ink-faint); padding: 14px; }
   .count-list { display: flex; flex-direction: column; gap: 6px; }
   .count-row, .cost-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 170px 110px; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
@@ -1835,6 +1876,7 @@
       <a href="#" class="nav-link nav-sub-link" data-page="count" data-perm="stock.count"><span class="nav-dot" aria-hidden="true"></span><span class="label">Stock count</span><span class="nav-abbr" aria-hidden="true">CNT</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
+      <a href="#" class="nav-link nav-sub-link hidden" data-page="partcodes" data-perm="stock.partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
       </div>
     </div>
     <a href="#" class="nav-link hidden" id="navUsers" data-page="users">
@@ -1852,6 +1894,7 @@
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="dropdowns" data-perm="stock.dropdowns"><span class="nav-dot" aria-hidden="true"></span><span class="label">Dropdowns</span><span class="nav-abbr" aria-hidden="true">DD</span></a>
+      <a href="#" class="nav-link nav-sub-link nav-phone-only hidden" data-page="partcodes" data-perm="stock.partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="apps"><span class="nav-dot" aria-hidden="true"></span><span class="label">Apps</span><span class="nav-abbr" aria-hidden="true">APP</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="feedback"><span class="nav-dot" aria-hidden="true"></span><span class="label">Feedback</span><span class="nav-abbr" aria-hidden="true">FB</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="bug"><span class="nav-dot" aria-hidden="true"></span><span class="label">Report a bug</span><span class="nav-abbr" aria-hidden="true">BUG</span></a>
@@ -2258,6 +2301,19 @@
       </div>
     </section>
 
+    <section class="page page-doc hidden" id="page-partcodes">
+      <div class="page-head"><h2>Part codes</h2><p>RM part codes: <b>CC</b> + category + type + size / spec + detail code. Pick from the index; the code, its name and the RM item are made for you, and a code is never issued twice.</p></div>
+      <div class="page-doc-body tool-page">
+        <div class="tool-bar">
+          <div class="seg" id="pcTabs" role="group" aria-label="Show"><button type="button" data-t="new">New code</button><button type="button" data-t="codes">Codes <span class="seg-n"></span></button><button type="button" data-t="index">Index <span class="seg-n"></span></button></div>
+          <select id="pcCatFilter" class="hidden" aria-label="Category"></select>
+          <input type="search" id="pcSearch" class="hidden" placeholder="Search code, name or size" aria-label="Search">
+          <button type="button" class="btn-ghost btn-compact hidden" id="pcAddType">Add a type</button>
+        </div>
+        <div id="pcBody"></div>
+      </div>
+    </section>
+
     <section class="page page-doc hidden" id="page-apps">
       <div class="page-head"><h2>Apps</h2><p>The other CALGAS apps. Each one opens in a new tab.</p></div>
       <div class="page-doc-body"><div class="app-gallery" id="appGallery"></div></div>
@@ -2660,7 +2716,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.34.0';
+const APP_VERSION = '3.35.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3546,6 +3602,8 @@ function syncLabel(action, p) {
     receiveIndent: 'Confirming' + no + ' was received', closeIndent: (p.mode === 'cancel' ? 'Cancelling' : 'Closing the rest of') + no,
     returnIndent: 'Posting a return against' + no, getNotifications: 'Checking notifications', markNotificationsRead: 'Marking notifications read',
     dismissNotifications: p.all ? 'Clearing notifications' : 'Removing a notification', sendPendingPush: 'Sending phone notifications',
+    getPartCodes: 'Loading part codes', importPartCodes: 'Bringing in the code index', createPartCode: 'Making part code ' + (p.catCode ? 'CC' + p.catCode + (p.typeCode || '') + '…' : ''),
+    savePartCodeType: 'Saving a type in the code index', savePartCodeDetail: 'Saving a detail code',
     savePushSubscription: 'Turning on notifications on this device', removePushSubscription: 'Turning off notifications on this device',
     testPush: 'Sending a test notification', getAttachments: 'Listing the entry’s files', getAttachmentsBulk: 'Checking which entries have files',
     uploadAttachment: 'Uploading a file', removeAttachment: 'Removing a file', checkTransaction: 'Checking an entry the network dropped',
@@ -4433,6 +4491,7 @@ function navigateTo(page, kind) {
   if (page === 'indents') { renderIndentsPage(); if (Date.now() - indentView.loadedAt > 60000) loadIndents(true); }
   if (page === 'costs') renderCostsPage();
   if (page === 'dropdowns') renderDropdownsPage();
+  if (page === 'partcodes') renderPartCodesPage();
   // Loads on first visit rather than at boot — the ledger can be large and
   // most sessions never open it.
   if (page === 'ledger') {
@@ -8930,7 +8989,7 @@ function permOk(spec) {
 function syncPermLinks() {
   document.querySelectorAll('[data-perm]').forEach(function (el) { el.classList.toggle('hidden', !permOk(el.dataset.perm)); });
 }
-const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns', indents: 'indents' };
+const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns', indents: 'indents', partcodes: 'stock.partcodes' };
 
 function kindSeg(kinds, current, withAll) {
   return (withAll ? ['all'] : []).concat(kinds).map(function (k) {
@@ -9448,6 +9507,377 @@ function wireCostsPage() {
   document.getElementById('costSaveBtn').addEventListener('click', saveCosts);
 }
 
+
+// ---- Part codes (3.35.0): the RM Part Code Master's coding system ----
+// CC + category code + type code + size / spec + detail code. The index
+// (types, sizes in use, detail codes) is held by the backend; the code and
+// name are built here as the sheet's formulas did, for the preview, and
+// again by the backend when it is made.
+const pcView = { data: null, loading: null, tab: 'new', cat: '', search: '', f: { cat: '', type: '', size: '', detail: '', newDetail: '', newMeaning: '', unit: '', min: '', hsn: '', gst: '' }, txn: null, busy: false };
+function pcAz(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
+function pcSizeNorm(v) {
+  return String(v == null ? '' : v).toUpperCase().replace(/\s+/g, '').replace(/[×*]/g, 'X')
+    .replace(/(\d+)\.(\d*?)0+(?!\d)/g, function (m, a, b) { return b ? a + '.' + b : a; });
+}
+function pcDetailNorm(v) { return String(v == null ? '' : v).toUpperCase().replace(/\s+/g, ''); }
+function pcType(cat, type) { return ((pcView.data && pcView.data.types) || []).find(function (t) { return t.Category_Code === cat && t.Type_Code === type; }) || null; }
+function pcDetailsOf(cat, type) { return ((pcView.data && pcView.data.details) || []).filter(function (d) { return d.Category_Code === cat && d.Type_Code === type; }).sort(function (a, b) { return pcAz(a.Detail_Code, b.Detail_Code); }); }
+function pcItemsOf(cat, type) { return ((pcView.data && pcView.data.items) || []).filter(function (i) { return i.parts && i.parts.cat === cat && i.parts.type === type; }); }
+function pcSizesOf(cat, type) {
+  const set = {};
+  ((pcView.data && pcView.data.sizes) || []).forEach(function (x) { if (x.Category_Code === cat && x.Type_Code === type) set[x.Size_Spec.toUpperCase()] = 1; });
+  pcItemsOf(cat, type).forEach(function (i) { if (i.parts.size) set[i.parts.size] = 1; });
+  return Object.keys(set).sort(pcAz);
+}
+function pcIsSerial(t) { return !!t && String(t.Size_Format).trim().toLowerCase() === 'serial'; }
+function pcNextSerial(cat, type) {
+  const nums = pcSizesOf(cat, type).filter(function (x) { return /^\d+$/.test(x); });
+  const max = nums.reduce(function (m, x) { return Math.max(m, Number(x)); }, 0);
+  const width = nums.length ? Math.max.apply(null, nums.map(function (x) { return x.length; })) : 2;
+  return String(max + 1).padStart(width, '0');
+}
+function pcBuild(f) {
+  const t = pcType(f.cat, f.type);
+  const out = { type: t, problems: [], warnings: [], newSize: false, newDetail: false };
+  if (!t) { out.problems.push('Pick the category and type.'); return out; }
+  const size = pcSizeNorm(f.size);
+  const detail = f.detail === '__new' ? pcDetailNorm(f.newDetail) : pcDetailNorm(f.detail);
+  const serial = pcIsSerial(t);
+  out.size = size; out.detail = detail;
+  if (!size) out.problems.push('Enter the size / spec' + (t.Size_Format ? ' (' + t.Size_Format + (t.Size_Example ? ', e.g. ' + t.Size_Example : '') + ')' : '') + '.');
+  if (t.Approval === 'Proposed') out.problems.push(t.Type_Name + ' is a proposed type. Set it to Approved in the index first.');
+  const label = (t.Detail_Label || 'detail code').toLowerCase();
+  if (t.Detail_Rule === 'Required' && !detail) out.problems.push('Pick the ' + label + ' — it is required for ' + t.Type_Name + '.');
+  if (detail && f.detail === '__new') {
+    if (!/^[A-Z0-9().+\/-]{1,12}$/.test(detail)) out.problems.push('A detail code is up to 12 capital letters, digits or marks like ( ) + -.');
+    else if (pcDetailsOf(f.cat, f.type).some(function (d) { return d.Detail_Code === detail; })) out.newDetail = false;
+    else if (!String(f.newMeaning || '').trim()) out.problems.push('Say what ' + detail + ' means.');
+    else out.newDetail = true;
+  }
+  if (size && !serial && /\sX\s/i.test(t.Size_Format)) {
+    const want = t.Size_Format.split(/\s+X\s+/i).length, have = size.split('X').length;
+    if (want !== have) out.warnings.push('The size format is ' + t.Size_Format + ' — ' + want + ' values joined with X; this has ' + have + '.');
+  }
+  if (size && /[^A-Z0-9.+\/()-]/.test(size)) out.warnings.push('The size has characters other than letters, digits and . + / ( ) -.');
+  out.code = ('CC' + t.Category_Code + t.Type_Code + size + detail).toUpperCase();
+  out.readable = 'CC-' + t.Category_Code + '-' + t.Type_Code + '-' + (size || '…') + (detail ? '-' + detail : '');
+  const prefix = t.Name_Prefix || (t.Category_Name + ' ' + t.Type_Name);
+  out.name = size ? (serial ? prefix + (size === '01' ? '' : '-' + size)
+    : (t.Name_Pattern === 'PREFIX SIZE-DETAIL' && detail) ? prefix + ' ' + size + '-' + detail
+    : prefix + '-' + size + (detail ? '-' + detail : '')).toUpperCase() : '';
+  const dup = size && ((pcView.data && pcView.data.items) || []).find(function (i) { return i.code.toUpperCase() === out.code; });
+  if (dup) out.problems.push(out.code + ' is already ' + dup.id + ' (' + dup.name + (dup.active ? '' : ', retired') + '). A code is never issued twice.');
+  out.newSize = !!size && pcSizesOf(f.cat, f.type).indexOf(size) < 0;
+  return out;
+}
+function pcNextId() {
+  const max = ((pcView.data && pcView.data.items) || []).reduce(function (m, i) { const x = /(\d+)\s*$/.exec(i.id || ''); return x ? Math.max(m, Number(x[1])) : m; }, 0);
+  return 'RM-' + String(max + 1).padStart(5, '0');
+}
+async function loadPartCodes(force) {
+  if (pcView.data && !force) return pcView.data;
+  pcView.data = await (pcView.loading = pcView.loading || api('getPartCodes', {}));
+  pcView.loading = null;
+  return pcView.data;
+}
+async function renderPartCodesPage(force) {
+  const body = document.getElementById('pcBody');
+  if (!pcView.data || force) {
+    if (!pcView.data) body.innerHTML = '<div class="db-card tool-empty">Loading part codes…</div>';
+    try { await loadPartCodes(true); } catch (err) { pcView.loading = null; body.innerHTML = '<div class="db-card tool-empty">' + escapeHtml(err.message) + '</div>'; return; }
+  }
+  const d = pcView.data, empty = !d.types.length;
+  document.querySelectorAll('#pcTabs [data-t]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === pcView.tab); b.disabled = empty && b.dataset.t !== 'new'; });
+  const n = document.querySelectorAll('#pcTabs .seg-n');
+  n[0].textContent = formatNum(d.items.length); n[1].textContent = formatNum(d.types.length);
+  const listTab = pcView.tab === 'codes' || pcView.tab === 'index';
+  const cats = Array.from(new Set(d.types.map(function (t) { return t.Category_Name + '|' + t.Category_Code; }))).sort(pcAz);
+  const cf = document.getElementById('pcCatFilter');
+  cf.classList.toggle('hidden', !listTab || empty);
+  cf.innerHTML = '<option value="">All categories</option>' + cats.map(function (c) { const p = c.split('|'); return '<option value="' + escapeHtml(p[1]) + '"' + (pcView.cat === p[1] ? ' selected' : '') + '>' + escapeHtml(p[0] + ' · ' + p[1]) + '</option>'; }).join('');
+  if (listTab && !empty) enhanceSelect_(cf);
+  const cfWrap = cf.closest('.combo'); if (cfWrap) cfWrap.classList.toggle('hidden', !listTab || empty);
+  const se = document.getElementById('pcSearch');
+  se.classList.toggle('hidden', pcView.tab !== 'codes' || empty); se.value = pcView.search;
+  document.getElementById('pcAddType').classList.toggle('hidden', pcView.tab !== 'index' || empty);
+  if (empty) { body.innerHTML = pcEmptyHtml(); return; }
+  if (pcView.tab === 'codes') return renderPcCodes();
+  if (pcView.tab === 'index') return renderPcIndex();
+  renderPcNew();
+}
+function pcEmptyHtml() {
+  return '<div class="db-card"><div class="tool-empty" style="text-align:left;max-width:640px;margin:0 auto">' +
+    '<h3 style="margin:0 0 8px;color:var(--ink)">Bring in the code index</h3>' +
+    '<p style="margin:0 0 6px">The categories, types, sizes in use and detail codes come from the <b>RM Part Code Master</b> sheet — its Part_Code_Index, Size_List and Detail_Codes tabs. After that they are kept here, and new codes are made on this page.</p>' +
+    '<p style="margin:0 0 16px;color:var(--ink-faint)">The ' + formatNum(pcView.data.items.length) + ' RM items already here keep their codes.</p>' +
+    '<button type="button" class="btn-primary btn-compact" id="pcImport">Bring in the index</button></div></div>';
+}
+function pcCatOptions(sel) {
+  const seen = {}, cats = [];
+  pcView.data.types.forEach(function (t) { if (!seen[t.Category_Code]) { seen[t.Category_Code] = 1; cats.push(t); } });
+  cats.sort(function (a, b) { return pcAz(a.Category_Name, b.Category_Name); });
+  return '<option value="">Pick the category</option>' + cats.map(function (t) { return '<option value="' + escapeHtml(t.Category_Code) + '"' + (sel === t.Category_Code ? ' selected' : '') + '>' + escapeHtml(t.Category_Name + ' · ' + t.Category_Code) + '</option>'; }).join('');
+}
+function pcTypeOptions(cat, sel) {
+  const types = pcView.data.types.filter(function (t) { return t.Category_Code === cat; }).sort(function (a, b) { return pcAz(a.Type_Name, b.Type_Name); });
+  return '<option value="">' + (cat ? 'Pick the type' : 'Pick the category first') + '</option>' + types.map(function (t) {
+    return '<option value="' + escapeHtml(t.Type_Code) + '"' + (sel === t.Type_Code ? ' selected' : '') + '>' + escapeHtml(t.Type_Name + ' · ' + t.Type_Code + (t.Approval === 'Proposed' ? ' (proposed)' : '')) + '</option>';
+  }).join('');
+}
+function renderPcNew() {
+  const f = pcView.f, t = pcType(f.cat, f.type), units = (pcView.data.units || []).slice().sort(pcAz);
+  if (f.unit && units.indexOf(f.unit) < 0) units.push(f.unit);
+  const dets = t ? pcDetailsOf(f.cat, f.type) : [];
+  const sizes = t ? pcSizesOf(f.cat, f.type) : [];
+  const rule = t ? t.Detail_Rule : 'None';
+  document.getElementById('pcBody').innerHTML = '<div class="pc-new">' +
+    '<div class="db-card"><div class="pc-form">' +
+      '<div class="field"><label for="pcfCat">Category <span class="req">*</span></label><select id="pcfCat">' + pcCatOptions(f.cat) + '</select></div>' +
+      '<div class="field"><label for="pcfType">Type <span class="req">*</span></label><select id="pcfType"' + (f.cat ? '' : ' disabled') + '>' + pcTypeOptions(f.cat, f.type) + '</select></div>' +
+      '<div class="field full"><label for="pcfSize">Size / spec <span class="req">*</span></label><input id="pcfSize" class="mono" list="pcfSizes" autocomplete="off" maxlength="40" style="text-transform:uppercase" value="' + escapeHtml(f.size) + '"' + (t ? '' : ' disabled') + ' placeholder="' + escapeHtml(t ? (t.Size_Example || '') : '') + '">' +
+        '<datalist id="pcfSizes">' + sizes.map(function (x) { return '<option value="' + escapeHtml(x) + '">'; }).join('') + '</datalist>' +
+        '<div class="hint" id="pcfSizeHint">' + (t ? escapeHtml(pcIsSerial(t) ? 'Serial number — the next free one is ' + pcNextSerial(f.cat, f.type) + '.' : t.Size_Format + (t.Size_Example ? ', e.g. ' + t.Size_Example : '') + '. In mm unless the format says otherwise; no units; values joined with X.') +
+          (sizes.length ? ' ' + plural(sizes.length, 'size') + ' in use.' : '') : 'The format shows here once the type is picked.') + '</div></div>' +
+      (t && rule !== 'None' ? '<div class="field full"><label for="pcfDetail">' + escapeHtml(t.Detail_Label || 'Detail code') + (rule === 'Required' ? ' <span class="req">*</span>' : '') + '<span class="pc-rule">' + (rule === 'Required' ? 'required' : 'optional') + '</span></label>' +
+        '<select id="pcfDetail" data-sort="none"><option value="">' + (rule === 'Required' ? 'Pick the ' + escapeHtml((t.Detail_Label || 'detail code').toLowerCase()) : 'None') + '</option>' +
+        dets.map(function (x) { return '<option value="' + escapeHtml(x.Detail_Code) + '"' + (f.detail === x.Detail_Code ? ' selected' : '') + '>' + escapeHtml(x.Detail_Code + (x.Detail_Meaning ? ' — ' + x.Detail_Meaning : '')) + '</option>'; }).join('') +
+        '<option value="__new"' + (f.detail === '__new' ? ' selected' : '') + '>New ' + escapeHtml((t.Detail_Label || 'detail code').toLowerCase()) + '…</option></select>' +
+        (f.detail === '__new' ? '<div class="pc-newdet"><input id="pcfNewDetail" class="mono" maxlength="12" placeholder="' + escapeHtml(t.Detail_Example || 'Code') + '" style="text-transform:uppercase" value="' + escapeHtml(f.newDetail) + '" aria-label="New code"><input id="pcfNewMeaning" maxlength="100" placeholder="What it means, e.g. Zinc Plated" value="' + escapeHtml(f.newMeaning) + '" aria-label="What it means"></div>' : '') +
+        '</div>' : '') +
+      '<div class="field"><label for="pcfUnit">Unit <span class="req">*</span></label><select id="pcfUnit"><option value="">Pick the unit</option>' + units.map(function (u) { return '<option' + (f.unit === u ? ' selected' : '') + '>' + escapeHtml(u) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="pcfMin">Minimum quantity</label><input id="pcfMin" type="number" inputmode="decimal" min="0" step="any" value="' + escapeHtml(f.min) + '" placeholder="Reorder level"></div>' +
+      '<div class="field"><label for="pcfHsn">HSN code</label><input id="pcfHsn" maxlength="20" inputmode="numeric" value="' + escapeHtml(f.hsn) + '"></div>' +
+      '<div class="field"><label for="pcfGst">GST %</label><input id="pcfGst" type="number" inputmode="decimal" min="0" max="28" step="any" value="' + escapeHtml(f.gst) + '"></div>' +
+    '</div></div>' +
+    '<div class="db-card pc-prev" id="pcPrev"></div></div>';
+  ['pcfCat', 'pcfType', 'pcfDetail', 'pcfUnit'].forEach(function (id) { const el = document.getElementById(id); if (el) enhanceSelect_(el); });
+  renderPcPreview();
+}
+function renderPcPreview() {
+  const box = document.getElementById('pcPrev'); if (!box) return;
+  const f = pcView.f, b = pcBuild(f), t = b.type;
+  const ready = t && b.size;
+  const unitMissing = !f.unit;
+  const probs = b.problems.slice(); if (ready && unitMissing) probs.push('Pick the unit.');
+  const check = !ready ? '' : probs.length ? '<span class="pc-check is-bad">✕ ' + (b.problems.some(function (p) { return /already/.test(p); }) ? 'Duplicate code' : 'Not ready') + '</span>'
+    : b.newSize ? '<span class="pc-check is-new">✓ OK — new size</span>' : '<span class="pc-check is-ok">✓ OK</span>';
+  box.innerHTML = '<div class="pc-eyebrow">New code</div>' +
+    '<div class="pc-code' + (ready ? '' : ' is-empty') + '">' + escapeHtml(ready ? b.code : 'CC' + (t ? t.Category_Code + t.Type_Code : '') + '…') + '</div>' +
+    '<div class="pc-readable">' + escapeHtml(t ? b.readable : 'CC-category-type-size-detail') + '</div>' +
+    '<div class="pc-name">' + escapeHtml(b.name || (t ? 'The name builds itself from ' + (t.Name_Prefix || t.Type_Name) : 'Pick the category and type')) + '</div>' +
+    (t ? '<div class="pc-facts"><span>Becomes <b>' + escapeHtml(pcNextId()) + '</b></span><span>Category <b>' + escapeHtml(t.Category_Name) + '</b></span>' + (f.unit ? '<span>Unit <b>' + escapeHtml(f.unit) + '</b></span>' : '') +
+      (b.newDetail ? '<span>New ' + escapeHtml((t.Detail_Label || 'detail').toLowerCase()) + ' <b>' + escapeHtml(b.detail) + '</b></span>' : '') + '</div>' : '') +
+    check +
+    (ready && (probs.length || b.warnings.length) ? '<ul class="pc-msgs">' + probs.map(function (p) { return '<li class="is-bad">' + escapeHtml(p) + '</li>'; }).join('') + b.warnings.map(function (w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') + '</ul>' : '') +
+    '<button type="button" class="btn-primary" id="pcCreate"' + (ready && !probs.length && !pcView.busy ? '' : ' disabled') + '>' + (pcView.busy ? 'Making the code…' : 'Make the code and the RM item') + '</button>';
+}
+function pcReadForm() {
+  const v = function (id) { const el = document.getElementById(id); return el ? el.value : undefined; };
+  const f = pcView.f;
+  ['size', 'min', 'hsn', 'gst', 'newDetail', 'newMeaning'].forEach(function (k) {
+    const val = v({ size: 'pcfSize', min: 'pcfMin', hsn: 'pcfHsn', gst: 'pcfGst', newDetail: 'pcfNewDetail', newMeaning: 'pcfNewMeaning' }[k]);
+    if (val !== undefined) f[k] = val;
+  });
+}
+function pcPickType(cat, type) {
+  const f = pcView.f;
+  f.cat = cat; f.type = type; f.size = ''; f.detail = ''; f.newDetail = ''; f.newMeaning = '';
+  const t = pcType(cat, type);
+  if (t && pcIsSerial(t)) f.size = pcNextSerial(cat, type);
+  // The unit most items of this type use.
+  if (t) {
+    const count = {};
+    pcItemsOf(cat, type).forEach(function (i) { if (i.unit) count[i.unit] = (count[i.unit] || 0) + 1; });
+    const best = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; })[0];
+    if (best) f.unit = best;
+  }
+  pcView.txn = null;
+}
+async function pcCreate() {
+  pcReadForm();
+  const f = pcView.f, b = pcBuild(f);
+  if (b.problems.length || !f.unit) return;
+  pcView.txn = pcView.txn || newClientTxnId();
+  pcView.busy = true; renderPcPreview();
+  try {
+    const r = await api('createPartCode', { catCode: f.cat, typeCode: f.type, size: f.size, detail: f.detail === '__new' ? f.newDetail : f.detail,
+      detailMeaning: f.detail === '__new' ? f.newMeaning : '', unit: f.unit, minQty: f.min, hsn: f.hsn, gst: f.gst, clientTxnId: pcView.txn });
+    toast(r.code + ' made as ' + r.idNo + ' — ' + r.name + '. It is in RM stock now.');
+    pcView.txn = null;
+    f.size = ''; f.detail = ''; f.newDetail = ''; f.newMeaning = ''; f.min = '';
+    const t = pcType(f.cat, f.type); if (t && pcIsSerial(t)) f.size = '';
+    await loadPartCodes(true);
+    if (t && pcIsSerial(t)) f.size = pcNextSerial(f.cat, f.type);
+    refreshAllData().then(function () { renderStockPage('rm'); }).catch(function () {});
+  } catch (err) { toast(err.message, true); }
+  finally { pcView.busy = false; renderPartCodesPage(); }
+}
+function pcFiltered() {
+  const q = pcView.search.trim().toUpperCase();
+  return pcView.data.items.filter(function (i) {
+    if (pcView.cat && !(i.parts && i.parts.cat === pcView.cat)) return false;
+    if (!q) return true;
+    return (i.code + ' ' + i.name + ' ' + i.id + ' ' + (i.parts ? i.parts.size + ' ' + i.parts.detail : '')).toUpperCase().indexOf(q) > -1;
+  }).sort(function (a, b) { return pcAz(a.code, b.code); });
+}
+function renderPcCodes() {
+  const rows = pcFiltered(), shown = rows.slice(0, 500);
+  const off = pcView.data.items.filter(function (i) { return !i.parts; }).length;
+  document.getElementById('pcBody').innerHTML = '<div class="tool-sum"><span><b>' + formatNum(rows.length) + '</b> code' + (rows.length === 1 ? '' : 's') +
+    (off && !pcView.cat ? ' · <span class="sub-low">' + formatNum(off) + ' don’t follow the system</span>' : '') + '</span></div>' +
+    '<div class="db-card pc-table-wrap"><table class="pc-table"><thead><tr><th>Code</th><th>Name</th><th>Category · type</th><th>Size / spec</th><th>Detail</th><th>Unit</th><th>Item</th></tr></thead><tbody>' +
+    (shown.length ? shown.map(function (i) {
+      const t = i.parts ? pcType(i.parts.cat, i.parts.type) : null;
+      return '<tr class="' + (i.active ? '' : 'is-off') + '"><td class="mono">' + escapeHtml(i.code) + '</td><td>' + escapeHtml(i.name) + (i.active ? '' : ' <span class="pc-chip">Retired</span>') + '</td>' +
+        '<td>' + (t ? escapeHtml(t.Category_Name + ' · ' + t.Type_Name) : '<span class="sub-low">Not in the system</span>') + '</td>' +
+        '<td class="mono">' + escapeHtml(i.parts ? i.parts.size : '') + '</td><td class="mono">' + escapeHtml(i.parts ? i.parts.detail : '') + '</td>' +
+        '<td>' + escapeHtml(i.unit) + '</td><td class="mono">' + escapeHtml(i.id) + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="tool-empty">No codes match.</td></tr>') + '</tbody></table></div>' +
+    (rows.length > shown.length ? '<div class="tool-more">Showing 500 of ' + formatNum(rows.length) + '. Search to narrow it down.</div>' : '');
+}
+function renderPcIndex() {
+  const d = pcView.data, byCat = {};
+  d.types.forEach(function (t) { if (!pcView.cat || t.Category_Code === pcView.cat) (byCat[t.Category_Code] = byCat[t.Category_Code] || []).push(t); });
+  const cats = Object.keys(byCat).sort(function (a, b) { return pcAz(byCat[a][0].Category_Name, byCat[b][0].Category_Name); });
+  document.getElementById('pcBody').innerHTML = cats.map(function (c) {
+    const list = byCat[c].sort(function (a, b) { return pcAz(a.Type_Name, b.Type_Name); });
+    return '<div class="db-card pc-cat"><div class="pc-cat-head"><h3>' + escapeHtml(list[0].Category_Name) + '</h3><span class="mono">' + escapeHtml(c) + '</span><span class="muted">' + plural(list.length, 'type') + '</span></div>' +
+      '<div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>Type</th><th>Size / spec</th><th>Detail code</th><th>Name</th><th>Codes</th><th></th></tr></thead><tbody>' +
+      list.map(function (t) {
+        const n = pcItemsOf(t.Category_Code, t.Type_Code).length, dets = pcDetailsOf(t.Category_Code, t.Type_Code);
+        return '<tr><td><b>' + escapeHtml(t.Type_Name) + '</b> <span class="mono">' + escapeHtml(t.Type_Code) + '</span>' + (t.Approval === 'Proposed' ? ' <span class="pc-chip is-prop">Proposed</span>' : '') + '</td>' +
+          '<td>' + escapeHtml(t.Size_Format) + (t.Size_Example ? '<div class="muted mono">e.g. ' + escapeHtml(t.Size_Example) + '</div>' : '') + '</td>' +
+          '<td>' + (t.Detail_Rule === 'None' ? '<span class="muted">None</span>' : '<span class="pc-chip' + (t.Detail_Rule === 'Required' ? ' is-req' : '') + '">' + escapeHtml(t.Detail_Rule) + '</span> ' + escapeHtml(t.Detail_Label) +
+            '<div class="muted">' + (dets.length ? escapeHtml(dets.map(function (x) { return x.Detail_Code; }).join(', ')) : 'none yet') + '</div>') + '</td>' +
+          '<td class="mono">' + escapeHtml(t.Name_Prefix) + '<div class="muted">' + escapeHtml(t.Name_Pattern) + '</div></td>' +
+          '<td>' + formatNum(n) + '<div class="muted">CC' + escapeHtml(t.Category_Code + t.Type_Code) + '…</div></td>' +
+          '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-ghost btn-compact" data-pcnew="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '"' + (t.Approval === 'Proposed' ? ' disabled' : '') + '>New code</button> <button type="button" class="btn-ghost btn-compact" data-pcedit="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '">Edit</button></td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }).join('') +
+  '<div class="tool-sum" style="margin-top:8px"><span class="muted">Brought in from the RM Part Code Master sheet. Bringing it in again replaces types, sizes and detail codes here with the sheet’s.</span>' +
+  '<button type="button" class="btn-ghost btn-compact" id="pcReimport">Bring in again…</button></div>';
+}
+// Add or edit a type. On a type with codes, its category and codes stay.
+function openPcTypeForm(key) {
+  const d = pcView.data;
+  const orig = key ? pcType(key.split('|')[0], key.split('|')[1]) : null;
+  const used = orig ? pcItemsOf(orig.Category_Code, orig.Type_Code).length : 0;
+  const t = Object.assign({ Category_Name: '', Category_Code: '', Type_Name: '', Type_Code: '', Size_Format: '', Size_Example: '', Detail_Label: '', Detail_Example: '', Detail_Rule: 'None', Name_Prefix: '', Name_Pattern: 'PREFIX-SIZE-DETAIL', Approval: 'Approved', Notes: '' }, orig || {});
+  const formats = Array.from(new Set(d.types.map(function (x) { return x.Size_Format; }).filter(Boolean))).sort(pcAz);
+  const bg = document.createElement('div');
+  bg.className = 'modal-backdrop'; bg.id = 'pcModal'; bg.dataset.form = '1';
+  const lockCodes = !!used;
+  bg.innerHTML = '<div class="modal" style="max-width:720px"><div class="modal-drag-handle" aria-hidden="true"></div>' +
+    '<div class="modal-head"><div><div class="modal-eyebrow">CODE INDEX</div><h3>' + (orig ? 'Edit ' + escapeHtml(orig.Type_Name) : 'Add a type') + '</h3><div class="muted">' +
+      (orig ? (used ? plural(used, 'code') + ' use this type, so its category and codes stay as they are.' : 'No codes use this type yet.') : 'A new category is added with its first type.') + '</div></div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>' +
+    '<div class="pc-form">' +
+      '<div class="field"><label for="ptCat">Category <span class="req">*</span></label><select id="ptCat"' + (orig ? ' disabled' : '') + '>' + (orig ? '<option value="' + escapeHtml(t.Category_Code) + '">' + escapeHtml(t.Category_Name + ' · ' + t.Category_Code) + '</option>' : pcCatOptions('').replace('Pick the category', 'Pick the category') + '<option value="__new">New category…</option>') + '</select></div>' +
+      '<div class="field hidden" id="ptNewCat"><label>New category <span class="req">*</span></label><div class="pc-newdet" style="grid-template-columns:1fr 110px;margin:0"><input id="ptCatName" maxlength="40" placeholder="Name, e.g. GASKET" style="text-transform:uppercase"><input id="ptCatCode" class="mono" maxlength="5" placeholder="Code" style="text-transform:uppercase"></div></div>' +
+      '<div class="field"><label for="ptTypeName">Type name <span class="req">*</span></label><input id="ptTypeName" maxlength="40" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Name) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HEX BOLT"></div>' +
+      '<div class="field"><label for="ptTypeCode">Type code <span class="req">*</span></label><input id="ptTypeCode" class="mono" maxlength="4" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Code) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HX; ST if the only type"></div>' +
+      '<div class="field"><label for="ptFormat">Size format <span class="req">*</span></label><input id="ptFormat" list="ptFormats" maxlength="60" value="' + escapeHtml(t.Size_Format) + '" placeholder="e.g. Dia X Height, or Serial"><datalist id="ptFormats">' + formats.map(function (x) { return '<option value="' + escapeHtml(x) + '">'; }).join('') + '</datalist></div>' +
+      '<div class="field"><label for="ptExample">Size example</label><input id="ptExample" class="mono" maxlength="40" value="' + escapeHtml(t.Size_Example) + '" placeholder="e.g. 85X247"></div>' +
+      '<div class="field"><label>Detail code</label><div class="seg" id="ptRule">' + ['None', 'Optional', 'Required'].map(function (r) { return '<button type="button" data-r="' + r + '" class="' + (t.Detail_Rule === r ? 'is-on' : '') + '">' + r + '</button>'; }).join('') + '</div></div>' +
+      '<div class="field pt-det"><label for="ptDetLabel">What it stands for</label><input id="ptDetLabel" maxlength="40" value="' + escapeHtml(t.Detail_Label) + '" placeholder="e.g. Finish, Stud, Terminal"></div>' +
+      '<div class="field pt-det"><label for="ptDetEx">Detail example</label><input id="ptDetEx" class="mono" maxlength="12" style="text-transform:uppercase" value="' + escapeHtml(t.Detail_Example) + '" placeholder="e.g. NC"></div>' +
+      '<div class="field"><label for="ptPrefix">Name prefix</label><input id="ptPrefix" maxlength="60" style="text-transform:uppercase" value="' + escapeHtml(t.Name_Prefix) + '" placeholder="Category and type name"></div>' +
+      '<div class="field"><label for="ptPattern">Name pattern</label><select id="ptPattern" data-sort="none"><option value="PREFIX-SIZE-DETAIL"' + (t.Name_Pattern === 'PREFIX-SIZE-DETAIL' ? ' selected' : '') + '>PREFIX-SIZE-DETAIL (BOLT HEX-M6X50-NC)</option><option value="PREFIX SIZE-DETAIL"' + (t.Name_Pattern === 'PREFIX SIZE-DETAIL' ? ' selected' : '') + '>PREFIX SIZE-DETAIL (METAL TOP 3STUD 100-M8X15)</option></select></div>' +
+      '<div class="field"><label for="ptApproval">Approval</label><select id="ptApproval" data-sort="none"><option' + (t.Approval === 'Approved' ? ' selected' : '') + '>Approved</option><option' + (t.Approval === 'Proposed' ? ' selected' : '') + '>Proposed</option></select></div>' +
+      '<div class="field full"><label for="ptNotes">Notes</label><input id="ptNotes" maxlength="300" value="' + escapeHtml(t.Notes) + '"></div>' +
+    '</div>' +
+    '<div class="pc-example" id="ptExampleOut"></div>' +
+    (orig && orig.Detail_Rule !== 'None' ? '<div class="field"><label>' + escapeHtml(orig.Detail_Label || 'Detail') + ' codes</label><div class="pc-dets" id="ptDets"></div>' +
+      '<div class="pc-newdet" style="grid-template-columns:120px 1fr auto"><input id="ptNewDet" class="mono" maxlength="12" placeholder="Code" style="text-transform:uppercase" aria-label="New code"><input id="ptNewDetMeaning" maxlength="100" placeholder="What it means" aria-label="What it means"><button type="button" class="btn-ghost btn-compact" id="ptAddDet">Add</button></div></div>' : '') +
+    '<div class="form-error" id="ptErr"></div>' +
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-primary btn-compact" id="ptSave">' + (orig ? 'Save' : 'Add the type') + '</button></div></div>';
+  bg.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) bg.remove(); });
+  document.body.appendChild(bg);
+  const $m = function (id) { return bg.querySelector('#' + id); };
+  let rule = t.Detail_Rule;
+  const catSel = $m('ptCat');
+  if (!orig) enhanceSelect_(catSel);
+  enhanceSelect_($m('ptPattern')); enhanceSelect_($m('ptApproval'));
+  const cur = function () {
+    const nc = catSel.value === '__new';
+    const cat = nc ? { Category_Name: $m('ptCatName').value.trim().toUpperCase(), Category_Code: $m('ptCatCode').value.trim().toUpperCase() } : (orig || d.types.find(function (x) { return x.Category_Code === catSel.value; }) || {});
+    return { Category_Name: cat.Category_Name || '', Category_Code: cat.Category_Code || '', Type_Name: $m('ptTypeName').value.trim().toUpperCase(), Type_Code: $m('ptTypeCode').value.trim().toUpperCase(),
+      Size_Format: $m('ptFormat').value.trim(), Size_Example: $m('ptExample').value.trim(), Detail_Label: rule === 'None' ? '' : $m('ptDetLabel').value.trim(), Detail_Example: rule === 'None' ? '' : $m('ptDetEx').value.trim().toUpperCase(),
+      Detail_Rule: rule, Name_Prefix: $m('ptPrefix').value.trim().toUpperCase(), Name_Pattern: $m('ptPattern').value, Approval: $m('ptApproval').value, Notes: $m('ptNotes').value.trim() };
+  };
+  const show = function () {
+    $m('ptNewCat').classList.toggle('hidden', catSel.value !== '__new');
+    bg.querySelectorAll('.pt-det').forEach(function (el) { el.classList.toggle('hidden', rule === 'None'); });
+    const x = cur(), ex = pcSizeNorm(x.Size_Example || (pcIsSerial(x) ? '01' : '')) || 'SIZE', det = rule === 'None' ? '' : pcDetailNorm(x.Detail_Example);
+    const prefix = x.Name_Prefix || ((x.Category_Name + ' ' + x.Type_Name).trim()) || 'NAME';
+    const name = pcIsSerial(x) ? prefix + (ex === '01' ? '' : '-' + ex) : (x.Name_Pattern === 'PREFIX SIZE-DETAIL' && det) ? prefix + ' ' + ex + '-' + det : prefix + '-' + ex + (det ? '-' + det : '');
+    $m('ptExampleOut').innerHTML = 'A code of this type: <b>CC' + escapeHtml((x.Category_Code || '???') + (x.Type_Code || '??') + ex + det) + '</b> · ' + escapeHtml(name.toUpperCase());
+    $m('ptPrefix').placeholder = (x.Category_Name + ' ' + x.Type_Name).trim() || 'Category and type name';
+  };
+  const dets = function () {
+    const box = $m('ptDets'); if (!box || !orig) return;
+    const list = pcDetailsOf(orig.Category_Code, orig.Type_Code);
+    box.innerHTML = list.length ? list.map(function (x) { return '<span><b>' + escapeHtml(x.Detail_Code) + '</b> ' + escapeHtml(x.Detail_Meaning || '') + '</span>'; }).join('') : '<span class="muted">None yet</span>';
+  };
+  bg.addEventListener('input', show); bg.addEventListener('change', show);
+  $m('ptRule').addEventListener('click', function (e) { const b = e.target.closest('[data-r]'); if (!b) return; rule = b.dataset.r; bg.querySelectorAll('#ptRule [data-r]').forEach(function (x) { x.classList.toggle('is-on', x === b); }); show(); });
+  show(); dets();
+  if ($m('ptAddDet')) $m('ptAddDet').addEventListener('click', async function (e) {
+    const btn = e.currentTarget; $m('ptErr').textContent = '';
+    setBtnLoading(btn, 'Adding…');
+    try {
+      pcView.data = await api('savePartCodeDetail', { catCode: orig.Category_Code, typeCode: orig.Type_Code, detailCode: $m('ptNewDet').value, meaning: $m('ptNewDetMeaning').value });
+      $m('ptNewDet').value = ''; $m('ptNewDetMeaning').value = ''; dets(); renderPartCodesPage();
+    } catch (err) { $m('ptErr').textContent = err.message; } finally { clearBtnLoading(btn, 'Add'); }
+  });
+  $m('ptSave').addEventListener('click', async function (e) {
+    const btn = e.currentTarget; $m('ptErr').textContent = '';
+    const x = cur();
+    if (!x.Category_Code) { $m('ptErr').textContent = catSel.value === '__new' ? 'Enter the new category’s name and code.' : 'Pick the category.'; return; }
+    setBtnLoading(btn, 'Saving…');
+    try {
+      pcView.data = await api('savePartCodeType', { type: x, original: orig ? { catCode: orig.Category_Code, typeCode: orig.Type_Code } : null });
+      bg.remove(); toast((orig ? 'Saved ' : 'Added ') + x.Type_Name + ' (' + x.Category_Code + '-' + x.Type_Code + ').');
+      renderPartCodesPage();
+    } catch (err) { $m('ptErr').textContent = err.message; } finally { clearBtnLoading(btn, orig ? 'Save' : 'Add the type'); }
+  });
+}
+async function pcImport(replace) {
+  if (replace && !(await confirmDialog('Bring the index in again from the RM Part Code Master sheet? Types, sizes and detail codes here are replaced with the sheet’s — anything added on this page since is lost unless it is in the sheet too. RM items and their codes don’t change.', { title: 'Bring in again', confirmText: 'Replace the index' }))) return;
+  const btn = document.getElementById(replace ? 'pcReimport' : 'pcImport');
+  if (btn) setBtnLoading(btn, 'Bringing it in…');
+  try {
+    pcView.data = await api('importPartCodes', { replace: !!replace });
+    const n = pcView.data.imported || {};
+    toast('Brought in ' + plural(n.types || 0, 'type') + ', ' + plural(n.sizes || 0, 'size') + ' and ' + plural(n.details || 0, 'detail code') + '.');
+  } catch (err) { toast(err.message, true); }
+  finally { if (btn && document.body.contains(btn)) clearBtnLoading(btn); renderPartCodesPage(); }
+}
+function wirePartCodesPage() {
+  document.getElementById('pcTabs').addEventListener('click', function (e) { const b = e.target.closest('[data-t]'); if (!b || b.disabled) return; pcReadForm(); pcView.tab = b.dataset.t; renderPartCodesPage(); });
+  document.getElementById('pcCatFilter').addEventListener('change', function (e) { pcView.cat = e.target.value; renderPartCodesPage(); });
+  document.getElementById('pcSearch').addEventListener('input', debounce(function () { pcView.search = document.getElementById('pcSearch').value; renderPcCodes(); }, 150));
+  document.getElementById('pcAddType').addEventListener('click', function () { openPcTypeForm(null); });
+  const body = document.getElementById('pcBody');
+  body.addEventListener('change', function (e) {
+    const id = e.target.id, f = pcView.f;
+    if (id === 'pcfCat') { pcReadForm(); pcPickType(e.target.value, ''); renderPcNew(); return; }
+    if (id === 'pcfType') { pcReadForm(); pcPickType(f.cat, e.target.value); renderPcNew(); const s = document.getElementById('pcfSize'); if (s && !s.value) s.focus(); return; }
+    if (id === 'pcfDetail') { pcReadForm(); f.detail = e.target.value; if (f.detail !== '__new') { f.newDetail = ''; f.newMeaning = ''; } renderPcNew(); if (f.detail === '__new') document.getElementById('pcfNewDetail').focus(); return; }
+    if (id === 'pcfUnit') { f.unit = e.target.value; renderPcPreview(); }
+  });
+  body.addEventListener('input', function (e) { if (/^pcf/.test(e.target.id)) { pcReadForm(); renderPcPreview(); } });
+  body.addEventListener('keydown', function (e) { if (e.key === 'Enter' && /^pcf/.test(e.target.id) && e.target.tagName === 'INPUT') { e.preventDefault(); const b = document.getElementById('pcCreate'); if (b && !b.disabled) pcCreate(); } });
+  body.addEventListener('click', function (e) {
+    if (e.target.closest('#pcCreate')) { pcCreate(); return; }
+    if (e.target.closest('#pcImport')) { pcImport(false); return; }
+    if (e.target.closest('#pcReimport')) { pcImport(true); return; }
+    const n = e.target.closest('[data-pcnew]');
+    if (n) { const k = n.dataset.pcnew.split('|'); pcReadForm(); pcPickType(k[0], k[1]); pcView.tab = 'new'; renderPartCodesPage(); return; }
+    const ed = e.target.closest('[data-pcedit]');
+    if (ed) openPcTypeForm(ed.dataset.pcedit);
+  });
+}
+
 // ---- Dropdown lists (Admin) ----
 const DD_NAMES = { RM_Category: 'RM categories', FG_Family: 'FG families', FG_Category: 'FG categories', Trade_Category: 'Trade categories',
                    Unit: 'Units', Supplier: 'Suppliers', OLCustomer: 'OL customers', Holidays: 'Holidays', 'Weekly Off': 'Weekly off days' };
@@ -9888,7 +10318,7 @@ function wireStaticEvents() {
       if (d) stepZoom(d); else applyZoom(1, true);
     });
   });
-  wireCountPage(); wireReorderPage(); wireCostsPage(); wireDropdownsPage();
+  wireCountPage(); wireReorderPage(); wireCostsPage(); wireDropdownsPage(); wirePartCodesPage();
   document.getElementById('ledgerEarlierBtn').addEventListener('click', loadEarlierYears);
   window.addEventListener('resize', debounce(updateNavIndicator, 100));
 
