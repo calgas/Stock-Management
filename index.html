@@ -1528,6 +1528,7 @@
   .pc-msgs li::before { content: ''; position: absolute; left: 4px; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: var(--low); }
   .pc-msgs li.is-bad { color: var(--critical); } .pc-msgs li.is-bad::before { background: var(--critical); }
   .pc-prev .btn-primary { margin-top: 16px; }
+  .pc-prev-body:empty + .btn-primary { margin-top: 0; }
   .pc-table-wrap { padding: 0; overflow-x: auto; }
   .pc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .pc-table th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; padding: 11px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -1546,6 +1547,31 @@
   .pc-example { font-size: 12.5px; color: var(--ink-soft); background: var(--line-soft); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 16px; }
   .pc-example b { font-family: var(--font-mono); color: var(--ink); }
   @media (max-width: 900px) { .pc-new { grid-template-columns: 1fr; } .pc-prev { position: static; } }
+  /* 3.36.0: kinds of code, approvals */
+  .pc-kinds { margin-bottom: 12px; }
+  .seg-lg button { padding: 9px 16px; font-size: 14px; }
+  #pcKinds .has-pending .seg-n { background: var(--copper); color: #fff; }
+  #pcKinds .seg-n:empty { display: none; }
+  .pc-approve-note { font-size: 12.5px; color: var(--ink-faint); margin-top: 10px; }
+  .pc-adds { list-style: none; margin: 10px 0 0; padding: 0; font-size: 13px; }
+  .pc-adds li { padding: 5px 10px; margin-top: 4px; border-radius: 8px; background: var(--copper-soft); color: var(--copper-deep); font-weight: 600; }
+  .pc-chip.is-ok { background: var(--ok-soft); color: var(--ok); }
+  .pc-chip.is-bad { background: var(--critical-soft); color: var(--critical); }
+  .pcr-list { display: grid; gap: 12px; }
+  .pcr-head { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); margin: 22px 0 10px; }
+  .pcr-card.is-focus { box-shadow: 0 0 0 2px var(--copper), var(--shadow); }
+  .pcr-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pcr-when { margin-left: auto; font-size: 12.5px; color: var(--ink-faint); }
+  .pcr-code { font-size: 20px; font-weight: 700; margin-top: 10px; word-break: break-all; }
+  .pcr-name { font-size: 14.5px; font-weight: 600; margin-top: 2px; }
+  .pcr-note { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); font-style: italic; }
+  .pcr-dec { margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
+  .pcr-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .fg-index { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 14px; align-items: start; }
+  .fg-index .pc-cat { margin-bottom: 0; } .fg-index .pc-table td { vertical-align: middle; }
+  @media (max-width: 560px) { .fg-index { grid-template-columns: minmax(0, 1fr); } }
+  .fg-rlist { margin-top: 10px; } .fg-rlist > b { font-size: 12px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; }
+  @media (max-width: 780px) { .pcr-when { margin-left: 0; width: 100%; } .seg-lg button { padding: 8px 12px; font-size: 13px; } }
   .tool-more { text-align: center; font-size: 12.5px; color: var(--ink-faint); padding: 14px; }
   .count-list { display: flex; flex-direction: column; gap: 6px; }
   .count-row, .cost-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 170px 110px; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
@@ -1911,7 +1937,7 @@
       <a href="#" class="nav-link nav-sub-link" data-page="count" data-perm="stock.count"><span class="nav-dot" aria-hidden="true"></span><span class="label">Stock count</span><span class="nav-abbr" aria-hidden="true">CNT</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
-      <a href="#" class="nav-link nav-sub-link hidden" data-page="partcodes" data-perm="stock.partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
+      <a href="#" class="nav-link nav-sub-link hidden" data-page="partcodes" data-perm="partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
       </div>
     </div>
     <a href="#" class="nav-link hidden" id="navUsers" data-page="users">
@@ -1929,7 +1955,7 @@
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="reorder"><span class="nav-dot" aria-hidden="true"></span><span class="label">Reorder list</span><span class="nav-abbr" aria-hidden="true">ORD</span></a>
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="costs" data-perm="stock.cost.view,items"><span class="nav-dot" aria-hidden="true"></span><span class="label">Standard costs</span><span class="nav-abbr" aria-hidden="true">&#8377;</span></a>
       <a href="#" class="nav-link nav-sub-link nav-phone-only" data-page="dropdowns" data-perm="stock.dropdowns"><span class="nav-dot" aria-hidden="true"></span><span class="label">Dropdowns</span><span class="nav-abbr" aria-hidden="true">DD</span></a>
-      <a href="#" class="nav-link nav-sub-link nav-phone-only hidden" data-page="partcodes" data-perm="stock.partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
+      <a href="#" class="nav-link nav-sub-link nav-phone-only hidden" data-page="partcodes" data-perm="partcodes"><span class="nav-dot" aria-hidden="true"></span><span class="label">Part codes</span><span class="nav-abbr" aria-hidden="true">PC</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="apps"><span class="nav-dot" aria-hidden="true"></span><span class="label">Apps</span><span class="nav-abbr" aria-hidden="true">APP</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="feedback"><span class="nav-dot" aria-hidden="true"></span><span class="label">Feedback</span><span class="nav-abbr" aria-hidden="true">FB</span></a>
       <a href="#" class="nav-link nav-sub-link" data-page="feedback" data-fb="bug"><span class="nav-dot" aria-hidden="true"></span><span class="label">Report a bug</span><span class="nav-abbr" aria-hidden="true">BUG</span></a>
@@ -2128,7 +2154,7 @@
           <button class="btn-ghost" id="fgRefreshBtn">Refresh</button>
           <span class="freshness-label" id="fgFreshness"></span>
           <button class="btn-ghost hidden add-btn-spacer" id="fgImportBtn"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="vertical-align:-2px;margin-right:6px"><path d="M8 10V2m0 0L5 5m3-3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12v1.5A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Import</button>
-          <button class="btn-primary btn-compact hidden" id="fgAddItemBtn">+ Add FG item</button>
+          <button class="btn-primary btn-compact hidden" id="fgAddItemBtn" title="New FG items are made in Part codes">+ New FG code</button>
         </div>
         <p class="toolbar-hint">Click a row to post a stock transaction. Clock icon shows history, pencil edits the item.</p>
       </div>
@@ -2337,13 +2363,16 @@
     </section>
 
     <section class="page page-doc hidden" id="page-partcodes">
-      <div class="page-head"><h2>Part codes</h2><p>RM part codes: <b>CC</b> + category + type + size / spec + detail code. Pick from the index; the code, its name and the RM item are made for you, and a code is never issued twice.</p></div>
+      <div class="page-head"><h2>Part codes</h2><p id="pcLede">RM part codes: <b>CC</b> + category + type + size / spec + detail code.</p></div>
       <div class="page-doc-body tool-page">
+        <div class="pc-kinds"><div class="seg seg-lg" id="pcKinds" role="group" aria-label="Codes"><button type="button" data-k="rm" class="hidden">RM</button><button type="button" data-k="fg" class="hidden">FG &amp; Trade</button><button type="button" data-k="req"><span class="seg-l">Approvals</span> <span class="seg-n"></span></button></div></div>
         <div class="tool-bar">
           <div class="seg" id="pcTabs" role="group" aria-label="Show"><button type="button" data-t="new">New code</button><button type="button" data-t="codes">Codes <span class="seg-n"></span></button><button type="button" data-t="index">Index <span class="seg-n"></span></button></div>
           <select id="pcCatFilter" class="hidden" aria-label="Category"></select>
+          <select id="pcFgFilter" class="hidden" aria-label="Show"></select>
           <input type="search" id="pcSearch" class="hidden" placeholder="Search code, name or size" aria-label="Search">
           <button type="button" class="btn-ghost btn-compact hidden" id="pcAddType">Add a type</button>
+          <button type="button" class="btn-ghost btn-compact hidden" id="pcAddEntry">Add to the index</button>
         </div>
         <div id="pcBody"></div>
       </div>
@@ -2751,7 +2780,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.35.2';
+const APP_VERSION = '3.36.0';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -3643,6 +3672,8 @@ function syncLabel(action, p) {
     dismissNotifications: p.all ? 'Clearing notifications' : 'Removing a notification', sendPendingPush: 'Sending phone notifications',
     getPartCodes: 'Loading part codes', importPartCodes: 'Bringing in the code index', createPartCode: 'Making part code ' + (p.catCode ? 'CC' + p.catCode + (p.typeCode || '') + '…' : ''),
     savePartCodeType: 'Saving a type in the code index', savePartCodeDetail: 'Saving a detail code',
+    importFgCodes: 'Bringing in the FG code list', createFgCode: 'Making FG part code', saveFgIndexEntry: 'Saving the FG code index',
+    approvePartCode: 'Approving part code ' + (p.requestId || ''), rejectPartCode: 'Sending a part code back', withdrawPartCode: 'Withdrawing a part code request',
     savePushSubscription: 'Turning on notifications on this device', removePushSubscription: 'Turning off notifications on this device',
     testPush: 'Sending a test notification', getAttachments: 'Listing the entry’s files', getAttachmentsBulk: 'Checking which entries have files',
     uploadAttachment: 'Uploading a file', removeAttachment: 'Removing a file', checkTransaction: 'Checking an entry the network dropped',
@@ -4249,6 +4280,12 @@ function syncItemButtons() {
     if (k === 'rm') {
       document.getElementById('rmAddItemBtn').classList.toggle('hidden', !can('stock.partcodes'));
       document.getElementById('rmImportBtn').classList.add('hidden');
+      return;
+    }
+    // FG items too (3.36.0); Trade items are still added here as well.
+    if (k === 'fg') {
+      document.getElementById('fgAddItemBtn').classList.toggle('hidden', !can('stock.partcodes.fg'));
+      document.getElementById('fgImportBtn').classList.add('hidden');
       return;
     }
     document.getElementById(k + 'AddItemBtn').classList.toggle('hidden', !canEditItems(config));
@@ -9057,13 +9094,15 @@ function permOk(spec) {
     if (p === 'admin') return !!(state.session && state.session.role === 'Admin');
     if (p === 'items') return STOCK_KINDS.some(function (k) { return can(uiConfig(k).itemsPerm); });
     if (p === 'indents') return canIndents();
+    // Part codes (3.36.0): any of the three ticks opens the page.
+    if (p === 'partcodes') return ['stock.partcodes', 'stock.partcodes.fg', 'stock.partcodes.trade'].some(function (k) { return can(k); });
     return can(p);
   });
 }
 function syncPermLinks() {
   document.querySelectorAll('[data-perm]').forEach(function (el) { el.classList.toggle('hidden', !permOk(el.dataset.perm)); });
 }
-const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns', indents: 'indents', partcodes: 'stock.partcodes' };
+const PAGE_PERMS = { count: 'stock.count', costs: 'stock.cost.view,items', dropdowns: 'stock.dropdowns', indents: 'indents', partcodes: 'partcodes' };
 
 function kindSeg(kinds, current, withAll) {
   return (withAll ? ['all'] : []).concat(kinds).map(function (k) {
@@ -9587,7 +9626,10 @@ function wireCostsPage() {
 // (types, sizes in use, detail codes) is held by the backend; the code and
 // name are built here as the sheet's formulas did, for the preview, and
 // again by the backend when it is made.
-const pcView = { data: null, loading: null, tab: 'new', cat: '', search: '', f: { cat: '', type: '', size: '', detail: '', newDetail: '', newMeaning: '', unit: '', min: '', hsn: '', gst: '18' }, txn: null, busy: false };
+const pcView = { data: null, loading: null, kind: '', tab: 'new', cat: '', search: '', f: { cat: '', type: '', size: '', detail: '', newDetail: '', newMeaning: '', unit: '', min: '', hsn: '', gst: '18', note: '' }, txn: null, busy: false,
+  // 3.36.0: FG & Trade codes, and approvals.
+  fgTab: 'new', fgFilter: '', fgSearch: '', fgTxn: null, focus: '',
+  fgf: { list: '', type: '', construction: '', ratingUnit: '', rating: '', detuning: '', voltage: '', frequency: '', canDia: '', canHt: '', customer: '', customerCode: '', customerTag: '', unit: 'NOS', min: '', hsn: '', gst: '18', note: '' } };
 function pcAz(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
 function pcSizeNorm(v) {
   return String(v == null ? '' : v).toUpperCase().replace(/\s+/g, '').replace(/[×*]/g, 'X')
@@ -9660,7 +9702,20 @@ async function renderPartCodesPage(force) {
     if (!pcView.data) body.innerHTML = '<div class="db-card tool-empty">Loading part codes…</div>';
     try { await loadPartCodes(true); } catch (err) { pcView.loading = null; body.innerHTML = '<div class="db-card tool-empty">' + escapeHtml(err.message) + '</div>'; return; }
   }
-  const d = pcView.data, empty = !d.types.length;
+  const d = pcView.data, who = pcWho(), kinds = pcKinds();
+  if (kinds.indexOf(pcView.kind) < 0) pcView.kind = kinds[0];
+  document.querySelectorAll('#pcKinds [data-k]').forEach(function (b) { b.classList.toggle('hidden', kinds.indexOf(b.dataset.k) < 0); b.classList.toggle('is-on', b.dataset.k === pcView.kind); });
+  const rq = document.querySelector('#pcKinds [data-k="req"]'), np = pcPendingN();
+  rq.querySelector('.seg-l').textContent = who.admin ? 'Approvals' : 'My requests';
+  rq.querySelector('.seg-n').textContent = np ? formatNum(np) : '';
+  rq.classList.toggle('has-pending', !!np && who.admin);
+  document.getElementById('pcLede').innerHTML = pcLede();
+  document.getElementById('pcTabs').classList.toggle('hidden', pcView.kind === 'req');
+  ['pcCatFilter', 'pcFgFilter'].forEach(function (x) { const el = document.getElementById(x), w = el.closest('.combo'); el.classList.add('hidden'); if (w) w.classList.add('hidden'); });
+  ['pcSearch', 'pcAddType', 'pcAddEntry'].forEach(function (x) { document.getElementById(x).classList.add('hidden'); });
+  if (pcView.kind === 'req') return renderPcRequests();
+  if (pcView.kind === 'fg') return renderFgPage();
+  const empty = !d.types.length;
   document.querySelectorAll('#pcTabs [data-t]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === pcView.tab); b.disabled = empty && b.dataset.t !== 'new'; });
   const n = document.querySelectorAll('#pcTabs .seg-n');
   n[0].textContent = formatNum(d.items.length); n[1].textContent = formatNum(d.types.length);
@@ -9673,13 +9728,14 @@ async function renderPartCodesPage(force) {
   const cfWrap = cf.closest('.combo'); if (cfWrap) cfWrap.classList.toggle('hidden', !listTab || empty);
   const se = document.getElementById('pcSearch');
   se.classList.toggle('hidden', pcView.tab !== 'codes' || empty); se.value = pcView.search;
-  document.getElementById('pcAddType').classList.toggle('hidden', pcView.tab !== 'index' || empty);
+  document.getElementById('pcAddType').classList.toggle('hidden', pcView.tab !== 'index' || empty || !who.admin);
   if (empty) { body.innerHTML = pcEmptyHtml(); return; }
   if (pcView.tab === 'codes') return renderPcCodes();
   if (pcView.tab === 'index') return renderPcIndex();
   renderPcNew();
 }
 function pcEmptyHtml() {
+  if (!pcWho().admin) return '<div class="db-card tool-empty">An Admin brings in the RM code index first. New RM codes are made here after that.</div>';
   return '<div class="db-card"><div class="tool-empty" style="text-align:left;max-width:640px;margin:0 auto">' +
     '<h3 style="margin:0 0 8px;color:var(--ink)">Bring in the code index</h3>' +
     '<p style="margin:0 0 6px">The categories, types, sizes in use and detail codes come from the <b>RM Part Code Master</b> sheet — its Part_Code_Index, Size_List and Detail_Codes tabs. After that they are kept here, and new codes are made on this page.</p>' +
@@ -9699,6 +9755,12 @@ function pcTypeOptions(cat, sel) {
   }).join('');
 }
 function renderPcNew() {
+  if (pcView.redrawing) return;
+  pcSettleFocus();
+  pcView.redrawing = true;
+  try { renderPcNewNow(); } finally { pcView.redrawing = false; }
+}
+function renderPcNewNow() {
   const f = pcView.f, t = pcType(f.cat, f.type), units = (pcView.data.units || []).slice().sort(pcAz);
   if (f.unit && units.indexOf(f.unit) < 0) units.push(f.unit);
   const dets = t ? pcDetailsOf(f.cat, f.type) : [];
@@ -9727,10 +9789,24 @@ function renderPcNew() {
       '<div class="field"><label for="pcfHsn">HSN code</label><input id="pcfHsn" maxlength="20" inputmode="numeric" value="' + escapeHtml(f.hsn) + '"></div>' +
       '<div class="field"><label for="pcfGst">GST %</label><input id="pcfGst" type="number" inputmode="decimal" min="0" max="28" step="any" value="' + escapeHtml(f.gst) + '"></div>' +
       (function () { const sp = gstSplit(String(f.gst).trim()); return '<div class="field full"><label>IGST · CGST · SGST %</label><div class="pc-gst3">' + ['IGST', 'CGST', 'SGST'].map(function (k) { return '<label>' + k + '<input id="pcf' + k + '" type="number" readonly tabindex="-1" class="is-derived" title="Worked out from GST %" value="' + escapeHtml(sp[k]) + '"></label>'; }).join('') + '</div><div class="hint">From GST %: IGST is the full rate, CGST and SGST half each.</div></div>'; })() +
+      (pcWho().admin ? '' : '<div class="field full"><label for="pcfNote">Note for the Admin</label><input id="pcfNote" maxlength="300" value="' + escapeHtml(f.note) + '" placeholder="Optional: what it is for"></div>') +
     '</div></div>' +
     '<div class="db-card pc-prev" id="pcPrev"></div></div>';
   ['pcfCat', 'pcfType', 'pcfDetail', 'pcfUnit'].forEach(function (id) { const el = document.getElementById(id); if (el) enhanceSelect_(el); });
   renderPcPreview();
+}
+// The preview's button stays the same element while the preview around it
+// is redrawn: leaving a box (its change event) redraws the preview, and a
+// button replaced between mouse down and up would swallow the click.
+function setPreview(box, btnId, html, btnText, disabled, foot) {
+  let btn = box.querySelector('#' + btnId);
+  if (!btn) {
+    box.innerHTML = '<div class="pc-prev-body"></div><button type="button" class="btn-primary" id="' + btnId + '"></button><div class="pc-prev-foot"></div>';
+    btn = box.querySelector('#' + btnId);
+  }
+  box.querySelector('.pc-prev-body').innerHTML = html;
+  btn.textContent = btnText; btn.disabled = !!disabled;
+  box.querySelector('.pc-prev-foot').innerHTML = foot || '';
 }
 function renderPcPreview() {
   const box = document.getElementById('pcPrev'); if (!box) return;
@@ -9740,22 +9816,24 @@ function renderPcPreview() {
   const probs = b.problems.slice(); if (ready && unitMissing) probs.push('Pick the unit.');
   const check = !ready ? '' : probs.length ? '<span class="pc-check is-bad">✕ ' + (b.problems.some(function (p) { return /already/.test(p); }) ? 'Duplicate code' : 'Not ready') + '</span>'
     : b.newSize ? '<span class="pc-check is-new">✓ OK — new size</span>' : '<span class="pc-check is-ok">✓ OK</span>';
-  box.innerHTML = '<div class="pc-eyebrow">New code</div>' +
+  setPreview(box, 'pcCreate', '<div class="pc-eyebrow">New code</div>' +
     '<div class="pc-code' + (ready ? '' : ' is-empty') + '">' + escapeHtml(ready ? b.code : 'CC' + (t ? t.Category_Code + t.Type_Code : '') + '…') + '</div>' +
     '<div class="pc-readable">' + escapeHtml(t ? b.readable : 'CC-category-type-size-detail') + '</div>' +
     '<div class="pc-name">' + escapeHtml(b.name || (t ? 'The name builds itself from ' + (t.Name_Prefix || t.Type_Name) : 'Pick the category and type')) + '</div>' +
-    (t ? '<div class="pc-facts"><span>Becomes <b>' + escapeHtml(pcNextId()) + '</b></span><span>Category <b>' + escapeHtml(t.Category_Name) + '</b></span>' + (f.unit ? '<span>Unit <b>' + escapeHtml(f.unit) + '</b></span>' : '') +
+    (t ? '<div class="pc-facts"><span>' + (pcWho().admin ? 'Becomes <b>' + escapeHtml(pcNextId()) + '</b>' : 'Goes to an Admin for approval') + '</span><span>Category <b>' + escapeHtml(t.Category_Name) + '</b></span>' + (f.unit ? '<span>Unit <b>' + escapeHtml(f.unit) + '</b></span>' : '') +
       (String(f.gst).trim() !== '' ? '<span>GST <b>' + escapeHtml(String(f.gst).trim()) + '%</b> (CGST ' + escapeHtml(String(gstSplit(f.gst.trim()).CGST)) + ' + SGST ' + escapeHtml(String(gstSplit(f.gst.trim()).SGST)) + ')</span>' : '') +
       (b.newDetail ? '<span>New ' + escapeHtml((t.Detail_Label || 'detail').toLowerCase()) + ' <b>' + escapeHtml(b.detail) + '</b></span>' : '') + '</div>' : '') +
     check +
-    (ready && (probs.length || b.warnings.length) ? '<ul class="pc-msgs">' + probs.map(function (p) { return '<li class="is-bad">' + escapeHtml(p) + '</li>'; }).join('') + b.warnings.map(function (w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') + '</ul>' : '') +
-    '<button type="button" class="btn-primary" id="pcCreate"' + (ready && !probs.length && !pcView.busy ? '' : ' disabled') + '>' + (pcView.busy ? 'Making the code…' : 'Make the code and the RM item') + '</button>';
+    (ready && (probs.length || b.warnings.length) ? '<ul class="pc-msgs">' + probs.map(function (p) { return '<li class="is-bad">' + escapeHtml(p) + '</li>'; }).join('') + b.warnings.map(function (w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') + '</ul>' : ''),
+    pcView.busy ? (pcWho().admin ? 'Making the code…' : 'Sending…') : pcWho().admin ? 'Make the code and the RM item' : 'Send for approval',
+    !(ready && !probs.length && !pcView.busy),
+    pcWho().admin ? '' : '<div class="pc-approve-note">An Admin approves it before the code and the RM item are made. You’ll get a notification either way.</div>');
 }
 function pcReadForm() {
   const v = function (id) { const el = document.getElementById(id); return el ? el.value : undefined; };
   const f = pcView.f;
-  ['size', 'min', 'hsn', 'gst', 'newDetail', 'newMeaning'].forEach(function (k) {
-    const val = v({ size: 'pcfSize', min: 'pcfMin', hsn: 'pcfHsn', gst: 'pcfGst', newDetail: 'pcfNewDetail', newMeaning: 'pcfNewMeaning' }[k]);
+  ['size', 'min', 'hsn', 'gst', 'newDetail', 'newMeaning', 'note'].forEach(function (k) {
+    const val = v({ size: 'pcfSize', min: 'pcfMin', hsn: 'pcfHsn', gst: 'pcfGst', newDetail: 'pcfNewDetail', newMeaning: 'pcfNewMeaning', note: 'pcfNote' }[k]);
     if (val !== undefined) f[k] = val;
   });
 }
@@ -9781,14 +9859,15 @@ async function pcCreate() {
   pcView.busy = true; renderPcPreview();
   try {
     const r = await api('createPartCode', { catCode: f.cat, typeCode: f.type, size: f.size, detail: f.detail === '__new' ? f.newDetail : f.detail,
-      detailMeaning: f.detail === '__new' ? f.newMeaning : '', unit: f.unit, minQty: f.min, hsn: f.hsn, gst: f.gst, clientTxnId: pcView.txn });
-    toast(r.code + ' made as ' + r.idNo + ' — ' + r.name + '. It is in RM stock now.');
+      detailMeaning: f.detail === '__new' ? f.newMeaning : '', unit: f.unit, minQty: f.min, hsn: f.hsn, gst: f.gst, note: f.note, clientTxnId: pcView.txn });
+    if (r.pending) { toast(r.code + ' sent for approval (' + r.requestId + '). The Admins have been told.'); api('sendPendingPush', {}).catch(function () {}); }
+    else toast(r.code + ' made as ' + r.idNo + ' — ' + r.name + '. It is in RM stock now.');
     pcView.txn = null;
-    f.size = ''; f.detail = ''; f.newDetail = ''; f.newMeaning = ''; f.min = '';
+    f.size = ''; f.detail = ''; f.newDetail = ''; f.newMeaning = ''; f.min = ''; f.note = '';
     const t = pcType(f.cat, f.type); if (t && pcIsSerial(t)) f.size = '';
     await loadPartCodes(true);
     if (t && pcIsSerial(t)) f.size = pcNextSerial(f.cat, f.type);
-    refreshAllData().then(function () { renderStockPage('rm'); }).catch(function () {});
+    if (!r.pending) refreshAllData().then(function () { renderStockPage('rm'); }).catch(function () {});
   } catch (err) { toast(err.message, true); }
   finally { pcView.busy = false; renderPartCodesPage(); }
 }
@@ -9831,10 +9910,10 @@ function renderPcIndex() {
             '<div class="muted">' + (dets.length ? escapeHtml(dets.map(function (x) { return x.Detail_Code; }).join(', ')) : 'none yet') + '</div>') + '</td>' +
           '<td class="mono">' + escapeHtml(t.Name_Prefix) + '<div class="muted">' + escapeHtml(t.Name_Pattern) + '</div></td>' +
           '<td>' + formatNum(n) + '<div class="muted">CC' + escapeHtml(t.Category_Code + t.Type_Code) + '…</div></td>' +
-          '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-ghost btn-compact" data-pcnew="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '"' + (t.Approval === 'Proposed' ? ' disabled' : '') + '>New code</button> <button type="button" class="btn-ghost btn-compact" data-pcedit="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '">Edit</button></td></tr>';
+          '<td style="text-align:right;white-space:nowrap"><button type="button" class="btn-ghost btn-compact" data-pcnew="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '"' + (t.Approval === 'Proposed' ? ' disabled' : '') + '>New code</button>' + (pcWho().admin ? ' <button type="button" class="btn-ghost btn-compact" data-pcedit="' + escapeHtml(t.Category_Code + '|' + t.Type_Code) + '">Edit</button>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div></div>';
   }).join('') +
-  '<div class="tool-sum" style="margin-top:8px"><span class="muted">The index is kept here. A size or detail code used for the first time joins it when its code is made; types and detail codes are added with Add a type and Edit.</span></div>';
+  '<div class="tool-sum" style="margin-top:8px"><span class="muted">The index is kept here. A size or detail code used for the first time joins it when its code is made; types and detail codes are added by an Admin with Add a type and Edit.</span></div>';
 }
 // Add or edit a type. On a type with codes, its category and codes stay.
 function openPcTypeForm(key) {
@@ -9934,12 +10013,28 @@ async function pcImport(replace) {
   finally { if (btn && document.body.contains(btn)) clearBtnLoading(btn); renderPartCodesPage(); }
 }
 function wirePartCodesPage() {
-  document.getElementById('pcTabs').addEventListener('click', function (e) { const b = e.target.closest('[data-t]'); if (!b || b.disabled) return; pcReadForm(); pcView.tab = b.dataset.t; renderPartCodesPage(); });
+  document.getElementById('pcTabs').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-t]'); if (!b || b.disabled) return;
+    if (pcView.kind === 'fg') { fgReadForm(); pcView.fgTab = b.dataset.t; } else { pcReadForm(); pcView.tab = b.dataset.t; }
+    renderPartCodesPage();
+  });
+  document.getElementById('pcKinds').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    if (pcView.kind === 'fg') fgReadForm(); else if (pcView.kind === 'rm') pcReadForm();
+    pcView.kind = b.dataset.k; pcView.focus = ''; renderPartCodesPage(b.dataset.k === 'req');
+  });
+  document.getElementById('pcFgFilter').addEventListener('change', function (e) { pcView.fgFilter = e.target.value; renderFgCodes(); });
+  document.getElementById('pcAddEntry').addEventListener('click', function () { openFgEntryForm(null, null); });
+  wireFgPage();
   document.getElementById('pcCatFilter').addEventListener('change', function (e) { pcView.cat = e.target.value; renderPartCodesPage(); });
-  document.getElementById('pcSearch').addEventListener('input', debounce(function () { pcView.search = document.getElementById('pcSearch').value; renderPcCodes(); }, 150));
+  document.getElementById('pcSearch').addEventListener('input', debounce(function () {
+    const v = document.getElementById('pcSearch').value;
+    if (pcView.kind === 'fg') { pcView.fgSearch = v; renderFgCodes(); } else { pcView.search = v; renderPcCodes(); }
+  }, 150));
   document.getElementById('pcAddType').addEventListener('click', function () { openPcTypeForm(null); });
   const body = document.getElementById('pcBody');
   body.addEventListener('change', function (e) {
+    if (pcView.kind !== 'rm') return;
     const id = e.target.id, f = pcView.f;
     if (id === 'pcfCat') { pcReadForm(); pcPickType(e.target.value, ''); renderPcNew(); return; }
     if (id === 'pcfType') { pcReadForm(); pcPickType(f.cat, e.target.value); renderPcNew(); const s = document.getElementById('pcfSize'); if (s && !s.value) s.focus(); return; }
@@ -9948,18 +10043,19 @@ function wirePartCodesPage() {
     if (id === 'pcfSize') { const v = pcSizeNorm(e.target.value); if (v !== e.target.value) e.target.value = v; pcReadForm(); renderPcPreview(); }
   });
   body.addEventListener('input', function (e) {
-    if (!/^pcf/.test(e.target.id)) return;
+    if (pcView.kind !== 'rm' || !/^pcf/.test(e.target.id)) return;
     pcReadForm();
     if (e.target.id === 'pcfGst') { const sp = gstSplit(e.target.value.trim()); ['IGST', 'CGST', 'SGST'].forEach(function (k) { const el = document.getElementById('pcf' + k); if (el) el.value = sp[k]; }); }
     renderPcPreview();
   });
   body.addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' || !/^pcf/.test(e.target.id) || e.target.tagName !== 'INPUT') return;
+    if (pcView.kind !== 'rm' || e.key !== 'Enter' || !/^pcf/.test(e.target.id) || e.target.tagName !== 'INPUT') return;
     const combo = e.target.closest('[data-combo]');
     if (combo && !combo.querySelector('.combo-list').classList.contains('hidden')) return; // Enter picks from the list
     e.preventDefault(); const b = document.getElementById('pcCreate'); if (b && !b.disabled) pcCreate();
   });
   body.addEventListener('click', function (e) {
+    if (pcView.kind !== 'rm') return;
     if (e.target.closest('#pcCreate')) { pcCreate(); return; }
     if (e.target.closest('#pcImport')) { pcImport(false); return; }
     if (e.target.closest('#pcReimport')) { pcImport(true); return; }
@@ -9967,6 +10063,619 @@ function wirePartCodesPage() {
     if (n) { const k = n.dataset.pcnew.split('|'); pcReadForm(); pcPickType(k[0], k[1]); pcView.tab = 'new'; renderPartCodesPage(); return; }
     const ed = e.target.closest('[data-pcedit]');
     if (ed) openPcTypeForm(ed.dataset.pcedit);
+  });
+}
+
+
+// ---- Part codes 3.36.0: approvals, and FG & Trade codes ----
+// Anyone but an Admin sends a new code for approval; it is made when an
+// Admin approves it. FG and Trade codes follow the FG Part Code Master's
+// system, built here for the preview as the backend builds them.
+function pcWho() { return (pcView.data && pcView.data.who) || { admin: false, rm: false, fg: false, trade: false }; }
+function pcKinds() {
+  const w = pcWho(), k = [];
+  if (w.rm) k.push('rm');
+  if (w.fg || w.trade) k.push('fg');
+  k.push('req');
+  return k;
+}
+function pcPendingN() { return ((pcView.data && pcView.data.requests) || []).filter(function (r) { return r.status === 'Pending'; }).length; }
+function pcLede() {
+  const w = pcWho(), appr = w.admin ? '' : ' Codes you make go to an Admin for approval first.';
+  if (pcView.kind === 'req') return w.admin ? 'Codes asked for by others wait here. Approving makes the code and its stock item in their name; not approving needs a reason, which they are told.'
+    : 'The codes you asked for, and what an Admin decided. You get a notification when one is decided.';
+  if (pcView.kind === 'fg') return 'FG and Trade part codes: <b>CM</b> + construction + type + rating + unit + voltage + can + customer. A new rating, voltage, can or customer can be typed in; it joins the index when the code is made.' + appr;
+  return 'RM part codes: <b>CC</b> + category + type + size / spec + detail code. Pick from the index; the code, its name and the RM item are made for you, and a code is never issued twice.' + appr;
+}
+
+const FG_SEGS = ['Construction', 'Type', 'Rating Unit', 'Voltage', 'Frequency', 'Can Dia', 'Customer'];
+const FG_SEG_FIELD = { 'Construction': 'construction', 'Type': 'type', 'Rating Unit': 'ratingUnit', 'Voltage': 'voltage', 'Frequency': 'frequency', 'Can Dia': 'canDia', 'Customer': 'customer' };
+function fgKey(v) { return String(v == null ? '' : v).trim().toUpperCase().replace(/\s+/g, ' '); }
+function fgNum(v) { return String(v).replace(/(\d+)\.(\d*?)0+(?!\d)/g, function (m, a, b) { return b ? a + '.' + b : a; }); }
+function fgRating(v) { return fgNum(String(v == null ? '' : v).trim().toUpperCase().replace(/\s+/g, '').replace(/[×*]/g, 'X')); }
+function fgVolt(v) { let t = String(v == null ? '' : v).trim().toUpperCase().replace(/\s+/g, ''); if (/^\d+(\.\d+)?$/.test(t)) t += 'V'; return fgNum(t); }
+function fgDia(v) {
+  const t = String(v == null ? '' : v).replace(/\s+/g, '').replace(/^(?:⌀|Φ|φ|Ø|ø|DIA|D)/i, '').replace(/mm$/i, '');
+  return t ? '⌀' + fgNum(t) : '';
+}
+function fgData() { return (pcView.data && pcView.data.fg) || { index: [], ratings: [], register: [], stockOnly: [] }; }
+function fgSeg(seg) { return fgData().index.filter(function (x) { return x.segment === seg; }); }
+function fgEntry(seg, name) {
+  if (!String(name == null ? '' : name).trim()) return null;
+  if (seg === 'Can Dia') return fgSeg(seg).find(function (x) { return fgDia(x.name) === fgDia(name); }) || null;
+  if (seg === 'Voltage') return fgSeg(seg).find(function (x) { return fgVolt(x.name) === fgVolt(name); }) || null;
+  return fgSeg(seg).find(function (x) { return fgKey(x.name) === fgKey(name); }) || null;
+}
+function fgIsReactor(t) { return !!t && (t.code === 'DR' || /REACTOR/i.test(t.name + ' ' + t.tag)); }
+function fgNextDia() {
+  const used = {}; fgSeg('Can Dia').forEach(function (x) { used[String(x.code).toUpperCase()] = 1; });
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let i = 0; i < 26; i++) if (!used[A[i]]) return A[i];
+  for (let j = 0; j < 26; j++) for (let k = 0; k < 26; k++) if (!used[A[j] + A[k]]) return A[j] + A[k];
+  return '?';
+}
+// Every code already used, and where (as the backend says it).
+let fgTakenCache = null;
+function fgTaken() {
+  const d = fgData();
+  if (fgTakenCache && fgTakenCache.d === d && fgTakenCache.r === pcView.data.requests) return fgTakenCache.map;
+  const map = {};
+  (d.stockOnly || []).forEach(function (s) { map[s.code.toUpperCase()] = s.id + ' in ' + s.kind + ' stock (' + s.name + ')'; });
+  d.register.forEach(function (r) {
+    map[r.code.toUpperCase()] = r.no + ' in the code list (' + r.name + ')' + (r.stock ? ', in ' + r.stock.kind + ' stock as ' + r.stock.id : ', not in stock yet');
+    (r.old || []).forEach(function (o) { map[o] = map[o] || 'the old code of ' + r.no + ' (' + r.code + ')'; });
+  });
+  (pcView.data.requests || []).forEach(function (q) { if (q.status === 'Pending' && q.kind !== 'RM') map[q.code.toUpperCase()] = map[q.code.toUpperCase()] || 'waiting for approval as ' + q.id; });
+  fgTakenCache = { d: d, r: pcView.data.requests, map: map };
+  return map;
+}
+// The code, its name and the checks, as fgcBuild_ makes them; "…" where a
+// choice is still missing, so the code shows its shape while it's filled in.
+function fgBuild(f) {
+  const out = { problems: [], warnings: [], adds: [], list: f.list === 'Trade' ? 'Trade' : 'FG' };
+  const bad = function (m) { out.problems.push(m); };
+  const type = fgEntry('Type', f.type);
+  if (!type) bad('Pick the type.');
+  const conUsed = !type || type.rule !== 'Not used';
+  const con = type && conUsed ? fgEntry('Construction', f.construction) : null;
+  if (type && conUsed && !con) bad('Pick the construction — ' + type.name + ' codes carry it.');
+  const cyl = !!con && con.rule === 'Can size';
+  Object.assign(out, { type: type, con: con, conUsed: conUsed, cyl: cyl });
+  const unit = fgEntry('Rating Unit', f.ratingUnit);
+  if (!unit) bad('Pick the rating unit.');
+  const rating = fgRating(f.rating);
+  if (!rating) bad('Enter the rating.');
+  else if (!/^\d+(\.\d+)?([X+]\d+(\.\d+)?)*$/.test(rating)) bad('A rating is a number like 12.5, or sections joined with X or + (3X100, 0.91+0.19).');
+  else if (unit && !fgData().ratings.some(function (r) { return fgKey(r.unit) === fgKey(unit.name) && fgRating(r.rating) === rating; })) { out.newRating = true; out.adds.push('New rating ' + rating + ' ' + unit.name); }
+  let det = '';
+  if (String(f.detuning == null ? '' : f.detuning).trim() !== '') {
+    const dn = Number(String(f.detuning).trim().replace(/%$/, ''));
+    if (isNaN(dn) || dn <= 0 || dn >= 100) bad('Detuning is a percentage, like 7 or 14.'); else if (dn !== 7) det = fgNum(String(dn));
+  }
+  let vName = fgVolt(f.voltage), vCode = '', vTag = '';
+  const volt = vName ? fgEntry('Voltage', vName) : null;
+  if (!vName) bad('Pick the voltage.');
+  else if (volt) { vCode = volt.code; vTag = volt.tag || fgVolt(volt.name); vName = volt.name; }
+  else if (!/^\d+(\.\d+)?V(AC|DC)?$/.test(vName)) bad('A new voltage is written like 690V or 750VDC.');
+  else {
+    vCode = /VDC$/.test(vName) ? vName.replace(/VDC$/, 'DC') : vName.replace(/V(AC)?$/, '');
+    const o = fgSeg('Voltage').find(function (x) { return String(x.code).toUpperCase() === vCode; });
+    if (o) bad('The voltage code ' + vCode + ' is already ' + o.name + '. Pick ' + o.name + ' instead.');
+    vTag = vName; out.adds.push('New voltage ' + vName + ' (code ' + vCode + ')');
+  }
+  const freq = String(f.frequency || '').trim() ? fgEntry('Frequency', f.frequency) : null;
+  let dCode = '', dName = '', ht = '';
+  if (cyl) {
+    dName = fgDia(f.canDia);
+    if (!dName) bad('Pick the can dia — cylindrical codes carry the can size.');
+    else if (!/^⌀\d+(\.\d+)?$/.test(dName)) bad('A can dia is a number in mm, like 63.5.');
+    else { const dia = fgEntry('Can Dia', dName); if (dia) { dCode = dia.code; dName = dia.name; } else { dCode = fgNextDia(); out.adds.push('New can ' + dName + ' (code ' + dCode + ')'); } }
+    ht = String(f.canHt == null ? '' : f.canHt).trim().replace(/\s*mm$/i, '');
+    if (!ht) bad('Enter the can height in mm.'); else if (!/^\d{2,4}$/.test(ht)) { bad('Can height is whole mm, like 175.'); ht = ''; } else ht = String(Number(ht));
+  }
+  const cust = fgEntry('Customer', f.customer);
+  let cCode = '', cTag = '', cName = '';
+  if (!String(f.customer || '').trim()) bad('Pick the customer.');
+  else if (cust) { cCode = cust.code; cTag = cust.tag || fgKey(cust.name); cName = cust.name; }
+  else {
+    cName = String(f.customer).replace(/\s+/g, ' ').trim().slice(0, 60);
+    cCode = String(f.customerCode || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); cTag = fgKey(f.customerTag) || fgKey(cName); out.newCustomer = true;
+    if (!cCode) bad(cName + ' is a new customer: give it a code of 1 to 3 letters.');
+    else if (!/^[A-Z0-9]{1,3}$/.test(cCode)) bad('A customer code is 1 to 3 capital letters or digits.');
+    else { const o = fgSeg('Customer').find(function (x) { return String(x.code).toUpperCase() === cCode; }); if (o) bad('The customer code ' + cCode + ' is already ' + o.name + '.'); }
+    out.adds.push('New customer ' + cName + ' (code ' + (cCode || '?') + ', ' + cTag + ' in names)');
+  }
+  const q = function (v) { return v || '…'; };
+  const rat = rating ? rating + (unit ? unit.code : '…') + det : '…';
+  const can = cyl ? q(dCode) + q(ht) : '';
+  out.code = ('CM' + (type ? (conUsed ? q(con && con.code) : '') + type.code : '…') + rat + q(vCode) + (freq ? freq.code : '') + can + q(cCode)).toUpperCase();
+  out.readable = ('CMPL-' + (type ? (conUsed ? q(con && con.code) + '-' : '') + type.code : '…') + '-' + rat + '-' + q(vCode) + (freq ? freq.code : '') + '-' + can + '-' + q(cCode)).toUpperCase();
+  out.name = [rating && unit ? rating + unit.tag : '', conUsed && con ? con.tag : '', type ? type.tag : '', det ? det + '%' : '', vTag, freq ? freq.tag : '',
+              cyl && dName && ht ? dName.replace(/^⌀/, '') + 'X' + ht : '', cTag].filter(Boolean).join(' ').toUpperCase();
+  out.family = unit ? unit.tag : '';
+  out.category = type ? (conUsed ? (con ? con.tag + '-' : '') + type.tag : type.tag) : '';
+  if (det && type && !fgIsReactor(type)) out.warnings.push('Detuning is usually only for reactors.');
+  out.complete = !out.problems.length;
+  if (out.complete) {
+    const hit = fgTaken()[out.code];
+    if (hit) { bad(out.code + ' is already ' + hit + '. A code is never issued twice.'); out.complete = false; out.dup = true; }
+  }
+  return out;
+}
+
+function renderFgPage() {
+  const d = fgData(), who = pcWho(), empty = !d.index.length;
+  document.querySelectorAll('#pcTabs [data-t]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === pcView.fgTab); b.disabled = empty && b.dataset.t !== 'new'; });
+  const n = document.querySelectorAll('#pcTabs .seg-n');
+  n[0].textContent = formatNum(d.register.length); n[1].textContent = formatNum(d.index.length);
+  const ff = document.getElementById('pcFgFilter');
+  if (pcView.fgTab === 'codes' && !empty) {
+    ff.classList.remove('hidden');
+    ff.innerHTML = [['', 'All codes'], ['FG', 'FG list'], ['Trade', 'Trade list'], ['in', 'In stock'], ['out', 'Not in stock'], ['extra', 'In stock, not in the list']].map(function (o) {
+      return '<option value="' + o[0] + '"' + (pcView.fgFilter === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+    ff.dataset.sort = 'none';
+    enhanceSelect_(ff);
+    const w = ff.closest('.combo'); if (w) w.classList.remove('hidden');
+    const se = document.getElementById('pcSearch'); se.classList.remove('hidden'); se.value = pcView.fgSearch; se.placeholder = 'Search code, name or list no.';
+  } else document.getElementById('pcSearch').placeholder = 'Search code, name or size';
+  document.getElementById('pcAddEntry').classList.toggle('hidden', pcView.fgTab !== 'index' || empty || !who.admin);
+  if (empty) { document.getElementById('pcBody').innerHTML = fgEmptyHtml(); return; }
+  if (pcView.fgTab === 'codes') return renderFgCodes();
+  if (pcView.fgTab === 'index') return renderFgIndex();
+  renderFgNew();
+}
+function fgEmptyHtml() {
+  if (!pcWho().admin) return '<div class="db-card tool-empty">An Admin brings in the FG code list first. FG and Trade codes are made here after that.</div>';
+  return '<div class="db-card"><div class="tool-empty" style="text-align:left;max-width:660px;margin:0 auto">' +
+    '<h3 style="margin:0 0 8px;color:var(--ink)">Bring in the FG code list</h3>' +
+    '<p style="margin:0 0 6px">The constructions, types, rating units, voltages, cans, customers and ratings come from the <b>FG Part Code Master</b> sheet’s FG_Code_Index and Rating_List tabs, and every code issued from its New_FG_Codes and Trade FG tabs. After that they are kept here, and new FG and Trade codes are made on this page — the sheet isn’t needed any more.</p>' +
+    '<p style="margin:0 0 16px;color:var(--ink-faint)">FG and Trade stock items don’t change. Codes already in stock are matched to the list, also under the code they had before the can height went in.</p>' +
+    '<button type="button" class="btn-primary btn-compact" id="fgImport">Bring in the FG code list</button></div></div>';
+}
+async function fgImport(replace) {
+  if (replace && !(await confirmDialog('Bring the FG code list in again from the FG Part Code Master sheet? The index, ratings and code list here are replaced with the sheet’s — codes made on this page since are lost from the list unless they are in the sheet too. Stock items don’t change.', { title: 'Bring in again', confirmText: 'Replace the list' }))) return;
+  const btn = document.getElementById(replace ? 'fgReimport' : 'fgImport');
+  if (btn) setBtnLoading(btn, 'Bringing it in…');
+  try {
+    const r = await api('importFgCodes', { replace: !!replace });
+    const n = r.imported || {};
+    toast('Brought in ' + plural(n.codes || 0, 'code') + ' (' + formatNum(n.fg || 0) + ' FG, ' + formatNum(n.trade || 0) + ' Trade), ' + plural(n.index || 0, 'index entry', 'index entries') + ' and ' + plural(n.ratings || 0, 'rating') + '.');
+    await loadPartCodes(true);
+  } catch (err) { toast(err.message, true); }
+  finally { if (btn && document.body.contains(btn)) clearBtnLoading(btn); renderPartCodesPage(); }
+}
+
+// A combobox that takes new values, in the app's own style.
+function fgComboHtml(id, label, value, options, o) {
+  o = o || {};
+  return '<div class="field' + (o.full ? ' full' : '') + '"><label for="' + id + '">' + escapeHtml(label) + (o.req ? ' <span class="req">*</span>' : '') + (o.rule ? '<span class="pc-rule">' + escapeHtml(o.rule) + '</span>' : '') + '</label>' +
+    '<div class="combo" data-combo><input type="text" class="combo-input' + (o.mono ? ' mono' : '') + '" id="' + id + '"' + (o.caps ? ' data-caps' : '') + ' autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" maxlength="' + (o.max || 40) + '"' +
+    ' data-options="' + escapeHtml(JSON.stringify(options)) + '"' + (o.noNew ? '' : ' data-allow-new="1" data-new-list="' + escapeHtml(o.newList || 'the list') + '" data-new-when="' + escapeHtml(o.newWhen || 'when the code is made') + '"') +
+    ' value="' + escapeHtml(value || '') + '"' + (o.disabled ? ' disabled' : '') + ' placeholder="' + escapeHtml(o.placeholder || '') + '">' +
+    '<button type="button" class="combo-toggle" tabindex="-1" aria-label="Show ' + escapeHtml(label.toLowerCase()) + '"' + (o.disabled ? ' disabled' : '') + '><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+    '<div class="combo-list hidden"></div></div>' + (o.hint ? '<div class="hint">' + o.hint + '</div>' : '') + '</div>';
+}
+function fgSelectHtml(id, label, value, items, o) {
+  o = o || {};
+  return '<div class="field' + (o.full ? ' full' : '') + '"><label for="' + id + '">' + escapeHtml(label) + (o.req ? ' <span class="req">*</span>' : '') + (o.rule ? '<span class="pc-rule">' + escapeHtml(o.rule) + '</span>' : '') + '</label>' +
+    '<select id="' + id + '"' + (o.disabled ? ' disabled' : '') + (o.sort === false ? ' data-sort="none"' : '') + '><option value="">' + escapeHtml(o.empty || 'Pick one') + '</option>' +
+    items.map(function (x) { return '<option value="' + escapeHtml(x[0]) + '"' + (fgKey(value) === fgKey(x[0]) ? ' selected' : '') + '>' + escapeHtml(x[1]) + '</option>'; }).join('') + '</select>' +
+    (o.hint ? '<div class="hint">' + o.hint + '</div>' : '') + '</div>';
+}
+function fgByName(a, b) { return pcAz(a.name, b.name); }
+function fgUsedMost(field, type) {
+  const count = {};
+  fgData().register.forEach(function (r) { if (fgKey(r.parts.type) === fgKey(type) && r.parts[field]) count[r.parts[field]] = (count[r.parts[field]] || 0) + 1; });
+  return Object.keys(count).sort(function (a, b) { return count[b] - count[a]; })[0] || '';
+}
+function fgListDefault() { const w = pcWho(); return w.fg ? 'FG' : 'Trade'; }
+// Redrawing a form takes away the box that has the cursor; its blur (and
+// change) runs first, while nothing is being replaced, and can't start a
+// second redraw in the middle of this one.
+function pcSettleFocus() {
+  const ae = document.activeElement, body = document.getElementById('pcBody');
+  if (!ae || !body.contains(ae)) return;
+  pcView.redrawing = true;
+  try { ae.blur(); } finally { pcView.redrawing = false; }
+}
+function renderFgNew() {
+  if (pcView.redrawing) return;
+  pcSettleFocus();
+  pcView.redrawing = true;
+  try { renderFgNewNow(); } finally { pcView.redrawing = false; }
+}
+function renderFgNewNow() {
+  const f = pcView.fgf, who = pcWho();
+  if (!f.list || (f.list === 'FG' && !who.fg) || (f.list === 'Trade' && !who.trade)) f.list = fgListDefault();
+  const b = fgBuild(f), t = b.type;
+  const units = (pcView.data.units || []).slice().sort(pcAz); if (f.unit && units.indexOf(f.unit) < 0) units.push(f.unit);
+  const ratings = fgData().ratings.filter(function (r) { return fgKey(r.unit) === fgKey(f.ratingUnit); }).map(function (r) { return fgRating(r.rating); });
+  ratings.sort(function (a, c) { return (parseFloat(a) - parseFloat(c)) || pcAz(a, c); });
+  const dias = fgSeg('Can Dia').map(function (x) { return x.name; }).sort(function (a, c) { return parseFloat(a.replace(/^⌀/, '')) - parseFloat(c.replace(/^⌀/, '')); });
+  const volts = fgSeg('Voltage').map(function (x) { return x.name; }).sort(function (a, c) { return (parseFloat(a) - parseFloat(c)) || pcAz(a, c); });
+  const custs = fgSeg('Customer').slice().sort(fgByName).map(function (x) { return x.name; });
+  const sp = gstSplit(String(f.gst).trim());
+  document.getElementById('pcBody').innerHTML = '<div class="pc-new">' +
+    '<div class="db-card"><div class="pc-form">' +
+      '<div class="field full"><label>Stock</label><div class="seg" id="fgfList">' +
+        '<button type="button" data-l="FG"' + (f.list === 'FG' ? ' class="is-on"' : '') + (who.fg ? '' : ' disabled') + '>FG</button>' +
+        '<button type="button" data-l="Trade"' + (f.list === 'Trade' ? ' class="is-on"' : '') + (who.trade ? '' : ' disabled') + '>Trade</button></div>' +
+        '<div class="hint">' + (f.list === 'Trade' ? 'Bought in and sold on: the code becomes a Trade item, numbered in the Trade list (TR-…).' : 'Made here: the code becomes an FG item, numbered in the FG list (FG-…).') + '</div></div>' +
+      fgSelectHtml('fgfType', 'Type', f.type, fgSeg('Type').slice().sort(fgByName).map(function (x) { return [x.name, x.name + ' · ' + x.code]; }), { req: true, empty: 'Pick the type' }) +
+      (b.conUsed ? fgSelectHtml('fgfCon', 'Construction', f.construction, fgSeg('Construction').slice().sort(fgByName).map(function (x) { return [x.name, x.name + ' · ' + x.code]; }), { req: true, empty: 'Pick the construction', disabled: !t })
+        : '<div class="field"><label>Construction</label><input value="Not used for ' + escapeHtml(t ? t.name : '') + '" disabled></div>') +
+      fgSelectHtml('fgfUnitR', 'Rating unit', f.ratingUnit, fgSeg('Rating Unit').map(function (x) { return [x.name, x.name + ' · ' + x.code]; }), { req: true, empty: 'Pick the unit', sort: false }) +
+      fgComboHtml('fgfRating', 'Rating', f.rating, ratings, { req: true, mono: true, caps: true, disabled: !f.ratingUnit, newList: 'the ' + (f.ratingUnit || '') + ' ratings',
+        placeholder: f.ratingUnit ? 'Pick one, or type a new one' : 'Pick the unit first', hint: 'A number; sections joined with X, like 3X100. No unit.' }) +
+      (fgIsReactor(t) ? '<div class="field"><label for="fgfDet">Detuning %</label><input id="fgfDet" type="number" inputmode="decimal" min="0" max="99" step="any" value="' + escapeHtml(f.detuning) + '" placeholder="7"><div class="hint">7% isn’t written in the code; any other value is.</div></div>' : '') +
+      fgComboHtml('fgfVolt', 'Voltage', f.voltage, volts, { req: true, mono: true, caps: true, newList: 'the voltages', placeholder: 'Pick one, or type a new one, e.g. 690V', hint: 'AC volts like 440V; DC like 750VDC.' }) +
+      fgSelectHtml('fgfFreq', 'Frequency', f.frequency || '50Hz', fgSeg('Frequency').map(function (x) { return [x.name, x.name + (x.code ? '' : ' (not written)')]; }), { sort: false, empty: '50Hz (not written)' }) +
+      (b.cyl ? fgComboHtml('fgfDia', 'Can dia', f.canDia, dias, { req: true, mono: true, newList: 'the cans', placeholder: 'e.g. ⌀63.5', hint: 'In mm. A new size gets the next free letter.' }) +
+        '<div class="field"><label for="fgfHt">Can height <span class="req">*</span></label><input id="fgfHt" type="number" inputmode="numeric" min="10" max="9999" step="1" class="mono" value="' + escapeHtml(f.canHt) + '" placeholder="mm, e.g. 175"><div class="hint">Whole mm. Cylindrical codes carry the can as dia letter + height.</div></div>' : '') +
+      fgComboHtml('fgfCust', 'Customer', f.customer, custs, { req: true, full: !!b.newCustomer, max: 60, newList: 'the customers', placeholder: 'Pick one, or type a new one' }) +
+      (b.newCustomer ? '<div class="field full"><label>New customer: its code and its name in item names</label><div class="pc-newdet" style="grid-template-columns:120px 1fr"><input id="fgfCustCode" class="mono" data-caps maxlength="3" placeholder="Code, e.g. KEL" value="' + escapeHtml(f.customerCode) + '" aria-label="Customer code"><input id="fgfCustTag" data-caps maxlength="40" placeholder="' + escapeHtml(fgKey(f.customer)) + '" value="' + escapeHtml(f.customerTag) + '" aria-label="Name in item names"></div><div class="hint">1 to 3 letters, not used by another customer. The name part is how item names end, like MARKET or EXPORT.</div></div>' : '') +
+      '<div class="field"><label for="fgfUnit">Unit</label><select id="fgfUnit">' + units.map(function (u) { return '<option' + (f.unit === u ? ' selected' : '') + '>' + escapeHtml(u) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="fgfMin">Minimum quantity</label><input id="fgfMin" type="number" inputmode="decimal" min="0" step="any" value="' + escapeHtml(f.min) + '" placeholder="Reorder level"></div>' +
+      '<div class="field"><label for="fgfHsn">HSN code</label><input id="fgfHsn" maxlength="20" inputmode="numeric" value="' + escapeHtml(f.hsn) + '" placeholder="e.g. 85321000"></div>' +
+      '<div class="field"><label for="fgfGst">GST %</label><input id="fgfGst" type="number" inputmode="decimal" min="0" max="28" step="any" value="' + escapeHtml(f.gst) + '"></div>' +
+      (f.list === 'FG' ? '<div class="field full"><label>IGST · CGST · SGST %</label><div class="pc-gst3">' + ['IGST', 'CGST', 'SGST'].map(function (k) { return '<label>' + k + '<input id="fgf' + k + '" type="number" readonly tabindex="-1" class="is-derived" title="Worked out from GST %" value="' + escapeHtml(sp[k]) + '"></label>'; }).join('') + '</div><div class="hint">From GST %: IGST is the full rate, CGST and SGST half each.</div></div>' : '') +
+      (who.admin ? '' : '<div class="field full"><label for="fgfNote">Note for the Admin</label><input id="fgfNote" maxlength="300" value="' + escapeHtml(f.note) + '" placeholder="Optional: what it is for"></div>') +
+    '</div></div>' +
+    '<div class="db-card pc-prev" id="fgPrev"></div></div>';
+  ['fgfType', 'fgfCon', 'fgfUnitR', 'fgfFreq', 'fgfUnit'].forEach(function (id) { const el = document.getElementById(id); if (el) enhanceSelect_(el); });
+  renderFgPreview(b);
+}
+function renderFgPreview(b) {
+  const box = document.getElementById('fgPrev'); if (!box) return;
+  const f = pcView.fgf, who = pcWho();
+  b = b || fgBuild(f);
+  const t = b.type, started = !!t;
+  const check = !started ? '' : b.dup ? '<span class="pc-check is-bad">✕ Duplicate code</span>' : b.problems.length ? '<span class="pc-check is-bad">✕ Not ready</span>'
+    : b.adds.length ? '<span class="pc-check is-new">✓ OK — ' + escapeHtml(b.newRating && b.adds.length === 1 ? 'new rating' : 'adds to the index') + '</span>' : '<span class="pc-check is-ok">✓ OK</span>';
+  const gst = String(f.gst).trim();
+  setPreview(box, 'fgCreate', '<div class="pc-eyebrow">New ' + escapeHtml(f.list === 'Trade' ? 'Trade' : 'FG') + ' code</div>' +
+    '<div class="pc-code' + (b.complete ? '' : ' is-empty') + '">' + escapeHtml(started ? b.code : 'CM…') + '</div>' +
+    '<div class="pc-readable">' + escapeHtml(started ? b.readable : 'CMPL-construction-type-rating-voltage-can-customer') + '</div>' +
+    '<div class="pc-name">' + escapeHtml(b.name || 'The name builds itself from the choices') + '</div>' +
+    (started ? '<div class="pc-facts"><span>' + (who.admin ? 'Becomes a new <b>' + escapeHtml(f.list) + '</b> item' : 'Goes to an Admin for approval') + '</span>' +
+      (b.family ? '<span>Family <b>' + escapeHtml(b.family) + '</b></span>' : '') + (b.category ? '<span>Category <b>' + escapeHtml(b.category) + '</b></span>' : '') +
+      '<span>Unit <b>' + escapeHtml(f.unit || 'NOS') + '</b></span>' + (gst !== '' ? '<span>GST <b>' + escapeHtml(gst) + '%</b></span>' : '') + '</div>' : '') +
+    check +
+    (b.adds.length && started ? '<ul class="pc-adds">' + b.adds.map(function (a) { return '<li>' + escapeHtml(a) + '</li>'; }).join('') + '</ul>' : '') +
+    (started && (b.problems.length || b.warnings.length) ? '<ul class="pc-msgs">' + b.problems.map(function (p) { return '<li class="is-bad">' + escapeHtml(p) + '</li>'; }).join('') + b.warnings.map(function (w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') + '</ul>' : ''),
+    pcView.busy ? (who.admin ? 'Making the code…' : 'Sending…') : who.admin ? 'Make the code and the ' + f.list + ' item' : 'Send for approval',
+    !(b.complete && !pcView.busy),
+    who.admin ? '' : '<div class="pc-approve-note">An Admin approves it before the code and the ' + escapeHtml(f.list) + ' item are made. You’ll get a notification either way.</div>');
+}
+function fgReadForm() {
+  const f = pcView.fgf;
+  const v = function (id) { const el = document.getElementById(id); return el ? el.value : undefined; };
+  const map = { rating: 'fgfRating', detuning: 'fgfDet', voltage: 'fgfVolt', canDia: 'fgfDia', canHt: 'fgfHt', customer: 'fgfCust', customerCode: 'fgfCustCode', customerTag: 'fgfCustTag', min: 'fgfMin', hsn: 'fgfHsn', gst: 'fgfGst', note: 'fgfNote' };
+  Object.keys(map).forEach(function (k) { const val = v(map[k]); if (val !== undefined) f[k] = val; });
+}
+function fgPickType(name) {
+  const f = pcView.fgf, t = fgEntry('Type', name);
+  f.type = name;
+  if (!t) return;
+  if (t.rule === 'Not used') f.construction = '';
+  else if (!f.construction) f.construction = fgUsedMost('construction', name);
+  if (!f.ratingUnit) f.ratingUnit = fgUsedMost('ratingUnit', name);
+  if (!fgIsReactor(t)) f.detuning = '';
+  pcView.fgTxn = null;
+}
+async function fgCreate() {
+  fgReadForm();
+  const f = pcView.fgf, b = fgBuild(f);
+  if (!b.complete) return;
+  pcView.fgTxn = pcView.fgTxn || newClientTxnId();
+  pcView.busy = true; renderFgPreview(b);
+  try {
+    const r = await api('createFgCode', { list: f.list, type: f.type, construction: b.conUsed ? f.construction : '', ratingUnit: f.ratingUnit, rating: f.rating, detuning: f.detuning,
+      voltage: f.voltage, frequency: f.frequency, canDia: b.cyl ? f.canDia : '', canHt: b.cyl ? f.canHt : '', customer: f.customer, customerCode: b.newCustomer ? f.customerCode : '',
+      customerTag: b.newCustomer ? f.customerTag : '', unit: f.unit, minQty: f.min, hsn: f.hsn, gst: f.gst, note: f.note, clientTxnId: pcView.fgTxn });
+    if (r.pending) { toast(r.code + ' sent for approval (' + r.requestId + '). The Admins have been told.'); api('sendPendingPush', {}).catch(function () {}); }
+    else toast(r.code + ' made as ' + r.idNo + ' — ' + r.name + '. It is in ' + r.kind + ' stock now.');
+    pcView.fgTxn = null;
+    f.rating = ''; f.canHt = ''; f.min = ''; f.note = ''; f.customerCode = ''; f.customerTag = '';
+    await loadPartCodes(true);
+    if (!r.pending) refreshAllData().then(function () { renderStockPage(r.kind === 'Trade' ? 'trade' : 'fg'); }).catch(function () {});
+  } catch (err) { toast(err.message, true); }
+  finally { pcView.busy = false; renderPartCodesPage(); }
+}
+
+function fgFiltered() {
+  const q = pcView.fgSearch.trim().toUpperCase(), flt = pcView.fgFilter, d = fgData();
+  if (flt === 'extra') return (d.stockOnly || []).filter(function (s) { return !q || (s.code + ' ' + s.name + ' ' + s.id).toUpperCase().indexOf(q) > -1; })
+    .map(function (s) { return { extra: true, code: s.code, name: s.name, no: '', list: s.kind, stock: { kind: s.kind, id: s.id, code: s.code } }; });
+  return d.register.filter(function (r) {
+    if (flt === 'FG' || flt === 'Trade') { if (r.list !== flt) return false; }
+    else if (flt === 'in' && !r.stock) return false;
+    else if (flt === 'out' && r.stock) return false;
+    if (!q) return true;
+    return (r.code + ' ' + r.name + ' ' + r.no + ' ' + (r.readable || '') + ' ' + (r.old || []).join(' ')).toUpperCase().indexOf(q) > -1;
+  }).slice().sort(function (a, b) { return pcAz(a.no, b.no); });
+}
+function renderFgCodes() {
+  const rows = fgFiltered(), shown = rows.slice(0, 500), who = pcWho(), d = fgData();
+  const inStock = d.register.filter(function (r) { return r.stock; }).length;
+  document.getElementById('pcBody').innerHTML = '<div class="tool-sum"><span><b>' + formatNum(rows.length) + '</b> ' + (pcView.fgFilter === 'extra' ? 'stock item' + (rows.length === 1 ? '' : 's') + ' not in the list' : 'code' + (rows.length === 1 ? '' : 's')) +
+    (!pcView.fgFilter ? ' · ' + formatNum(inStock) + ' in stock' : '') + '</span>' +
+    (who.admin ? '<button type="button" class="btn-ghost btn-compact" id="fgReimport">Bring in again</button>' : '') + '</div>' +
+    '<div class="db-card pc-table-wrap"><table class="pc-table"><thead><tr><th>Code</th><th>Name</th><th>List</th><th>Stock</th><th>BOM</th></tr></thead><tbody>' +
+    (shown.length ? shown.map(function (r) {
+      const off = String(r.active).toUpperCase() === 'NO';
+      const stock = r.stock ? '<span class="pc-chip is-ok">' + escapeHtml(r.stock.kind + ' · ' + r.stock.id) + '</span>' + (r.stock.old ? '<div class="muted mono" title="In stock under the code it had before">as ' + escapeHtml(r.stock.code) + '</div>' : '')
+        : r.extra ? '' : (who.fg || who.trade) && !off ? '<button type="button" class="btn-ghost btn-compact" data-fgstock="' + escapeHtml(r.code) + '">Add to stock</button>' : '<span class="muted">Not in stock</span>';
+      return '<tr class="' + (off ? 'is-off' : '') + '"><td class="mono">' + escapeHtml(r.code) + (r.readable ? '<div class="muted">' + escapeHtml(r.readable) + '</div>' : '') + '</td>' +
+        '<td>' + escapeHtml(r.name) + (off ? ' <span class="pc-chip">Retired</span>' : '') + (r.extra ? ' <span class="pc-chip is-prop">Not in the code list</span>' : '') + '</td>' +
+        '<td class="mono">' + escapeHtml(r.no || r.list) + (r.no ? '<div class="muted">' + escapeHtml(r.list) + ' list</div>' : '') + '</td>' +
+        '<td>' + stock + '</td>' +
+        '<td>' + escapeHtml(r.bom || '') + (r.bomLink ? ' <a href="' + escapeHtml(r.bomLink) + '" target="_blank" rel="noopener">Open</a>' : '') + '</td></tr>';
+    }).join('') : '<tr><td colspan="5" class="tool-empty">No codes match.</td></tr>') + '</tbody></table></div>' +
+    (rows.length > shown.length ? '<div class="tool-more">Showing 500 of ' + formatNum(rows.length) + '. Search to narrow it down.</div>' : '');
+}
+// A code from the list into FG or Trade stock.
+function openFgStockForm(code) {
+  const r = fgData().register.find(function (x) { return x.code === code; }); if (!r) return;
+  const who = pcWho();
+  let list = (r.list === 'Trade' ? who.trade : !who.fg) ? 'Trade' : 'FG';
+  if (list === 'FG' && !who.fg) list = 'Trade';
+  const units = (pcView.data.units || []).slice().sort(pcAz); if (r.unit && units.indexOf(r.unit) < 0) units.push(r.unit);
+  const bg = document.createElement('div');
+  bg.className = 'modal-backdrop'; bg.id = 'fgStockModal'; bg.dataset.form = '1';
+  bg.innerHTML = '<div class="modal" style="max-width:560px"><div class="modal-drag-handle" aria-hidden="true"></div>' +
+    '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(r.no) + ' · ' + escapeHtml(r.list) + ' LIST</div><h3 class="mono">' + escapeHtml(r.code) + '</h3><div class="muted">' + escapeHtml(r.name) + '</div></div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>' +
+    '<div class="pc-form">' +
+      '<div class="field full"><label>Stock</label><div class="seg" id="fsList"><button type="button" data-l="FG"' + (list === 'FG' ? ' class="is-on"' : '') + (who.fg ? '' : ' disabled') + '>FG</button><button type="button" data-l="Trade"' + (list === 'Trade' ? ' class="is-on"' : '') + (who.trade ? '' : ' disabled') + '>Trade</button></div></div>' +
+      '<div class="field"><label for="fsUnit">Unit</label><select id="fsUnit">' + units.map(function (u) { return '<option' + ((r.unit || 'NOS') === u ? ' selected' : '') + '>' + escapeHtml(u) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="fsMin">Minimum quantity</label><input id="fsMin" type="number" inputmode="decimal" min="0" step="any" placeholder="Reorder level"></div>' +
+      '<div class="field"><label for="fsHsn">HSN code</label><input id="fsHsn" maxlength="20" inputmode="numeric" placeholder="e.g. 85321000"></div>' +
+      '<div class="field"><label for="fsGst">GST %</label><input id="fsGst" type="number" inputmode="decimal" min="0" max="28" step="any" value="18"></div>' +
+      (who.admin ? '' : '<div class="field full"><label for="fsNote">Note for the Admin</label><input id="fsNote" maxlength="300" placeholder="Optional: what it is for"></div>') +
+    '</div><div class="form-error" id="fsErr"></div>' +
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-primary btn-compact" id="fsSave">' + (who.admin ? 'Add to stock' : 'Send for approval') + '</button></div></div>';
+  bg.addEventListener('click', function (e) {
+    if (e.target.closest('[data-x]')) { bg.remove(); return; }
+    const l = e.target.closest('#fsList [data-l]');
+    if (l && !l.disabled) { list = l.dataset.l; bg.querySelectorAll('#fsList [data-l]').forEach(function (x) { x.classList.toggle('is-on', x === l); }); }
+  });
+  document.body.appendChild(bg);
+  enhanceSelect_(bg.querySelector('#fsUnit'));
+  const txn = newClientTxnId();
+  bg.querySelector('#fsSave').addEventListener('click', async function (e) {
+    const btn = e.currentTarget, $m = function (id) { const el = bg.querySelector('#' + id); return el ? el.value : ''; };
+    bg.querySelector('#fsErr').textContent = '';
+    setBtnLoading(btn, who.admin ? 'Adding…' : 'Sending…');
+    try {
+      const res = await api('createFgCode', { list: list, fromCode: r.code, unit: $m('fsUnit'), minQty: $m('fsMin'), hsn: $m('fsHsn'), gst: $m('fsGst'), note: $m('fsNote'), clientTxnId: txn });
+      bg.remove();
+      if (res.pending) { toast(res.code + ' sent for approval (' + res.requestId + ').'); api('sendPendingPush', {}).catch(function () {}); }
+      else { toast(res.code + ' is in ' + res.kind + ' stock now as ' + res.idNo + '.'); refreshAllData().catch(function () {}); }
+      await loadPartCodes(true); renderPartCodesPage();
+    } catch (err) { bg.querySelector('#fsErr').textContent = err.message; clearBtnLoading(btn); }
+  });
+}
+
+function renderFgIndex() {
+  const d = fgData(), who = pcWho(), used = {};
+  d.register.forEach(function (r) {
+    FG_SEGS.forEach(function (s) {
+      const v = r.parts[FG_SEG_FIELD[s]]; if (!v) return;
+      const k = s + '|' + (s === 'Can Dia' ? fgDia(v) : s === 'Voltage' ? fgVolt(v) : fgKey(v));
+      used[k] = (used[k] || 0) + 1;
+    });
+  });
+  const keyOf = function (s, name) { return s + '|' + (s === 'Can Dia' ? fgDia(name) : s === 'Voltage' ? fgVolt(name) : fgKey(name)); };
+  const RULE = { Type: 'Construction', Construction: 'Can size' };
+  const sortSeg = function (s, list) {
+    if (s === 'Voltage' || s === 'Can Dia') return list.slice().sort(function (a, b) { return parseFloat(String(a.name).replace(/^⌀/, '')) - parseFloat(String(b.name).replace(/^⌀/, '')) || pcAz(a.name, b.name); });
+    if (s === 'Frequency' || s === 'Rating Unit') return list;
+    return list.slice().sort(fgByName);
+  };
+  const ratingsByUnit = {};
+  d.ratings.forEach(function (r) { (ratingsByUnit[r.unit] = ratingsByUnit[r.unit] || []).push(fgRating(r.rating)); });
+  document.getElementById('pcBody').innerHTML = '<div class="fg-index">' + FG_SEGS.map(function (s) {
+    const list = sortSeg(s, fgSeg(s));
+    return '<div class="db-card pc-cat"><div class="pc-cat-head"><h3>' + escapeHtml(s === 'Type' ? 'Types' : s === 'Can Dia' ? 'Can dias' : s === 'Rating Unit' ? 'Rating units' : s === 'Frequency' ? 'Frequencies' : s + 's') + '</h3><span class="muted">' + formatNum(list.length) + '</span>' +
+      (who.admin ? '<button type="button" class="btn-ghost btn-compact" data-fgadd="' + escapeHtml(s) + '" style="margin-left:auto">Add</button>' : '') + '</div>' +
+      '<div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>Name</th><th>Code</th><th>In names</th>' + (RULE[s] ? '<th>' + RULE[s] + '</th>' : '') + '<th>Codes</th>' + (who.admin ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      list.map(function (x) {
+        const rule = s === 'Type' ? (x.rule === 'Not used' ? '<span class="pc-chip">Not used</span>' : '<span class="pc-chip is-req">Required</span>') : s === 'Construction' ? (x.rule === 'Can size' ? '<span class="pc-chip is-req">Dia + height</span>' : '<span class="muted">—</span>') : '';
+        return '<tr><td><b>' + escapeHtml(x.name) + '</b></td><td class="mono">' + escapeHtml(x.code || '—') + '</td><td class="mono">' + escapeHtml(x.tag || '—') + '</td>' + (RULE[s] ? '<td>' + rule + '</td>' : '') +
+          '<td>' + formatNum(used[keyOf(s, x.name)] || 0) + '</td>' + (who.admin ? '<td style="text-align:right"><button type="button" class="btn-ghost btn-compact" data-fgedit="' + escapeHtml(s + '|' + x.name) + '">Edit</button></td>' : '') + '</tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }).join('') +
+  '<div class="db-card pc-cat"><div class="pc-cat-head"><h3>Ratings</h3><span class="muted">' + formatNum(d.ratings.length) + '</span>' + (who.admin ? '<button type="button" class="btn-ghost btn-compact" data-fgadd="Rating" style="margin-left:auto">Add</button>' : '') + '</div>' +
+    Object.keys(ratingsByUnit).map(function (u) {
+      const list = ratingsByUnit[u].slice().sort(function (a, b) { return (parseFloat(a) - parseFloat(b)) || pcAz(a, b); });
+      return '<div class="fg-rlist"><b>' + escapeHtml(u) + '</b><div class="pc-dets">' + list.map(function (r) { return '<span class="mono">' + escapeHtml(r) + '</span>'; }).join('') + '</div></div>';
+    }).join('') + '</div></div>' +
+  '<div class="tool-sum" style="margin-top:8px"><span class="muted">The index is kept here. A new rating, voltage, can or customer typed on a new code joins it when the code is made; ' + (who.admin ? 'anything else is added here.' : 'anything else is added by an Admin.') + '</span></div>';
+}
+// Add a name to a segment of the index, or edit one (Admins).
+function openFgEntryForm(seg, name) {
+  const orig = seg && name ? fgEntry(seg, name) : null;
+  let rule = orig ? orig.rule : '';
+  const bg = document.createElement('div');
+  bg.className = 'modal-backdrop'; bg.id = 'fgEntryModal'; bg.dataset.form = '1';
+  const segs = FG_SEGS.concat(['Rating']);
+  bg.innerHTML = '<div class="modal" style="max-width:560px"><div class="modal-drag-handle" aria-hidden="true"></div>' +
+    '<div class="modal-head"><div><div class="modal-eyebrow">FG CODE INDEX</div><h3>' + (orig ? 'Edit ' + escapeHtml(orig.name) : 'Add to the index') + '</h3>' +
+      (orig ? '<div class="muted">A name in use keeps its name and code; how it shows in item names can change, for codes made from now on.</div>' : '') + '</div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>' +
+    '<div class="pc-form">' +
+      '<div class="field full"><label for="feSeg">What</label><select id="feSeg" data-sort="none"' + (orig ? ' disabled' : '') + '>' + segs.map(function (s) { return '<option' + (s === (seg || 'Customer') ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field fe-rating"><label for="feUnit">Rating unit</label><select id="feUnit" data-sort="none">' + fgSeg('Rating Unit').map(function (x) { return '<option>' + escapeHtml(x.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="feName">Name <span class="req">*</span></label><input id="feName" maxlength="60" value="' + escapeHtml(orig ? orig.name : '') + '"></div>' +
+      '<div class="field fe-plain"><label for="feCode">Code</label><input id="feCode" class="mono" data-caps maxlength="8" value="' + escapeHtml(orig ? orig.code : '') + '"></div>' +
+      '<div class="field fe-plain"><label for="feTag">In item names</label><input id="feTag" data-caps maxlength="40" value="' + escapeHtml(orig ? orig.tag : '') + '" placeholder="The name in capitals"></div>' +
+      '<div class="field full fe-rule-type"><label>Construction</label><div class="seg" id="feRuleType"><button type="button" data-r="Required">Required</button><button type="button" data-r="Not used">Not used</button></div><div class="hint">Not used: its codes leave the construction out, like AC Compensation Contactor (CMCT…).</div></div>' +
+      '<div class="field full fe-rule-con"><label class="check-inline"><input type="checkbox" id="feCan"' + (rule === 'Can size' ? ' checked' : '') + '> Codes carry the can dia and height (cylindrical cans)</label></div>' +
+    '</div><div class="pc-example" id="feHint"></div><div class="form-error" id="feErr"></div>' +
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-primary btn-compact" id="feSave">' + (orig ? 'Save' : 'Add') + '</button></div></div>';
+  document.body.appendChild(bg);
+  const $m = function (id) { return bg.querySelector('#' + id); };
+  enhanceSelect_($m('feSeg')); enhanceSelect_($m('feUnit'));
+  const show = function () {
+    const s = $m('feSeg').value;
+    bg.querySelector('.fe-rating').classList.toggle('hidden', s !== 'Rating');
+    bg.querySelectorAll('.fe-plain').forEach(function (el) { el.classList.toggle('hidden', s === 'Rating'); });
+    bg.querySelector('.fe-rule-type').classList.toggle('hidden', s !== 'Type');
+    bg.querySelector('.fe-rule-con').classList.toggle('hidden', s !== 'Construction');
+    if (s === 'Type' && rule !== 'Not used') rule = 'Required';
+    bg.querySelectorAll('#feRuleType [data-r]').forEach(function (b) { b.classList.toggle('is-on', b.dataset.r === rule); });
+    $m('feName').placeholder = { Construction: 'e.g. Cylindrical', Type: 'e.g. Heavy Duty', 'Rating Unit': 'e.g. kVAr', Voltage: 'e.g. 690V or 750VDC', Frequency: 'e.g. 60Hz', 'Can Dia': 'e.g. 70 (mm)', Customer: 'e.g. Kirloskar', Rating: 'e.g. 13.5 or 3X100' }[s] || '';
+    $m('feCode').placeholder = { Construction: 'e.g. C', Type: 'e.g. HD', 'Rating Unit': 'e.g. K', Voltage: 'e.g. 690 or 750DC', Frequency: 'e.g. 60', 'Can Dia': 'e.g. T', Customer: '1 to 3 letters' }[s] || '';
+    $m('feHint').textContent = s === 'Can Dia' ? 'The next free letter is ' + fgNextDia() + '.' : s === 'Customer' ? 'Codes in use: ' + fgSeg('Customer').map(function (x) { return x.code; }).join(', ') + '.' : '';
+  };
+  bg.addEventListener('change', show);
+  bg.addEventListener('click', function (e) {
+    if (e.target.closest('[data-x]')) { bg.remove(); return; }
+    const r = e.target.closest('#feRuleType [data-r]'); if (r) { rule = r.dataset.r; show(); }
+  });
+  show();
+  $m('feSave').addEventListener('click', async function (e) {
+    const btn = e.currentTarget, s = $m('feSeg').value;
+    $m('feErr').textContent = '';
+    setBtnLoading(btn, 'Saving…');
+    try {
+      const res = await api('saveFgIndexEntry', s === 'Rating' ? { segment: 'Rating', unit: $m('feUnit').value, name: $m('feName').value }
+        : { segment: s, name: $m('feName').value, code: $m('feCode').value, tag: $m('feTag').value, rule: s === 'Type' ? rule : s === 'Construction' ? ($m('feCan').checked ? 'Can size' : '') : '', original: orig ? orig.name : null });
+      pcView.data.fg = res; fgTakenCache = null;
+      bg.remove(); toast((orig ? 'Saved ' : 'Added ') + $m('feName').value.trim() + '.');
+      renderPartCodesPage();
+    } catch (err) { $m('feErr').textContent = err.message; clearBtnLoading(btn); }
+  });
+}
+
+// ---- Requests: waiting for approval, and decided ----
+function renderPcRequests() {
+  const d = pcView.data, who = pcWho(), list = d.requests || [];
+  const pend = list.filter(function (r) { return r.status === 'Pending'; }), done = list.filter(function (r) { return r.status !== 'Pending'; });
+  document.getElementById('pcBody').innerHTML =
+    '<div class="pcr-list">' + (pend.length ? pend.map(pcrCard).join('') : '<div class="db-card tool-empty">' + (who.admin ? 'Nothing is waiting for approval.' : 'Nothing of yours is waiting for approval.') + '</div>') + '</div>' +
+    (done.length ? '<h3 class="pcr-head">Decided in the last 45 days</h3><div class="pcr-list">' + done.map(pcrCard).join('') + '</div>' : '');
+  if (pcView.focus) {
+    const el = document.querySelector('[data-req="' + CSS.escape(pcView.focus) + '"]');
+    if (el) el.scrollIntoView({ block: 'center', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
+  }
+}
+function pcrCard(r) {
+  const who = pcWho(), me = String((state.session && state.session.username) || '').toLowerCase();
+  const cls = { Pending: 'is-req', Approved: 'is-ok', Rejected: 'is-bad', Withdrawn: '' }[r.status] || '';
+  const label = { Pending: 'Waiting', Approved: 'Approved', Rejected: 'Not approved', Withdrawn: 'Withdrawn' }[r.status] || r.status;
+  const when = r.at ? timeAgo(new Date(r.at)) : '';
+  const decided = r.status === 'Approved' ? 'Approved by ' + r.decidedByName + (r.itemId ? ' — made as <b>' + escapeHtml(r.itemId) + '</b>' : '') + (r.reason ? ': ' + escapeHtml(r.reason) : '')
+    : r.status === 'Rejected' ? 'Not approved by ' + escapeHtml(r.decidedByName) + ': <b>' + escapeHtml(r.reason) + '</b>'
+    : r.status === 'Withdrawn' ? 'Withdrawn' + (r.decidedBy && r.decidedBy.toLowerCase() !== r.by.toLowerCase() ? ' by ' + escapeHtml(r.decidedByName) : '') : '';
+  return '<div class="db-card pcr-card' + (pcView.focus === r.id ? ' is-focus' : '') + '" data-req="' + escapeHtml(r.id) + '">' +
+    '<div class="pcr-top"><span class="pc-chip">' + escapeHtml(r.kind) + '</span><span class="mono muted">' + escapeHtml(r.id) + '</span><span class="pc-chip ' + cls + '">' + escapeHtml(label) + '</span>' +
+      '<span class="pcr-when">' + escapeHtml(r.byName) + (when ? ' · ' + escapeHtml(when) : '') + '</span></div>' +
+    '<div class="pcr-code mono">' + escapeHtml(r.code) + '</div><div class="pcr-name">' + escapeHtml(r.name) + '</div>' +
+    (r.details && r.details.length ? '<div class="pc-facts">' + r.details.map(function (kv) { return '<span>' + escapeHtml(kv[0]) + ' <b>' + escapeHtml(kv[1]) + '</b></span>'; }).join('') + '</div>' : '') +
+    (r.adds.length ? '<ul class="pc-adds">' + r.adds.map(function (a) { return '<li>' + escapeHtml(a) + '</li>'; }).join('') + '</ul>' : '') +
+    (r.note ? '<div class="pcr-note">“' + escapeHtml(r.note) + '”</div>' : '') +
+    (decided ? '<div class="pcr-dec">' + decided + (r.decidedAt ? ' <span class="muted">· ' + escapeHtml(timeAgo(new Date(r.decidedAt))) + '</span>' : '') + '</div>' : '') +
+    (r.status === 'Pending' ? '<div class="pcr-actions">' +
+      (who.admin ? '<button type="button" class="btn-primary btn-compact" data-pcok="' + escapeHtml(r.id) + '">Approve</button><button type="button" class="btn-ghost btn-compact" data-pcno="' + escapeHtml(r.id) + '">Not approved…</button>' : '') +
+      (r.by.toLowerCase() === me ? '<button type="button" class="btn-ghost btn-compact" data-pcwd="' + escapeHtml(r.id) + '">Withdraw</button>' : '') + '</div>' : '') +
+  '</div>';
+}
+async function pcApprove(id, btn) {
+  setBtnLoading(btn, 'Approving…');
+  try {
+    const r = await api('approvePartCode', { requestId: id });
+    toast(r.code + ' approved — made as ' + r.idNo + ' in ' + r.kind + ' stock.');
+    api('sendPendingPush', {}).catch(function () {});
+    refreshAllData().catch(function () {});
+    await loadPartCodes(true);
+  } catch (err) { toast(err.message, true); }
+  finally { renderPartCodesPage(); }
+}
+function pcReject(id) {
+  const r = (pcView.data.requests || []).find(function (x) { return x.id === id; }); if (!r) return;
+  const bg = document.createElement('div');
+  bg.className = 'modal-backdrop'; bg.dataset.form = '1';
+  bg.innerHTML = '<div class="modal" style="max-width:520px"><div class="modal-drag-handle" aria-hidden="true"></div>' +
+    '<div class="modal-head"><div><div class="modal-eyebrow">' + escapeHtml(r.id) + '</div><h3>Not approve ' + escapeHtml(r.code) + '?</h3><div class="muted">' + escapeHtml(r.byName) + ' is told, with your reason. Nothing is made.</div></div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>' +
+    '<div class="field"><label for="pcrReason">Why <span class="req">*</span></label><textarea id="pcrReason" rows="3" maxlength="300" placeholder="e.g. Use the customer code BH; that size is already CCBLT…"></textarea></div>' +
+    '<div class="form-error" id="pcrErr"></div>' +
+    '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-danger" id="pcrSend">Not approved</button></div></div>';
+  bg.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) bg.remove(); });
+  document.body.appendChild(bg);
+  bg.querySelector('#pcrReason').focus();
+  bg.querySelector('#pcrSend').addEventListener('click', async function (e) {
+    const btn = e.currentTarget, reason = bg.querySelector('#pcrReason').value.trim();
+    if (!reason) { bg.querySelector('#pcrErr').textContent = 'Say why, so ' + r.byName + ' knows what to change.'; return; }
+    setBtnLoading(btn, 'Sending…');
+    try {
+      await api('rejectPartCode', { requestId: id, reason: reason });
+      bg.remove(); toast(r.code + ': ' + r.byName + ' has been told.');
+      api('sendPendingPush', {}).catch(function () {});
+      await loadPartCodes(true); renderPartCodesPage();
+    } catch (err) { bg.querySelector('#pcrErr').textContent = err.message; clearBtnLoading(btn); }
+  });
+}
+async function pcWithdraw(id) {
+  const r = (pcView.data.requests || []).find(function (x) { return x.id === id; }); if (!r) return;
+  if (!(await confirmDialog('Withdraw ' + r.code + '? It won’t be made, and the Admins won’t see it waiting any more.', { title: 'Withdraw ' + r.id, confirmText: 'Withdraw' }))) return;
+  try { await api('withdrawPartCode', { requestId: id }); toast(r.code + ' withdrawn.'); await loadPartCodes(true); }
+  catch (err) { toast(err.message, true); }
+  finally { renderPartCodesPage(); }
+}
+// "partcode:PCR-00012" from a notification opens it.
+function openPartCodeRequest(id) {
+  if (!permOk('partcodes')) { toast('Your account can’t open part codes.', true); return; }
+  pcView.kind = 'req'; pcView.focus = id;
+  navigateTo('partcodes');
+  renderPartCodesPage(true);
+}
+
+function wireFgPage() {
+  const body = document.getElementById('pcBody');
+  body.addEventListener('change', function (e) {
+    if (pcView.kind !== 'fg' || pcView.fgTab !== 'new') return;
+    const id = e.target.id, f = pcView.fgf;
+    if (!/^fgf/.test(id)) return;
+    fgReadForm();
+    if (id === 'fgfType') { fgPickType(e.target.value); renderFgNew(); return; }
+    if (id === 'fgfCon') { f.construction = e.target.value; renderFgNew(); return; }
+    if (id === 'fgfUnitR') { f.ratingUnit = e.target.value; f.rating = ''; renderFgNew(); return; }
+    if (id === 'fgfFreq') { f.frequency = e.target.value; renderFgPreview(); return; }
+    if (id === 'fgfUnit') { f.unit = e.target.value; renderFgPreview(); return; }
+    if (id === 'fgfRating') { const v = fgRating(e.target.value); if (v !== e.target.value) e.target.value = f.rating = v; }
+    if (id === 'fgfVolt') { const v = fgVolt(e.target.value); const en = fgEntry('Voltage', v); e.target.value = f.voltage = en ? en.name : v; }
+    if (id === 'fgfDia') { const v = fgDia(e.target.value); const en = fgEntry('Can Dia', v); e.target.value = f.canDia = en ? en.name : v; }
+    // A customer not in the list asks for its code and name: shown or hidden
+    // as the box is left.
+    if (id === 'fgfCust') { f.customer = e.target.value; const now = !!fgBuild(f).newCustomer; if (now !== !!document.getElementById('fgfCustCode')) { renderFgNew(); if (now) { const c = document.getElementById('fgfCustCode'); if (c) c.focus(); } return; } }
+    renderFgPreview();
+  });
+  body.addEventListener('input', function (e) {
+    if (pcView.kind !== 'fg' || pcView.fgTab !== 'new' || !/^fgf/.test(e.target.id)) return;
+    fgReadForm();
+    if (e.target.id === 'fgfGst') { const sp = gstSplit(e.target.value.trim()); ['IGST', 'CGST', 'SGST'].forEach(function (k) { const el = document.getElementById('fgf' + k); if (el) el.value = sp[k]; }); }
+    renderFgPreview();
+  });
+  body.addEventListener('keydown', function (e) {
+    if (pcView.kind !== 'fg' || e.key !== 'Enter' || !/^fgf/.test(e.target.id) || e.target.tagName !== 'INPUT') return;
+    const combo = e.target.closest('[data-combo]');
+    if (combo && !combo.querySelector('.combo-list').classList.contains('hidden')) return;
+    e.preventDefault(); const b = document.getElementById('fgCreate'); if (b && !b.disabled) fgCreate();
+  });
+  body.addEventListener('click', function (e) {
+    const ok = e.target.closest('[data-pcok]'); if (ok) { pcApprove(ok.dataset.pcok, ok); return; }
+    const no = e.target.closest('[data-pcno]'); if (no) { pcReject(no.dataset.pcno); return; }
+    const wd = e.target.closest('[data-pcwd]'); if (wd) { pcWithdraw(wd.dataset.pcwd); return; }
+    if (pcView.kind !== 'fg') return;
+    if (e.target.closest('#fgCreate')) { fgCreate(); return; }
+    if (e.target.closest('#fgImport')) { fgImport(false); return; }
+    if (e.target.closest('#fgReimport')) { fgImport(true); return; }
+    const l = e.target.closest('#fgfList [data-l]');
+    if (l && !l.disabled) { fgReadForm(); pcView.fgf.list = l.dataset.l; pcView.fgTxn = null; renderFgNew(); return; }
+    const st = e.target.closest('[data-fgstock]'); if (st) { openFgStockForm(st.dataset.fgstock); return; }
+    const ad = e.target.closest('[data-fgadd]'); if (ad) { openFgEntryForm(ad.dataset.fgadd, null); return; }
+    const ed = e.target.closest('[data-fgedit]'); if (ed) { const k = ed.dataset.fgedit.split('|'); openFgEntryForm(k[0], k.slice(1).join('|')); }
   });
 }
 
@@ -10545,7 +11254,11 @@ function wireStockPageEvents(kind) {
   });
   id('RefreshBtn').addEventListener('click', async function () { const btn = this; setBtnLoading(btn, 'Refreshing…', true); try { await refreshAllData(); render(); renderHome(); updateFreshnessLabel(kind); toast('Refreshed.'); } catch (err) { toast(err.message, true); } finally { clearBtnLoading(btn); } });
   id('ExportBtn').addEventListener('click', function () { exportToExcel(config); });
-  id('AddItemBtn').addEventListener('click', function () { if (kind === 'rm') { pcView.tab = 'new'; navigateTo('partcodes'); return; } openItemModal(kind, null); });
+  id('AddItemBtn').addEventListener('click', function () {
+    if (kind === 'rm') { pcView.kind = 'rm'; pcView.tab = 'new'; navigateTo('partcodes'); return; }
+    if (kind === 'fg') { pcView.kind = 'fg'; pcView.fgTab = 'new'; pcView.fgf.list = 'FG'; navigateTo('partcodes'); return; }
+    openItemModal(kind, null);
+  });
   id('ImportBtn').addEventListener('click', function () { openImportModal(kind); });
 }
 
@@ -11144,6 +11857,8 @@ async function loadNotifications(quiet) {
     const top = notifView.items[0];
     // Something new about an indent: the indent list (and its count) follows.
     if (had !== null && top && top.ID !== had && /^indent:/.test(top.Link || '')) loadIndents(true);
+    // Something new about a part code: the open Part codes page catches up.
+    if (had !== null && top && top.ID !== had && /^partcode:/.test(top.Link || '') && pcView.data && !document.getElementById('page-partcodes').classList.contains('hidden')) renderPartCodesPage(true);
   }).catch(function (e) { if (!quiet) toast(e.message, true); }).finally(function () { notifView.loading = null; });
   return notifView.loading;
 }
@@ -11218,6 +11933,8 @@ function markNotifRead(ids) {
 }
 // Where a notification leads. "indent:IND/26-27/0004" opens that indent.
 function openNotifLink(link) {
+  const pc = String(link || '').match(/^partcode:(.+)$/);
+  if (pc) { openPartCodeRequest(pc[1]); return; }
   const m = String(link || '').match(/^indent:(.+)$/);
   if (!m) return;
   if (!canIndents()) { toast('Your account can’t open indents.', true); return; }
