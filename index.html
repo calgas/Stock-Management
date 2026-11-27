@@ -156,7 +156,7 @@
   .cap-spark { position: absolute; top: 50%; left: 50%; width: 130px; height: 2px; margin-left: -65px; margin-top: -1px; background: linear-gradient(90deg, transparent, var(--copper) 45%, var(--azure) 55%, transparent); opacity: 0.4; animation: capSpark 2.2s ease-in-out infinite; pointer-events: none; }
   .splash-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; color: var(--ink); }
   .splash-sub { font-size: 11.5px; font-weight: 700; color: var(--copper); text-transform: uppercase; letter-spacing: 0.14em; margin: 0 0 28px; animation: splashGlow 2.4s ease-in-out infinite; }
-  .splash-progress { width: min(260px, 78vw); height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; margin-bottom: 12px; box-shadow: inset 0 1px 2px rgba(28,32,36,0.08); position: relative; }
+  .splash-progress { width: min(260px, calc(78vw / var(--app-zoom, 1))); height: 4px; background: var(--line-soft); border-radius: 99px; overflow: hidden; margin-bottom: 12px; box-shadow: inset 0 1px 2px rgba(28,32,36,0.08); position: relative; }
   /* Faint tick marks — a capacitance-scale reading, not just a bare bar. */
   .splash-progress::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(90deg, transparent 0, transparent 7px, rgba(28,32,36,0.08) 7px, rgba(28,32,36,0.08) 8px); pointer-events: none; }
   [data-theme="dark"] .splash-progress::before { background-image: repeating-linear-gradient(90deg, transparent 0, transparent 7px, rgba(0,0,0,0.35) 7px, rgba(0,0,0,0.35) 8px); }
@@ -869,7 +869,7 @@
   .notif-btn { position: relative; }
   .notif-count { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #c0392b; color: #fff;
                  font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--panel); pointer-events: none; }
-  .notif-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 380px; max-height: min(72vh, 580px); display: flex; flex-direction: column; text-align: left;
+  .notif-panel { position: absolute; top: calc(100% + 10px); right: 0; width: 380px; max-height: min(calc(72vh / var(--app-zoom, 1)), 580px); display: flex; flex-direction: column; text-align: left;
                  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 44px rgba(0,0,0,.2); z-index: 120; overflow: hidden; }
   .notif-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--line); }
   .notif-head h4 { margin: 0; font-size: 15px; flex: 1; color: var(--ink); }
@@ -892,13 +892,13 @@
   @media (max-width: 780px) {
     /* On a phone the panel spans the top bar (the bar is the positioned box). */
     .notif-wrap { position: static; }
-    .notif-panel { left: 8px; right: 8px; top: calc(100% + 6px); width: auto; max-height: calc(100vh - 190px); }
+    .notif-panel { left: 8px; right: 8px; top: calc(100% + 6px); width: auto; max-height: calc(calc(100vh / var(--app-zoom, 1)) - 190px); }
   }
   .ind-ask { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
   .ind-actions { flex-wrap: wrap; gap: 8px; }
   @media (max-width: 760px) { .ind-line { grid-template-columns: 1fr 44px 40px; grid-template-areas: "item item item" "qty unit rm" "note note note" "info info info"; } }
   .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 23, 28, 0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; animation: fadeIn 0.18s var(--ease); }
-  .modal { width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.22s var(--spring) both; }
+  .modal { width: 100%; max-width: 460px; max-height: calc(90vh / var(--app-zoom, 1)); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); padding: 32px; animation: modalPop 0.22s var(--spring) both; }
   .modal.modal-wide { max-width: 760px; }
 
   /* Form modals get a wider frame and a two-column field grid on desktop.
@@ -997,7 +997,7 @@
      of letting it scroll. overscroll-behavior-x keeps a swipe that reaches
      the end of the table from turning into a browser back-navigation. */
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
-  .ledger-table-wrap { max-height: min(58vh, 640px); overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--panel); }
+  .ledger-table-wrap { max-height: min(calc(58vh / var(--app-zoom, 1)), 640px); overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--panel); }
   /* Thin, always-visible scrollbars: on a touch device an overlay scrollbar
      never appears until you already guessed the area scrolls. */
   .table-scroll::-webkit-scrollbar, .ledger-table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
@@ -1142,7 +1142,7 @@
   #toastContainer {
     position: fixed; top: calc(16px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
     z-index: 300; display: flex; flex-direction: column; align-items: center; gap: 10px;
-    pointer-events: none; width: min(440px, calc(100vw - 32px));
+    pointer-events: none; width: min(440px, calc(calc(100vw / var(--app-zoom, 1)) - 32px));
   }
   .toast {
     position: relative; width: 100%; display: flex; align-items: flex-start; gap: 12px; overflow: hidden;
@@ -1237,7 +1237,7 @@
     .page { height: auto; overflow: visible; animation: none; padding: 20px 16px; }
 
     #page-rm > div:last-child, #page-fg > div:last-child, #page-trade > div:last-child, #page-users > div:last-child {
-      overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px 16px; width: 100vw;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px 16px; width: calc(100vw / var(--app-zoom, 1));
     }
     table { min-width: 800px; }
     thead th { top: -20px; }
@@ -1337,7 +1337,7 @@
        50-row-tall element, and the header row stays put. */
     .page-grid { display: block; overflow: visible; }
     .page-grid > .grid-panel, .page-grid > .table-scroll { display: flex; margin-bottom: 24px; }
-    .page-grid .table-scroll { max-height: 62vh; overflow: auto; }
+    .page-grid .table-scroll { max-height: calc(62vh / var(--app-zoom, 1)); overflow: auto; }
 
     /* The topbar carries the tab name, so it becomes a two-row bar on
        mobile: brand and controls above, title below. */
@@ -1354,7 +1354,7 @@
       padding: 10px 0 4px; margin-bottom: 8px;
     }
     .ledger-table-wrap table { min-width: 620px; }
-    .ledger-table-wrap { max-height: 60vh; }
+    .ledger-table-wrap { max-height: calc(60vh / var(--app-zoom, 1)); }
     .ledger-table-wrap tbody td { padding: 12px 14px; }
 
     /* iOS zooms the whole page when a focused input is under 16px. That
@@ -1386,7 +1386,7 @@
        swipe-to-dismiss (wired up in JS). */
     .modal-backdrop { align-items: flex-end; padding: 0; }
     .modal {
-      width: 100%; max-width: 100% !important; max-height: 92vh; border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 100% !important; max-height: calc(92vh / var(--app-zoom, 1)); border-radius: 20px 20px 0 0;
       padding: 10px 20px calc(16px + env(safe-area-inset-bottom));
       animation: sheetSlideUp 0.24s var(--spring) both;
       display: flex; flex-direction: column;
@@ -1580,7 +1580,7 @@
   .tool-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .tool-table th, .tool-table td { padding: 8px 6px; border-bottom: 1px solid var(--line-soft); text-align: left; }
   .tool-table th { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
-  .count-review { max-height: 46vh; overflow: auto; margin-bottom: 8px; }
+  .count-review { max-height: calc(46vh / var(--app-zoom, 1)); overflow: auto; margin-bottom: 8px; }
   .ro-group { margin-bottom: 14px; padding: 14px 16px; }
   .ro-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
   .ro-head h3 { margin: 0; font-size: 15px; color: var(--ink); }
@@ -1693,6 +1693,37 @@
     .stock-table .st-sub { grid-area: sub; }
     .stock-table .st-act { grid-area: act; justify-self: end; display: flex; gap: 4px; }
     .stock-table tbody tr td:first-child { box-shadow: none !important; }
+
+    /* Team and the ledger as cards on a phone too (3.35.2): a wide table
+       there was a sideways scroll of tall rows, worse with the app zoomed out. */
+    #page-users > div:last-child, #page-ledger > .table-scroll, #page-ledger > div:last-child { overflow-x: visible; margin: 0; padding: 0 0 16px; width: auto; }
+    #page-users .table-scroll, #page-ledger .table-scroll { max-height: none; overflow: visible; }
+    #page-users table, #page-ledger table { min-width: 0 !important; width: 100%; }
+    #page-users thead, #page-ledger thead { display: none; }
+    #page-users tbody tr, #page-ledger tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    #page-users tbody td, #page-ledger tbody td { display: block; padding: 0 !important; border: 0 !important; background: none !important; min-width: 0; height: auto !important; box-shadow: none !important; }
+    #page-users tbody td.empty, #page-ledger tbody td.empty { grid-column: 1 / -1; padding: 24px 0 !important; text-align: center; }
+    #page-users tbody tr { grid-template-areas: "name role" "user status" "dept act" "email email" "mail mail"; }
+    #page-users .u-name { grid-area: name; font-weight: 650; font-size: 14px; overflow-wrap: anywhere; }
+    #page-users .u-role { grid-area: role; justify-self: end; }
+    #page-users .u-user { grid-area: user; font-size: 12.5px; color: var(--ink-soft); overflow-wrap: anywhere; }
+    #page-users .u-status { grid-area: status; justify-self: end; }
+    #page-users .u-dept { grid-area: dept; font-size: 12.5px; color: var(--ink-soft); }
+    #page-users .actions-cell { grid-area: act; justify-self: end; }
+    #page-users .u-email { grid-area: email; font-size: 12px; color: var(--ink-faint); overflow-wrap: anywhere; }
+    #page-users .u-mail { grid-area: mail; }
+    #page-users .u-mail:empty { display: none; }
+    #page-ledger tbody tr { grid-template-areas: "name qty" "code type" "date dept" "ref user" "act act"; }
+    #page-ledger td[data-label="Name"] { grid-area: name; font-weight: 650; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+    #page-ledger td[data-label="Qty"] { grid-area: qty; text-align: right; font-weight: 700; white-space: nowrap; }
+    #page-ledger td[data-label="Code"] { grid-area: code; font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+    #page-ledger td[data-label="Type"] { grid-area: type; justify-self: end; text-align: right; }
+    #page-ledger td[data-label="Date"] { grid-area: date; font-size: 12px; color: var(--ink-soft); }
+    #page-ledger td[data-label="Department"] { grid-area: dept; justify-self: end; font-size: 12px; color: var(--ink-soft); }
+    #page-ledger td[data-label="Reference"] { grid-area: ref; font-size: 12px; color: var(--ink-faint); overflow-wrap: anywhere; }
+    #page-ledger td[data-label="Entered by"] { grid-area: user; justify-self: end; font-size: 12px; color: var(--ink-faint); }
+    #page-ledger tbody td.ledger-actions-col { grid-area: act; justify-self: end; }
+    #page-ledger tbody td.ledger-actions-col:empty { display: none; }
   }
   /* APP-PROMPTS-CSS:BEGIN */
 /* ---- Install and update prompts (shared; see shared/app-prompts.js) ---- */
@@ -2500,7 +2531,7 @@
     </div>
     <form id="itemForm">
       <div class="form-grid">
-        <div class="field"><label for="itemCode">Code</label><input type="text" id="itemCode" required></div>
+        <div class="field"><label for="itemCode">Code</label><input type="text" id="itemCode" data-caps required></div>
         <div id="itemFieldsMain" class="grid-passthrough"></div>
       </div>
       <details id="itemFieldsMoreWrap" class="hidden"><summary>More details</summary><div id="itemFieldsMore" class="form-grid"></div></details>
@@ -2720,7 +2751,7 @@
 /* =========================================================================
    CONFIG & PWA SETUP
    ========================================================================= */
-const APP_VERSION = '3.35.1';
+const APP_VERSION = '3.35.2';
 const GOOGLE_API_URL = 'https://script.google.com/macros/s/AKfycbzs_aW0G-NvVvs-_Yk41d4esq1lkKVBTzQEQTrbbIKe7kQfoYdXD3cuhd6Wt2UQ6MU0/exec';
 const COMPANY_NAME = 'CALGAS CAPACITORS';
 const COMPANY_LOGO_ICON_URL = './logo/icon-192.png';
@@ -7047,7 +7078,7 @@ function renderComboList_(combo, filter) {
   // the list when the form is saved (3.33).
   const typed = String(filter || '').replace(/\s+/g, ' ').trim();
   const offerNew = input.dataset.allowNew === '1' && typed && !opts.some(function (o) { return String(o).toLowerCase() === typed.toLowerCase(); });
-  const newRow = offerNew ? '<div class="combo-option combo-new' + (shown.length ? '' : ' is-active') + '" data-value="' + escapeHtml(typed) + '"><b>+ \u201c' + escapeHtml(typed) + '\u201d</b><small>New \u2014 added to ' + escapeHtml(input.dataset.newList || 'the list') + ' when you save</small></div>' : '';
+  const newRow = offerNew ? '<div class="combo-option combo-new' + (shown.length ? '' : ' is-active') + '" data-value="' + escapeHtml(typed) + '"><b>+ \u201c' + escapeHtml(typed) + '\u201d</b><small>New \u2014 added to ' + escapeHtml(input.dataset.newList || 'the list') + ' ' + escapeHtml(input.dataset.newWhen || 'when you save') + '</small></div>' : '';
   if (shown.length === 0 && !newRow) {
     list.innerHTML = '<div class="combo-empty">No match</div>';
   } else {
@@ -7082,6 +7113,17 @@ function enforceComboValue_(input) {
   }
   input.dataset.lastValid = input.value;
 }
+// Codes are always in capitals (3.35.2): a box marked data-caps turns what
+// is typed into capitals as it is typed, keeping the cursor where it was.
+document.addEventListener('input', function (e) {
+  const el = e.target;
+  if (!el || !el.hasAttribute || !el.hasAttribute('data-caps')) return;
+  const up = el.value.toUpperCase();
+  if (up === el.value) return;
+  const a = el.selectionStart, b = el.selectionEnd;
+  el.value = up;
+  try { el.setSelectionRange(a, b); } catch (x) {}
+}, true);
 // Only the item form's comboboxes ([data-combo]); the enhanced selects
 // handle their own events.
 document.addEventListener('input', function (e) {
@@ -7121,6 +7163,7 @@ document.addEventListener('mousedown', function (e) {
     input.value = opt.dataset.value;
     input.dataset.lastValid = input.value;
     closeCombo_(combo);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
     return;
   }
   // Clicking anywhere else closes any open list.
@@ -7134,8 +7177,10 @@ document.addEventListener('focusout', function (e) {
   const combo = input.closest('[data-combo]');
   setTimeout(function () {
     if (combo.contains(document.activeElement)) return;
+    const was = input.value;
     enforceComboValue_(input);
     closeCombo_(combo);
+    if (input.value !== was) input.dispatchEvent(new Event('change', { bubbles: true }));
   }, 0);
 });
 document.addEventListener('keydown', function (e) {
@@ -7155,7 +7200,7 @@ document.addEventListener('keydown', function (e) {
     options[idx].classList.add('is-active');
     options[idx].scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'Enter') {
-    if (idx > -1) { e.preventDefault(); input.value = options[idx].dataset.value; input.dataset.lastValid = input.value; closeCombo_(combo); }
+    if (idx > -1) { e.preventDefault(); input.value = options[idx].dataset.value; input.dataset.lastValid = input.value; closeCombo_(combo); input.dispatchEvent(new Event('change', { bubbles: true })); }
   } else if (e.key === 'Escape') {
     enforceComboValue_(input); closeCombo_(combo);
   }
@@ -8880,7 +8925,7 @@ function renderUsersPage() {
     const wantsTrade = record ? !!record.effective['stock.mail.trade'] : false;
     const tier = record ? (record.category || 'Default') : '';
     const mailBadges = '<div class="mail-badges"><span class="mail-badge' + (wantsRM ? ' on' : '') + '">RM</span><span class="mail-badge' + (wantsFG ? ' on' : '') + '">FG</span><span class="mail-badge' + (wantsTrade ? ' on' : '') + '">TR</span></div>';
-    return '<tr data-username="' + escapeHtml(u.Username) + '"><td>' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono">' + escapeHtml(u.Username) + '</td><td><span class="tag tag-role-' + lc(u.Role).replace(/[^a-z0-9]+/g, '-') + '">' + escapeHtml(u.Role) + '</span></td><td>' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td>' + escapeHtml(u.Email || '—') + '</td><td>' + mailBadges + '</td><td><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
+    return '<tr data-username="' + escapeHtml(u.Username) + '"><td class="u-name">' + escapeHtml(u.Name) + (active ? '' : ' <span class="muted">(inactive)</span>') + '</td><td class="mono u-user">' + escapeHtml(u.Username) + '</td><td class="u-role"><span class="tag tag-role-' + lc(u.Role).replace(/[^a-z0-9]+/g, '-') + '">' + escapeHtml(u.Role) + '</span></td><td class="u-dept">' + escapeHtml(u.Department || '—') + (tier ? '<span class="tier-badge">' + escapeHtml(tier) + '</span>' : '') + '</td><td class="u-email">' + escapeHtml(u.Email || '—') + '</td><td class="u-mail">' + mailBadges + '</td><td class="u-status"><span class="status status-' + (active ? 'ok' : 'none') + '">' + statusIcon(active ? 'ok' : 'none') + (active ? 'Active' : 'Inactive') + '</span></td><td class="actions-cell"><button class="row-action" data-action="edit-user" title="Edit">' + EDIT_ICON + '</button></td></tr>';
   }).join('');
 }
 function openUserModal(username) {
@@ -9663,15 +9708,19 @@ function renderPcNew() {
     '<div class="db-card"><div class="pc-form">' +
       '<div class="field"><label for="pcfCat">Category <span class="req">*</span></label><select id="pcfCat">' + pcCatOptions(f.cat) + '</select></div>' +
       '<div class="field"><label for="pcfType">Type <span class="req">*</span></label><select id="pcfType"' + (f.cat ? '' : ' disabled') + '>' + pcTypeOptions(f.cat, f.type) + '</select></div>' +
-      '<div class="field full"><label for="pcfSize">Size / spec <span class="req">*</span></label><input id="pcfSize" class="mono" list="pcfSizes" autocomplete="off" maxlength="40" style="text-transform:uppercase" value="' + escapeHtml(f.size) + '"' + (t ? '' : ' disabled') + ' placeholder="' + escapeHtml(t ? (t.Size_Example || '') : '') + '">' +
-        '<datalist id="pcfSizes">' + sizes.map(function (x) { return '<option value="' + escapeHtml(x) + '">'; }).join('') + '</datalist>' +
+      '<div class="field full"><label for="pcfSize">Size / spec <span class="req">*</span></label>' +
+        '<div class="combo" data-combo><input type="text" class="combo-input mono" id="pcfSize" data-caps autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" maxlength="40"' +
+        ' data-options="' + escapeHtml(JSON.stringify(sizes)) + '" data-allow-new="1" data-new-list="' + escapeHtml(t ? 'the sizes of ' + t.Type_Name : 'the sizes') + '" data-new-when="when the code is made"' +
+        ' value="' + escapeHtml(f.size) + '"' + (t ? '' : ' disabled') + ' placeholder="' + escapeHtml(t ? (sizes.length ? 'Pick one, or type a new one, e.g. ' : 'Type it, e.g. ') + (t.Size_Example || '') : 'Pick the type first') + '">' +
+        '<button type="button" class="combo-toggle" tabindex="-1" aria-label="Show sizes"' + (t ? '' : ' disabled') + '><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+        '<div class="combo-list hidden"></div></div>' +
         '<div class="hint" id="pcfSizeHint">' + (t ? escapeHtml(pcIsSerial(t) ? 'Serial number — the next free one is ' + pcNextSerial(f.cat, f.type) + '.' : t.Size_Format + (t.Size_Example ? ', e.g. ' + t.Size_Example : '') + '. In mm unless the format says otherwise; no units; values joined with X.') +
           (sizes.length ? ' ' + plural(sizes.length, 'size') + ' in use.' : '') : 'The format shows here once the type is picked.') + '</div></div>' +
       (t && rule !== 'None' ? '<div class="field full"><label for="pcfDetail">' + escapeHtml(t.Detail_Label || 'Detail code') + (rule === 'Required' ? ' <span class="req">*</span>' : '') + '<span class="pc-rule">' + (rule === 'Required' ? 'required' : 'optional') + '</span></label>' +
         '<select id="pcfDetail" data-sort="none"><option value="">' + (rule === 'Required' ? 'Pick the ' + escapeHtml((t.Detail_Label || 'detail code').toLowerCase()) : 'None') + '</option>' +
         dets.map(function (x) { return '<option value="' + escapeHtml(x.Detail_Code) + '"' + (f.detail === x.Detail_Code ? ' selected' : '') + '>' + escapeHtml(x.Detail_Code + (x.Detail_Meaning ? ' — ' + x.Detail_Meaning : '')) + '</option>'; }).join('') +
         '<option value="__new"' + (f.detail === '__new' ? ' selected' : '') + '>New ' + escapeHtml((t.Detail_Label || 'detail code').toLowerCase()) + '…</option></select>' +
-        (f.detail === '__new' ? '<div class="pc-newdet"><input id="pcfNewDetail" class="mono" maxlength="12" placeholder="' + escapeHtml(t.Detail_Example || 'Code') + '" style="text-transform:uppercase" value="' + escapeHtml(f.newDetail) + '" aria-label="New code"><input id="pcfNewMeaning" maxlength="100" placeholder="What it means, e.g. Zinc Plated" value="' + escapeHtml(f.newMeaning) + '" aria-label="What it means"></div>' : '') +
+        (f.detail === '__new' ? '<div class="pc-newdet"><input id="pcfNewDetail" class="mono" data-caps maxlength="12" placeholder="' + escapeHtml(t.Detail_Example || 'Code') + '" style="text-transform:uppercase" value="' + escapeHtml(f.newDetail) + '" aria-label="New code"><input id="pcfNewMeaning" maxlength="100" placeholder="What it means, e.g. Zinc Plated" value="' + escapeHtml(f.newMeaning) + '" aria-label="What it means"></div>' : '') +
         '</div>' : '') +
       '<div class="field"><label for="pcfUnit">Unit <span class="req">*</span></label><select id="pcfUnit"><option value="">Pick the unit</option>' + units.map(function (u) { return '<option' + (f.unit === u ? ' selected' : '') + '>' + escapeHtml(u) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="pcfMin">Minimum quantity</label><input id="pcfMin" type="number" inputmode="decimal" min="0" step="any" value="' + escapeHtml(f.min) + '" placeholder="Reorder level"></div>' +
@@ -9802,22 +9851,24 @@ function openPcTypeForm(key) {
       (orig ? (used ? plural(used, 'code') + ' use this type, so its category and codes stay as they are.' : 'No codes use this type yet.') : 'A new category is added with its first type.') + '</div></div><button class="icon-btn" data-x aria-label="Close">&#10005;</button></div>' +
     '<div class="pc-form">' +
       '<div class="field"><label for="ptCat">Category <span class="req">*</span></label><select id="ptCat"' + (orig ? ' disabled' : '') + '>' + (orig ? '<option value="' + escapeHtml(t.Category_Code) + '">' + escapeHtml(t.Category_Name + ' · ' + t.Category_Code) + '</option>' : pcCatOptions('').replace('Pick the category', 'Pick the category') + '<option value="__new">New category…</option>') + '</select></div>' +
-      '<div class="field hidden" id="ptNewCat"><label>New category <span class="req">*</span></label><div class="pc-newdet" style="grid-template-columns:1fr 110px;margin:0"><input id="ptCatName" maxlength="40" placeholder="Name, e.g. GASKET" style="text-transform:uppercase"><input id="ptCatCode" class="mono" maxlength="5" placeholder="Code" style="text-transform:uppercase"></div></div>' +
-      '<div class="field"><label for="ptTypeName">Type name <span class="req">*</span></label><input id="ptTypeName" maxlength="40" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Name) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HEX BOLT"></div>' +
-      '<div class="field"><label for="ptTypeCode">Type code <span class="req">*</span></label><input id="ptTypeCode" class="mono" maxlength="4" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Code) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HX; ST if the only type"></div>' +
-      '<div class="field"><label for="ptFormat">Size format <span class="req">*</span></label><input id="ptFormat" list="ptFormats" maxlength="60" value="' + escapeHtml(t.Size_Format) + '" placeholder="e.g. Dia X Height, or Serial"><datalist id="ptFormats">' + formats.map(function (x) { return '<option value="' + escapeHtml(x) + '">'; }).join('') + '</datalist></div>' +
-      '<div class="field"><label for="ptExample">Size example</label><input id="ptExample" class="mono" maxlength="40" value="' + escapeHtml(t.Size_Example) + '" placeholder="e.g. 85X247"></div>' +
+      '<div class="field hidden" id="ptNewCat"><label>New category <span class="req">*</span></label><div class="pc-newdet" style="grid-template-columns:1fr 110px;margin:0"><input id="ptCatName" data-caps maxlength="40" placeholder="Name, e.g. GASKET" style="text-transform:uppercase"><input id="ptCatCode" class="mono" data-caps maxlength="5" placeholder="Code" style="text-transform:uppercase"></div></div>' +
+      '<div class="field"><label for="ptTypeName">Type name <span class="req">*</span></label><input id="ptTypeName" data-caps maxlength="40" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Name) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HEX BOLT"></div>' +
+      '<div class="field"><label for="ptTypeCode">Type code <span class="req">*</span></label><input id="ptTypeCode" class="mono" data-caps maxlength="4" style="text-transform:uppercase" value="' + escapeHtml(t.Type_Code) + '"' + (lockCodes ? ' disabled' : '') + ' placeholder="e.g. HX; ST if the only type"></div>' +
+      '<div class="field"><label for="ptFormat">Size format <span class="req">*</span></label><div class="combo" data-combo><input type="text" class="combo-input" id="ptFormat" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" maxlength="60"' +
+        ' data-options="' + escapeHtml(JSON.stringify(formats)) + '" data-allow-new="1" data-new-list="the size formats" data-new-when="when the type is saved" value="' + escapeHtml(t.Size_Format) + '" placeholder="e.g. Dia X Height, or Serial">' +
+        '<button type="button" class="combo-toggle" tabindex="-1" aria-label="Show size formats"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6.5L8 10.5L12 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="combo-list hidden"></div></div></div>' +
+      '<div class="field"><label for="ptExample">Size example</label><input id="ptExample" class="mono" data-caps maxlength="40" value="' + escapeHtml(t.Size_Example) + '" placeholder="e.g. 85X247"></div>' +
       '<div class="field"><label>Detail code</label><div class="seg" id="ptRule">' + ['None', 'Optional', 'Required'].map(function (r) { return '<button type="button" data-r="' + r + '" class="' + (t.Detail_Rule === r ? 'is-on' : '') + '">' + r + '</button>'; }).join('') + '</div></div>' +
       '<div class="field pt-det"><label for="ptDetLabel">What it stands for</label><input id="ptDetLabel" maxlength="40" value="' + escapeHtml(t.Detail_Label) + '" placeholder="e.g. Finish, Stud, Terminal"></div>' +
-      '<div class="field pt-det"><label for="ptDetEx">Detail example</label><input id="ptDetEx" class="mono" maxlength="12" style="text-transform:uppercase" value="' + escapeHtml(t.Detail_Example) + '" placeholder="e.g. NC"></div>' +
-      '<div class="field"><label for="ptPrefix">Name prefix</label><input id="ptPrefix" maxlength="60" style="text-transform:uppercase" value="' + escapeHtml(t.Name_Prefix) + '" placeholder="Category and type name"></div>' +
+      '<div class="field pt-det"><label for="ptDetEx">Detail example</label><input id="ptDetEx" class="mono" data-caps maxlength="12" style="text-transform:uppercase" value="' + escapeHtml(t.Detail_Example) + '" placeholder="e.g. NC"></div>' +
+      '<div class="field"><label for="ptPrefix">Name prefix</label><input id="ptPrefix" data-caps maxlength="60" style="text-transform:uppercase" value="' + escapeHtml(t.Name_Prefix) + '" placeholder="Category and type name"></div>' +
       '<div class="field"><label for="ptPattern">Name pattern</label><select id="ptPattern" data-sort="none"><option value="PREFIX-SIZE-DETAIL"' + (t.Name_Pattern === 'PREFIX-SIZE-DETAIL' ? ' selected' : '') + '>PREFIX-SIZE-DETAIL (BOLT HEX-M6X50-NC)</option><option value="PREFIX SIZE-DETAIL"' + (t.Name_Pattern === 'PREFIX SIZE-DETAIL' ? ' selected' : '') + '>PREFIX SIZE-DETAIL (METAL TOP 3STUD 100-M8X15)</option></select></div>' +
       '<div class="field"><label for="ptApproval">Approval</label><select id="ptApproval" data-sort="none"><option' + (t.Approval === 'Approved' ? ' selected' : '') + '>Approved</option><option' + (t.Approval === 'Proposed' ? ' selected' : '') + '>Proposed</option></select></div>' +
       '<div class="field full"><label for="ptNotes">Notes</label><input id="ptNotes" maxlength="300" value="' + escapeHtml(t.Notes) + '"></div>' +
     '</div>' +
     '<div class="pc-example" id="ptExampleOut"></div>' +
     (orig && orig.Detail_Rule !== 'None' ? '<div class="field"><label>' + escapeHtml(orig.Detail_Label || 'Detail') + ' codes</label><div class="pc-dets" id="ptDets"></div>' +
-      '<div class="pc-newdet" style="grid-template-columns:120px 1fr auto"><input id="ptNewDet" class="mono" maxlength="12" placeholder="Code" style="text-transform:uppercase" aria-label="New code"><input id="ptNewDetMeaning" maxlength="100" placeholder="What it means" aria-label="What it means"><button type="button" class="btn-ghost btn-compact" id="ptAddDet">Add</button></div></div>' : '') +
+      '<div class="pc-newdet" style="grid-template-columns:120px 1fr auto"><input id="ptNewDet" class="mono" data-caps maxlength="12" placeholder="Code" style="text-transform:uppercase" aria-label="New code"><input id="ptNewDetMeaning" maxlength="100" placeholder="What it means" aria-label="What it means"><button type="button" class="btn-ghost btn-compact" id="ptAddDet">Add</button></div></div>' : '') +
     '<div class="form-error" id="ptErr"></div>' +
     '<div class="modal-actions"><button type="button" class="btn-ghost" data-x="cancel">Cancel</button><button type="button" class="btn-primary btn-compact" id="ptSave">' + (orig ? 'Save' : 'Add the type') + '</button></div></div>';
   bg.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) bg.remove(); });
@@ -9893,7 +9944,8 @@ function wirePartCodesPage() {
     if (id === 'pcfCat') { pcReadForm(); pcPickType(e.target.value, ''); renderPcNew(); return; }
     if (id === 'pcfType') { pcReadForm(); pcPickType(f.cat, e.target.value); renderPcNew(); const s = document.getElementById('pcfSize'); if (s && !s.value) s.focus(); return; }
     if (id === 'pcfDetail') { pcReadForm(); f.detail = e.target.value; if (f.detail !== '__new') { f.newDetail = ''; f.newMeaning = ''; } renderPcNew(); if (f.detail === '__new') document.getElementById('pcfNewDetail').focus(); return; }
-    if (id === 'pcfUnit') { f.unit = e.target.value; renderPcPreview(); }
+    if (id === 'pcfUnit') { f.unit = e.target.value; renderPcPreview(); return; }
+    if (id === 'pcfSize') { const v = pcSizeNorm(e.target.value); if (v !== e.target.value) e.target.value = v; pcReadForm(); renderPcPreview(); }
   });
   body.addEventListener('input', function (e) {
     if (!/^pcf/.test(e.target.id)) return;
@@ -9901,7 +9953,12 @@ function wirePartCodesPage() {
     if (e.target.id === 'pcfGst') { const sp = gstSplit(e.target.value.trim()); ['IGST', 'CGST', 'SGST'].forEach(function (k) { const el = document.getElementById('pcf' + k); if (el) el.value = sp[k]; }); }
     renderPcPreview();
   });
-  body.addEventListener('keydown', function (e) { if (e.key === 'Enter' && /^pcf/.test(e.target.id) && e.target.tagName === 'INPUT') { e.preventDefault(); const b = document.getElementById('pcCreate'); if (b && !b.disabled) pcCreate(); } });
+  body.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || !/^pcf/.test(e.target.id) || e.target.tagName !== 'INPUT') return;
+    const combo = e.target.closest('[data-combo]');
+    if (combo && !combo.querySelector('.combo-list').classList.contains('hidden')) return; // Enter picks from the list
+    e.preventDefault(); const b = document.getElementById('pcCreate'); if (b && !b.disabled) pcCreate();
+  });
   body.addEventListener('click', function (e) {
     if (e.target.closest('#pcCreate')) { pcCreate(); return; }
     if (e.target.closest('#pcImport')) { pcImport(false); return; }
@@ -10203,7 +10260,7 @@ const APP_GALLERY = [
   { name: 'Stock Management', tag: 'You are here', here: true, color: '#b5652e',
     desc: 'RM, FG and Trade stock, every movement in the ledger, and balances that add up.',
     icon: '<path d="M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="M3.8 7.7 12 12l8.2-4.3M12 12v9"/>' },
-  { name: 'Orders & Dispatch', tag: 'Same sign-in', color: '#3e6e97', url: 'https://calgas.github.io/Production-Tracker/',
+  { name: 'Orders & Dispatch', tag: 'Same sign-in', color: '#3e6e97', url: 'https://calgas.github.io/Orders-Dispatch/',
     desc: 'Customer orders, the batches made for them, receiving finished batches into stores, and dispatches with a printable delivery note.',
     icon: '<path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>' },
   { name: 'Batch Card Tracker', tag: 'Same sign-in', color: '#2f8a6a', url: 'https://calgas.github.io/Batch-Card-Tracker/',
